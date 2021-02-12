@@ -13,14 +13,11 @@ reticulate::py_config()
 # new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 # if(length(new.packages)) install.packages(new.packages)
 
-url<-"http://169.254.169.254/latest/meta-data/iam/security-credentials/ESTAT.DSL2531B.DefaultRole"
-aws<-jsonlite::fromJSON(url)
 
 # library(reticulate)
 # library(DBI)
 library(RAthena)
 library(wihoja)
-
 reticulate::use_condaenv("RAthena")
 
 # -- RJDBC library
@@ -31,14 +28,7 @@ reticulate::use_condaenv("RAthena")
 # new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 # if(length(new.packages)) install.packages(new.packages)
 
-con <- dbConnect(RAthena::athena(),
-                 region_name="eu-west-1",
-                 aws_access_key_id = aws$AccessKeyId,
-                 aws_secret_access_key = aws$SecretAccessKey,
-                 aws_session_token = aws$Token,
-                 s3_staging_dir="s3://ecdataplatform-prod-estat-dsl2531b-athena-results-eu-west-1/",
-                 work_group = "ESTAT.DSL2531B.WorkGroup"
-) 
+open_oja_db()
 
 get_data <- function(query){
   my_data <- dbGetQuery(con, query)
