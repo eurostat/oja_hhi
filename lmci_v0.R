@@ -53,6 +53,8 @@ library(hhi)
 library(sf)
 library(stringi)
 
+source("hhi_functions.R")
+
 empty_as_na <- function(y){
   
   y[!str_detect(y, "")] <- NA

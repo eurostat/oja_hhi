@@ -12,3 +12,11 @@ sep <- function(linha) {
 }
 
 
+## Function for setting empty values to NA
+
+empty_as_na <- function(y){
+  
+  y[!str_detect(y, "")] <- NA
+  
+  return(y)
+}
