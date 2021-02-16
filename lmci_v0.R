@@ -1,24 +1,8 @@
-####Connection to database####
+####Required libraries####
 
-# list.of.packages <- c('ggplot2','RJDBC','reshape','dplyr','ggplot2') 
-# new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-# if(length(new.packages)) install.packages(new.packages)
-
-library(wihoja)
-
-# -- RJDBC library
-# if you don't hvae rJava installed, uncomment the following line and run it
-#install.packages("rJava")
-
-# list.of.packages <- c('ggplot2','RJDBC','reshape','dplyr','ggplot2') 
-# new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-# if(length(new.packages)) install.packages(new.packages)
-
-open_oja_db()
-
-
-library(tidyverse)
 require("restatapi")
+library(wihoja)
+library(tidyverse)
 library(Hmisc)
 library(dplyr)
 library(ggplot2)
@@ -35,8 +19,13 @@ library(hhi)
 library(sf)
 library(stringi)
 
+####Source function files####
+
 source("hhi_functions.R")
 
+####Connection to the database####
+
+open_oja_db()
 
 #declaring function for calculating Labour market concentration index. Creates subfolder for each country
 
