@@ -8,6 +8,7 @@ library(dplyr)
 library(ggplot2)
 library(xlsx)
 library(readxl)
+library(openxlsx)
 library(gmodels)
 library(data.table)
 library(lubridate)
@@ -18,6 +19,7 @@ library(openxlsx)
 library(hhi)
 library(sf)
 library(stringi)
+library(gdata)
 
 ####Source function files####
 
@@ -170,9 +172,10 @@ lmcirun <- function(x){
   # dframe <- read_fst((paste0(path,"OJA",countrycode, "step3.fst")), as.data.table = TRUE)
   dframe <- subset(dframe, !is.na(idprovince))
   
-  fua <- read_excel("Geodata/CorrespondenceTable.xlsx")
-  fua <- subset(fua, fua$COUNTRY == countrycode)
-  colnames(fua) <- c("country", "idprovince","idcity", "fua_id", "var1", "city", "city_latin")
+  #source code for matching LAU codes, NUTS codes and FUAid downloaded from Eurostat website
+  source("assignFUA.R")
+
+  fua <- subset(fua, fua$country == countrycode)
   totfuanum <- length(unique(fua$fua_id))-1
   
   #Handle country exceptions
@@ -195,6 +198,7 @@ lmcirun <- function(x){
   dframe <- select(dframe, -c("idcity.x", "idcity.y", "fua_id.x", "fua_id.x", "country.x", "country.y", "var1.x", "idprovince.y", "idprovince.x", "city_latin.y"))
   }
   
+  #include quality check?How the matching by city name works.
   
   # Left join first by both idprovince and idcity
   dframe <- left_join(dframe,fua,by=c("idprovince","idcity"))
