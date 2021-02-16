@@ -1,24 +1,10 @@
-####Connection to database and download####
-
-#include also OLD connection details
-
-reticulate::py_config()
-# library(RJDBC)
-
-# -- RJDBC library
-# if you don't hvae rJava installed, uncomment the following line and run it
-#install.packages("rJava")
+####Connection to database####
 
 # list.of.packages <- c('ggplot2','RJDBC','reshape','dplyr','ggplot2') 
 # new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 # if(length(new.packages)) install.packages(new.packages)
 
-
-# library(reticulate)
-# library(DBI)
-library(RAthena)
 library(wihoja)
-reticulate::use_condaenv("RAthena")
 
 # -- RJDBC library
 # if you don't hvae rJava installed, uncomment the following line and run it
@@ -30,10 +16,6 @@ reticulate::use_condaenv("RAthena")
 
 open_oja_db()
 
-get_data <- function(query){
-  my_data <- dbGetQuery(con, query)
-  return(my_data)
-}
 
 library(tidyverse)
 require("restatapi")
@@ -55,22 +37,6 @@ library(stringi)
 
 source("hhi_functions.R")
 
-empty_as_na <- function(y){
-  
-  y[!str_detect(y, "")] <- NA
-  
-  return(y)
-}
-
-
-sep <- function(linha) {
-  resp <- strsplit(linha," |/|-")
-  resp <- unlist(resp)
-  resp <- gsub(",|;|\\.","",resp)
-  resp <- sort(resp[which(nchar(resp) > 2)])
-  resp <- paste0(resp,collapse=" ")
-  resp <- tolower(resp)
-}
 
 #declaring function for calculating Labour market concentration index. Creates subfolder for each country
 
