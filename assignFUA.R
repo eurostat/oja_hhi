@@ -1,15 +1,5 @@
-install.packages("readxl")
-install.packages("dplyr")
-install.packages("stringr")
-install.packages("openxlsx")
-install.packages("gdata")
-library(readxl)
-library(dplyr)
-library(stringr)
-library(openxlsx)
-library(gdata)
 
-
+createfua <- function(){
 ### download file with eurostat classification
 
 download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile="EU-28-LAU-2019-NUTS-2016.xlsx")
@@ -98,5 +88,8 @@ colnames(fua) <- c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "ci
 
 rm(DF)
 rm(DFlist)
-rm(countrylist, filename, filename2, i, assignFUA)
+rm(x, countrylist, filename, filename2, i, assignFUA)
+
+return(fua)
+}
 

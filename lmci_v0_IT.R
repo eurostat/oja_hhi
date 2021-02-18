@@ -34,6 +34,7 @@ open_oja_db()
 lmcirun <- function(x){
   countrycodes <- get("cc",.restatapi_env)$EU27_2020
   countrycode<-countrycodes[x]
+  countrycode <- "IT"
   path <- paste0(countrycode, "/")
   dir.create(countrycode)
   resultspath <- paste0(path,"Results/")
@@ -84,14 +85,14 @@ lmcirun <- function(x){
   #applying empty as na function
   dframe <- dframe %>% mutate_at(c("companyname", "city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector"), empty_as_na)
   
-  write.fst(dframe,paste0(path,"OJA",countrycode, ".fst"), 100)
+  #write.fst(dframe,paste0(path,"OJA",countrycode, ".fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, ".fst"), as.data.table = TRUE)
   
   dframe <- subset(dframe, dup == 0)
   
   dframe <- subset(dframe, select =  -c(grab_date))
   
-  write.fst(dframe,paste0(path,"OJA",countrycode, "step1.fst"), 100)
+ # write.fst(dframe,paste0(path,"OJA",countrycode, "step1.fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
   
   dframe <- subset(dframe, !is.na(contract))
@@ -155,7 +156,7 @@ lmcirun <- function(x){
   
   
   #save step2
-  write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
+  #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
   
   
   #dframe <- read_fst((paste0(path,"OJA",countrycode, "step2.fst")), c("general_id", "expire_date", "idsector", "qtr", "idesco_level_4", "idregion", "companyname", "idprovince", "idcity", "site"), as.data.table = TRUE)
@@ -189,7 +190,7 @@ lmcirun <- function(x){
   #when company name is NA takes the value of the variable imp
   dframe$companyname[is.na(dframe$companyname)] <- dframe$imp[is.na(dframe$companyname)]
   
-  write.fst(dframe,paste0(path,"OJA",countrycode, "step3.fst"), 100)
+ # write.fst(dframe,paste0(path,"OJA",countrycode, "step3.fst"), 100)
   
   
   # download geo information  ======================================
@@ -215,7 +216,7 @@ lmcirun <- function(x){
   dframe <- subset(dframe, !is.na(idprovince))
   
   #source code for matching LAU codes, NUTS codes and FUAid downloaded from Eurostat website
-  source("assignFUA.R")
+  fua <- createfua()
   
   fua <- subset(fua, fua$country == countrycode)
   totfuanum <- length(unique(fua$fua_id))-1
@@ -257,7 +258,7 @@ lmcirun <- function(x){
   
   fuanum <- length(unique(dframe$fua_id))
   
-  write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
+  #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
   
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
   
