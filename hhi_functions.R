@@ -97,6 +97,13 @@ createfua <- function(){
   DF <- select(DF , Code_2013 , Code_2016 , recoded)
   colnames(DF) <- c("NUTS_3_2013" , "NUTS_3_CODE" , "recoded")
   
+  # input manually the NUTS2013-NUTS2016 correspondence for 3 NUTS2016 regions
+  DF$NUTS_3_CODE[DF$NUTS_3_2013=="DE915"|DF$NUTS_3_2013=="DE919"] <- "DE91C"
+  DF$recoded[DF$NUTS_3_2013=="DE915"|DF$NUTS_3_2013=="DE919"] <- 1
+  DF$recoded[DF$NUTS_3_2013=="NL322"] <- 1
+  DF$recoded[DF$NUTS_3_2013=="NL326"] <- 1
+  
+  
   
   ### merge the NUTS2016-NUTS2013 correspondence table with the main NUTS-LAU-FUA areas and assign country variable
   x <- merge(x , DF , all.x=TRUE)
