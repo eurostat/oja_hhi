@@ -117,16 +117,12 @@ createfua <- function(){
   x$assign[x$recoded==2] <- 0
   
   
-  ### leave only one row per NUTS3 region
-  
-  x$dup <- duplicated(x$NUTS_3_CODE)
-  x <- x[x$dup==FALSE , ]
-  
   # final vector to be used for the calculation of the LMCI
   
   fua <- select(x, country , NUTS_3_CODE , LAU_CODE , FUA_ID, LAU_NAME_NA , LAU_NAME_LA , recoded , assign)
   colnames(fua) <- c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1")
   
+
   rm(DF)
   rm(DFlist)
   rm(x, countrylist, filename, filename2, i, assignFUA)
