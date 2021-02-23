@@ -1,7 +1,6 @@
 ####Required libraries####
 
 require("restatapi")
-library(wihoja)
 library(tidyverse)
 library(Hmisc)
 library(dplyr)
@@ -20,6 +19,8 @@ library(hhi)
 library(sf)
 library(stringi)
 library(gdata)
+library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
+#devtools::install_github("eurostat/wihoja", auth_token= "a1XXXXXXXXXXXXXXXXXXXXXXea4a2ab9621f")
 
 ####Source function files####
 
