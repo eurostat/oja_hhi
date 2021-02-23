@@ -32,6 +32,7 @@ createfua <- function(){
   ### download file with eurostat classification
   
   download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile="EU-28-LAU-2019-NUTS-2016.xlsx")
+  options (timeout = 100)
   filename <- "EU-28-LAU-2019-NUTS-2016.xlsx"
   
   ###selecting countries
