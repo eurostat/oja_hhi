@@ -129,3 +129,48 @@ createfua <- function(){
   
   return(fua)
 }
+
+
+calculate_hhi <- function (dframe) {
+  
+  ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
+  # compute market shares by quarter, FUA and esco level 4 occupation
+  # create grids of occupation, geo unit and quarter
+  grid <- expand.grid(esco = unique(dframe$idesco_level_4), geo = unique(dframe$fua_id), qtr = unique(dframe$qtr), stringsAsFactors = FALSE)
+  
+  # count obs per occupation, region, quarter
+  setDT(dframe)
+  dframe[, ncount := .N, by = list(idesco_level_4, fua_id, qtr)]
+  
+  # count obs per occupation, region, quarter, company
+  dframe[, ccount := .N, by = list(idesco_level_4, fua_id, qtr, companyname)]
+  
+  #market shares
+  dframe$mshare <- ((dframe$ccount) / (dframe$ncount)) * 100
+  dframe$ms2 <- (dframe$mshare)^2
+  
+  hhi <- data.frame()
+  
+  for (i in 1:dim(grid)[1]) {
+    # count obs per cell and company
+    subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
+    subset$hhi <- sum(subset$ms2)
+    subset <- subset[1, !c("companyname") ] 
+    hhi <- rbind(hhi, subset)
+  }
+  save(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
+  # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
+  
+  hhi <- na.omit(hhi)
+  
+  totalmean <- mean(hhi$hhi)
+  totalmean
+  totalmedian <- median(hhi$hhi)
+  totalmedian  
+  
+  #describe(hhi$hhi)
+  
+  #empirical cumulative distribution function for value 2500
+  #ecdf(hhi$hhi)(2500) 
+  return (hhi)
+  }
