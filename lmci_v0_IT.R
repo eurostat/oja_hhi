@@ -233,10 +233,7 @@ lmcirun <- function(x){
   
   ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
   hhi <- calculate_hhi(dframe)
-  dframetemp <- dframe
-  dframe <- dframeupper
-  hhiupper <- calculate_hhi(dframe)
-  dframe <- dframetemp
+  hhiupper <- calculate_hhi(dframe=dframeupper)
   
   ###
   hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
@@ -254,11 +251,15 @@ lmcirun <- function(x){
   hhigeo <- st_as_sf(hhigeo)
   hhigeo$geometry <- st_cast(hhigeo$geometry, "GEOMETRY")
   
+  hhigeo <- create_hhigeo(hhi)
+  hhigeoupper <- create_hhigeo(hhi=hhiupper)
+  
   # st_geometry(hhigeo) <- hhigeo$geometry
   # 
   # hhigeo <- st_zm(hhigeo, drop = TRUE, what = "ZM")
   
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
+  saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   
   if (nrow(hhigeo) > 0){
     
@@ -624,10 +625,10 @@ lmcirun <- function(x){
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
   
   ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
-  hhi <- calculate_hhi(dframe)
+  hhi <- calculate_hhi()
   dframetemp <- dframe
   dframe <- dframeupper
-  hhiupper <- calculate_hhi(dframe)
+  hhiupper <- calculate_hhi(dframe = dframeupper)
   dframe <- dframetemp
   
   ###
