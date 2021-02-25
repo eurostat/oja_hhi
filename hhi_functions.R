@@ -131,7 +131,7 @@ createfua <- function(){
 }
 
 
-calculate_hhi <- function (dframe) {
+calculate_hhi <- function (dframe = dframe) {
   
   ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
   # compute market shares by quarter, FUA and esco level 4 occupation
@@ -173,4 +173,22 @@ calculate_hhi <- function (dframe) {
   #empirical cumulative distribution function for value 2500
   #ecdf(hhi$hhi)(2500) 
   return (hhi)
-  }
+}
+
+create_hhigeo <- function(hhi = hhi){
+  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
+  
+  hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean")])
+  
+  hhigeo <- data.table(left_join(hhigeo, sfile, by = "fua_id"))
+  
+  names(hhigeo)[names(hhigeo) == 'URAU_NAME'] <- 'fua_name'
+  
+  hhigeo$fua_name <- as.character(hhigeo$fua_name)
+  
+  hhigeo$wmean <- round(hhigeo$wmean)
+  
+  hhigeo <- st_as_sf(hhigeo)
+  hhigeo$geometry <- st_cast(hhigeo$geometry, "GEOMETRY")
+  return (hhigeo)
+}
