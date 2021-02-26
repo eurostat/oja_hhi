@@ -3,11 +3,11 @@
 ### running the code which extracts the sample of companies and applies the agency filter
 
 # sourcing the code
-source("filter_out_agencies_country.R")
+source("Other scripts/filter_out_agencies_country.R")
 # checking that the list of companies (cleaned of agencies) is there and backing it up
 str(companies_names_dataframe)
-companies_names_dataframe_2 <- companies_names_dataframe
-# companies_names_dataframe <- companies_names_dataframe_2
+companies_names_dataframe_backup <- companies_names_dataframe
+# companies_names_dataframe <- companies_names_dataframe_backup
 
 
 ### exporting and importing files for the manual extraction of keywords
@@ -17,7 +17,7 @@ companies_to_clean <- companies_names_dataframe[companies_names_dataframe$Freq>9
 write.csv(companies_to_clean[ , 1] , "companies_to_clean_export.csv")
 # reading the keywords for data cleaning from imported files
 # NB if it fails to refresh the file, use a slightly different file name
-clean_names <- read.csv("companies_to_clean_import.csv" , sep = ";")
+clean_names <- read.csv("Other scripts/companies_to_clean_import.csv" , sep = ";")
 #  clean_names <- read.csv("companies_to_clean.csv" , sep = ";")
 head(clean_names)
 
@@ -39,6 +39,8 @@ names_replaced <- function(i) {
 names_replaced_list <- apply(as.matrix(1:dim(clean_names)[1]),1,names_replaced)
 write.csv2(names_replaced_list,"names_replaced_list.csv")
 
+#temp <- companies_names_dataframe$companyname[str_detect(companies_names_dataframe$companyname, clean_names[2,3]) ==TRUE | companies_names_dataframe$companyname==clean_names[2,4] ]
+#View(temp)
 
 # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
 for(i in 1:dim(clean_names)[1]) {
@@ -51,6 +53,15 @@ for(i in 1:dim(clean_names)[1]) {
 companies_names_dataframe <- group_by(companies_names_dataframe,companyname)
 companies_names_dataframe <- summarise(companies_names_dataframe, Freq=sum(Freq))
 companies_names_dataframe <- arrange(companies_names_dataframe , desc(Freq))
+
+
+
+
+
+
+
+
+
 
 
 ### generate a table with cumulative distributions
