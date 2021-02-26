@@ -134,6 +134,13 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
+  
+  companies_names_dataframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" , NA))
+  companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
+  
+  keep <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
+  
+  
   dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
   
   #save step2
