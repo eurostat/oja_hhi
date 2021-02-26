@@ -175,14 +175,24 @@ ggplot(data = plotdata) +
 
 
 
+
+
+
+
+
+
+
+
+##############################################################################################
+#code starts here
+
+
 ##############################################################################################
 # sumstats/query function
 ##############################################################################################
 
 #ante-function
 keep <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
-
-
 
 
 
@@ -275,19 +285,16 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
 sumstats_by_company <-gen_sum_stats(filterlist = filteredout$companyname, keeplist = keep$companyname)
 str(sumstats_by_company)
 
-#vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
-
-
 #generate logs
 sumstats_by_company$ln_esco3 <- log(sumstats_by_company$idesco_level_3)
 sumstats_by_company$ln_undup_n <- log(sumstats_by_company$tot_n - sumstats_by_company$tot_dups)
+sumstats_by_company$sqln_undup_n <- sumstats_by_company$ln_undup_n^2
+sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
+sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
 
 sumstats_by_company$ln_n <- log(sumstats_by_company$tot_n)
 sumstats_by_company$ln_esco4 <- log(sumstats_by_company$idesco_level_4)
 sumstats_by_company$sqln_esco4 <- log(sumstats_by_company$idesco_level_4)^2
-sumstats_by_company$sqln_undup_n <- sumstats_by_company$ln_undup_n^2
-sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
-sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
 sumstats_by_company$ln_prov <- log(sumstats_by_company$idprovince)
 sumstats_by_company$sqln_prov <- log(sumstats_by_company$idprovince)^2
 sumstats_by_company$ln_regi <- log(sumstats_by_company$idregion)
@@ -300,7 +307,7 @@ sumstats_by_company$small <- ifelse(sumstats_by_company$tot_n<6,1,0)
 
 
 ##############################################################################################
-# run regressions
+# function for automatic flag
 ##############################################################################################
 
 
@@ -403,7 +410,7 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   } else {
     xdata4 <- 0
   }
-  flag <- eval(parse(text=paste("mydata$", flag, sep = "")))
+  fl <- eval(parse(text=paste("mydata$", flag, sep = "")))
   
   #adapt the size of the matrices b2 and Var_b2 to different numbers of regressors
   if (xvar2=="") {
@@ -451,31 +458,45 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   output1 <- as.data.frame(cbind(nam,mydata$autom_flag))
   colnames(output1) <- c(names, "autom_flag")
   
-  # calculate number of false/true positives/negatives and store it as output2
-  mydata$true_pos <- mydata$autom_flag==1 & flag == 1
-  mydata$false_pos <-  mydata$autom_flag==1 & flag == 0
-  mydata$true_neg <- mydata$autom_flag==0 & flag == 0
-  mydata$false_neg <-  mydata$autom_flag==0 & flag == 1
-  true_pos <- sum(mydata$true_pos)
-  false_pos <- sum(mydata$false_pos)
-  true_neg <- sum(mydata$true_neg)
-  false_neg <- sum(mydata$false_neg)
-  output2 <- as.data.frame(cbind(true_pos, false_pos, true_neg, false_neg))
-  colnames(output2) <- cbind("true_pos", "false_pos", "true_neg", "false_neg")
+  output4 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
+  colnames(output4) <- c(names, "autom_flag", "comb")
+  output4$comboflag <- 0
+  output4$comboflag[output4$autom_flag==1 & output4$comb!=0] <- 1
+  output4 <- cbind(output4[output4$comboflag==1,1] , output4[output4$comboflag==1,4])
+  colnames(output4) <- c(names, "comboflag")
   
-  output <- list(output1, output2, output3)
+  # calculate number of false/true positives/negatives and store it as output2
+  mydata$true_pos <- mydata$autom_flag==1 & fl == 1
+  mydata$false_pos <-  mydata$autom_flag==1 & fl == 0
+  mydata$true_neg <- mydata$autom_flag==0 & fl == 0
+  mydata$false_neg <-  mydata$autom_flag==0 & fl == 1
+  mydata$unkn_pos <- mydata$autom_flag==1 & fl == -1
+  mydata$unkn_neg <-  mydata$autom_flag==0 & fl == -1
+  true_pos <- sum(mydata$true_pos)
+  true_neg <- sum(mydata$true_neg)
+  false_pos <- sum(mydata$false_pos)
+  false_neg <- sum(mydata$false_neg)
+  unkn_pos <- sum(mydata$unkn_pos)
+  unkn_neg <- sum(mydata$unkn_neg)
+  output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
+  colnames(output2) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
+  
+  output <- list(output1, output2, output3, output4)
   return(output)
 }
 
 
 #rule 1
-test <- automflag()
-prova <- merge(sumstats_by_company,test[[1]])
+automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+comboflag <- automflag_output[[4]]
 test[[2]]
 
-test[[3]]
-str(test[[1]])
-View(prova)
+
+### code ends here
+#######################################################################################################
+
+
+
 
 test <- automflag(xvar2="sqln_undup_n")
 test[[2]]
