@@ -116,17 +116,6 @@ lmcirun <- function(x){
   #countrycode<-"IT"
   companies_to_clean_csv <- paste0("companies_to_clean_" , countrycode , ".csv")
   clean_names <- read.csv(companies_to_clean_csv , sep = ";")
-  # generate a function to record all the company names that are replaced, so it is possible to check for wrong rules
-  names_replaced <- function(i) {
-    temp <- dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) ==TRUE | dframe$companyname==clean_names[i,4] ]
-    temp <- temp[temp!=clean_names[i,5]]
-    temp <- paste(temp, collapse=" ; ")
-    return(temp)
-  }
-  # run this check-up function for all consolidated companynames and export the results
-  names_replaced_list_csv <- apply(as.matrix(1:dim(clean_names)[1]),1,names_replaced)
-  names_replaced_list_csv <- paste0("names_replaced_list_",countrycode,".csv")
-  write.csv2(names_replaced_list , names_replaced_list_csv)
   
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
@@ -219,19 +208,15 @@ lmcirun <- function(x){
   
   dframeupper <- dframe[!is.na(dframe$companyname) , ]
   
-  ####IMPUTATION OF MISSING COMPANYNAMES####
-  
+  ####IMPUTATION OF MISSING COMPANYNAMES (i.e. Staffing agencies removed by the filter)####
   #replace all missing company names with unique strings
-  # recode missings to NA
-  dframe$companyname[dframe$companyname == ""] <- NA
   no <- seq_len(length(dframe$companyname))
   no <- paste0("missing",no)
+  dframe$companyname <- sapply(dframe$companyname, as.character)
+  dframe$companyname[is.na(dframe$companyname)] <- " "
   dframe$companyname[dframe$companyname==" "] <- no[dframe$companyname==" "]
   rm(no)
   
-dframe$companyname <- sapply(dframe$companyname, as.character)
-dframe$companyname[is.na(dframe$companyname)] <- " "
-
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
   
@@ -239,28 +224,10 @@ dframe$companyname[is.na(dframe$companyname)] <- " "
   hhi <- calculate_hhi(dframe)
   hhiupper <- calculate_hhi(dframe=dframeupper)
   
-  ###
-  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
-  
-  hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean")])
-   
-  hhigeo <- data.table(left_join(hhigeo, sfile, by = "fua_id"))
-  
-  names(hhigeo)[names(hhigeo) == 'URAU_NAME'] <- 'fua_name'
-  
-  hhigeo$fua_name <- as.character(hhigeo$fua_name)
-  
-  hhigeo$wmean <- round(hhigeo$wmean)
-  
-  hhigeo <- st_as_sf(hhigeo)
-  hhigeo$geometry <- st_cast(hhigeo$geometry, "GEOMETRY")
+  ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
   
   hhigeo <- create_hhigeo(hhi)
   hhigeoupper <- create_hhigeo(hhi=hhiupper)
-  
-  # st_geometry(hhigeo) <- hhigeo$geometry
-  # 
-  # hhigeo <- st_zm(hhigeo, drop = TRUE, what = "ZM")
   
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
@@ -512,6 +479,17 @@ lmcirun <- function(x){
   #countrycode<-"IT"
   companies_to_clean_csv <- paste0("companies_to_clean_" , countrycode , ".csv")
   clean_names <- read.csv(companies_to_clean_csv , sep = ";")
+  # generate a function to record all the company names that are replaced, so it is possible to check for wrong rules
+  names_replaced <- function(i) {
+    temp <- dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) ==TRUE | dframe$companyname==clean_names[i,4] ]
+    temp <- temp[temp!=clean_names[i,5]]
+    temp <- paste(temp, collapse=" ; ")
+    return(temp)
+  }
+  # run this check-up function for all consolidated companynames and export the results
+  names_replaced_list_csv <- apply(as.matrix(1:dim(clean_names)[1]),1,names_replaced)
+  names_replaced_list_csv <- paste0("names_replaced_list_",countrycode,".csv")
+  write.csv2(names_replaced_list , names_replaced_list_csv)
   
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
@@ -530,13 +508,11 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
-
+  dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
   
   #companies_names_dataframe <- mutate(companies_names_dataframe, companyname = replace(companyname, str_detect(companies_names_dataframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",companies_names_dataframe$companyname) == "", NA))
   #companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
   
-  dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
- 
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
   
@@ -612,10 +588,11 @@ lmcirun <- function(x){
   ####IMPUTATION OF MISSING COMPANYNAMES####
   
   #replace all missing company names with unique strings
+  # recode missings to NA
+  dframe$companyname[dframe$companyname == ""] <- NA
   no <- seq_len(length(dframe$companyname))
   no <- paste0("missing",no)
-  dframe$companyname[is.na(dframe$companyname)] <- " "
-  dframe$companyname[dframe$companyname==" "] <- no[dframe$companyname==" "]
+  dframe$companyname[dframe$companyname==""] <- no[dframe$companyname==""]
   rm(no)
   
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
