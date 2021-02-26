@@ -1,4 +1,4 @@
-Language;staff_agency_name;staff_agency_site;exact
+Language;staff_agency_name;staff_agency_site;exact;
 EN;cross_border_talents;www.cbtalents.com;
 EN;kelly_services;www.kellyservices.pt;
 EN;hays;www.hays.pt;
@@ -137,7 +137,7 @@ EN;agentscout;keyword;
 IT;gazzetta_ufficiale;keyword;
 IT;living_business;https://www.livingbusiness.it/;
 IT;axl;https://www.aperelle.it/;exact
-IT;perpiù;https://www.lavoropiu.it/partner/perpiu/;
+IT;perpiÃ¹;https://www.lavoropiu.it/partner/perpiu/;
 IT;profili;https://profili.it/;
 EN;keyword;executive_search;
 IT;seaz;https://www.seaz.net/;
