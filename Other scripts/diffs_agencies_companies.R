@@ -226,6 +226,8 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   general_query$keyvar <- str_to_lower(general_query$keyvar)
   
   #standardize companyname
+  ordered <- sapply(companies_names_dataframe$companyname, function(x) sep(x))
+  companies_names_dataframe$companyname <- ordered
   #companies_names_dataframe$companyname <- gsub(",|;|.","",companies_names_dataframe$companyname)
   general_query$keyvar <- str_trim(general_query$keyvar)
   general_query$keyvar <- gsub(" ","_",general_query$keyvar)
@@ -489,7 +491,7 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
 #rule 1
 automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
 comboflag <- automflag_output[[4]]
-test[[2]]
+automflag_output[[2]]
 
 
 ### code ends here
