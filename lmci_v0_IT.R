@@ -98,7 +98,8 @@ lmcirun <- function(x){
   
   dframe <- subset(dframe, !is.na(idesco_level_4))
   
-  
+  write.fst(dframe,paste0(path,"ITtest.fst"), 100)
+  dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
   # clean and order company names for LMC index --------
   
   ordered <- sapply(dframe$companyname, function(x) sep(x))
@@ -225,9 +226,12 @@ lmcirun <- function(x){
   dframe$companyname[dframe$companyname == ""] <- NA
   no <- seq_len(length(dframe$companyname))
   no <- paste0("missing",no)
-  dframe$companyname[dframe$companyname==""] <- no[dframe$companyname==""]
+  dframe$companyname[dframe$companyname==" "] <- no[dframe$companyname==" "]
   rm(no)
   
+dframe$companyname <- sapply(dframe$companyname, as.character)
+dframe$companyname[is.na(dframe$companyname)] <- " "
+
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
   
@@ -239,7 +243,7 @@ lmcirun <- function(x){
   hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
   
   hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean")])
-  
+   
   hhigeo <- data.table(left_join(hhigeo, sfile, by = "fua_id"))
   
   names(hhigeo)[names(hhigeo) == 'URAU_NAME'] <- 'fua_name'
@@ -538,6 +542,9 @@ lmcirun <- function(x){
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
   dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
+  
+  #companies_names_dataframe <- mutate(companies_names_dataframe, companyname = replace(companyname, str_detect(companies_names_dataframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",companies_names_dataframe$companyname) == "", NA))
+  #companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
   
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
