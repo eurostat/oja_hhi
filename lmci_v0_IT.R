@@ -512,17 +512,6 @@ lmcirun <- function(x){
   #countrycode<-"IT"
   companies_to_clean_csv <- paste0("companies_to_clean_" , countrycode , ".csv")
   clean_names <- read.csv(companies_to_clean_csv , sep = ";")
-  # generate a function to record all the company names that are replaced, so it is possible to check for wrong rules
-  names_replaced <- function(i) {
-    temp <- dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) ==TRUE | dframe$companyname==clean_names[i,4] ]
-    temp <- temp[temp!=clean_names[i,5]]
-    temp <- paste(temp, collapse=" ; ")
-    return(temp)
-  }
-  # run this check-up function for all consolidated companynames and export the results
-  names_replaced_list_csv <- apply(as.matrix(1:dim(clean_names)[1]),1,names_replaced)
-  names_replaced_list_csv <- paste0("names_replaced_list_",countrycode,".csv")
-  write.csv2(names_replaced_list , names_replaced_list_csv)
   
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
