@@ -134,13 +134,15 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
+  # 
+  # # companies_names_dataframe <- as.data.frame(table(dframe$companyname))
+  # # companies_names_dataframe <- mutate(companies_names_dataframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" , NA))
+  # # companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
   
-  companies_names_dataframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" , NA))
-  companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
-  
-  keep <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
-  
-  
+  #keep <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
+  keep <- as.data.frame(clean_names$replace_with)
+  colnames(keep) <- "companyname" 
+
   sumstats_by_company <-gen_sum_stats(filterlist = filteredout$companyname, keeplist = keep$companyname)
   str(sumstats_by_company)
   
@@ -151,14 +153,16 @@ lmcirun <- function(x){
   sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
   sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
   
-
   automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
   comboflag <- automflag_output[[4]]
   automflag_output[[2]]
   
-  
-  
   dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
+  
+  filteredout$filteredout <- 1
+  dframe <- merge(dframe, filteredout, all.x = TRUE)
+  
+  dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$filteredout == 1, NA))
   
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
