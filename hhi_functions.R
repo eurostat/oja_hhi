@@ -226,8 +226,8 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   general_query$keyvar <- str_to_lower(general_query$keyvar)
   
   #standardize companyname
-  ordered <- sapply(companies_names_dataframe$companyname, function(x) sep(x))
-  companies_names_dataframe$companyname <- ordered
+  ordered <- sapply(general_query$keyvar, function(x) sep(x))
+  general_query$keyvar <- ordered
   #companies_names_dataframe$companyname <- gsub(",|;|.","",companies_names_dataframe$companyname)
   general_query$keyvar <- str_trim(general_query$keyvar)
   general_query$keyvar <- gsub(" ","_",general_query$keyvar)
