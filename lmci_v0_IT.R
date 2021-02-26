@@ -98,8 +98,8 @@ lmcirun <- function(x){
   
   dframe <- subset(dframe, !is.na(idesco_level_4))
   
-  write.fst(dframe,paste0(path,"ITtest.fst"), 100)
-  dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
+  #write.fst(dframe,paste0(path,"ITtest.fst"), 100)
+  #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
   # clean and order company names for LMC index --------
   
   ordered <- sapply(dframe$companyname, function(x) sep(x))
@@ -139,6 +139,23 @@ lmcirun <- function(x){
   companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
   
   keep <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
+  
+  
+  sumstats_by_company <-gen_sum_stats(filterlist = filteredout$companyname, keeplist = keep$companyname)
+  str(sumstats_by_company)
+  
+  #generate logs
+  sumstats_by_company$ln_esco3 <- log(sumstats_by_company$idesco_level_3)
+  sumstats_by_company$ln_undup_n <- log(sumstats_by_company$tot_n - sumstats_by_company$tot_dups)
+  sumstats_by_company$sqln_undup_n <- sumstats_by_company$ln_undup_n^2
+  sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
+  sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
+  
+
+  automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+  comboflag <- automflag_output[[4]]
+  automflag_output[[2]]
+  
   
   
   dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
