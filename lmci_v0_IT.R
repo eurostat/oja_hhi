@@ -530,11 +530,13 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
-  dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
+
   
   #companies_names_dataframe <- mutate(companies_names_dataframe, companyname = replace(companyname, str_detect(companies_names_dataframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",companies_names_dataframe$companyname) == "", NA))
   #companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
   
+  dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
+ 
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
   
@@ -610,11 +612,10 @@ lmcirun <- function(x){
   ####IMPUTATION OF MISSING COMPANYNAMES####
   
   #replace all missing company names with unique strings
-  # recode missings to NA
-  dframe$companyname[dframe$companyname == ""] <- NA
   no <- seq_len(length(dframe$companyname))
   no <- paste0("missing",no)
-  dframe$companyname[dframe$companyname==""] <- no[dframe$companyname==""]
+  dframe$companyname[is.na(dframe$companyname)] <- " "
+  dframe$companyname[dframe$companyname==" "] <- no[dframe$companyname==" "]
   rm(no)
   
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
