@@ -283,7 +283,7 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   
 }
 
-automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
+automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
   
   #mydata <- sumstats_by_company
   #flag <- "filteredout"
