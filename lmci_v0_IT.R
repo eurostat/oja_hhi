@@ -157,7 +157,7 @@ lmcirun <- function(x){
   comboflag <- automflag_output[[4]]
   automflag_output[[2]]
   
-  dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
+  #dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
   
   filteredout$filteredout <- 1
   dframe <- merge(dframe, filteredout, all.x = TRUE)
