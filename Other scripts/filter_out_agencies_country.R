@@ -1,5 +1,8 @@
 
 
+country <- "IT"
+
+
 
 #libraries and data connection
 #install.packages("wihoja")
@@ -8,9 +11,6 @@ open_oja_db()
 #install.packages("tidyverse")
 library(tidyverse)
 
-
-
-country <- "IT"
 
 
 
@@ -46,7 +46,8 @@ companies_names_dataframe <- companies_names_dataframe[companies_names_dataframe
 dim(companies_names_dataframe)
 
 #applying the job agency filter
-staff_agencies <- read.csv("staff_agencies_IT.csv" , sep = ";")
+filecsv <- paste0("staff_agencies_" , country , ".csv")
+staff_agencies <- read.csv(filecsv , sep = ";")
 blacklist <- staff_agencies[staff_agencies$exact != "exact" , 2]
 blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
 #filteredout <- filter(companies_names_dataframe, str_detect(companies_names_dataframe$companyname, paste(blacklist, collapse = '|')) | (companies_names_dataframe$companyname == paste(blacklist_exact, collapse = '|')) )
@@ -93,8 +94,8 @@ head(companies_freqtable)
 ### print and view output
 
 #print output
-write.csv(companies_freqtable , "companies_freqtable_IT.csv")
-write.csv(companies_names_dataframe , "companies_names_dataframe_IT.csv")
+write.csv(companies_freqtable , "companies_freqtable.csv")
+write.csv(companies_names_dataframe , "companies_names_dataframe.csv")
 write.csv(filteredout , "filteredout.csv")
 #cumulative distribution of ads and company names
 head(companies_freqtable)
