@@ -209,7 +209,7 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   #key_var <- "companyname"
   
   
-  ### compile and run query
+  ### compile and run query.
   
   querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM estat_dsl2531b_oja.ft_document_en_v8 WHERE idcountry='" , idcountry , "' ORDER BY RAND()  LIMIT " , samplesize)
   general_query <- query_athena(querytext)
