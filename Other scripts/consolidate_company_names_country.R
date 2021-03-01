@@ -1,9 +1,14 @@
 
 
+
 ### running the code which extracts the sample of companies and applies the agency filter
 
 # sourcing the code
 source("Other scripts/filter_out_agencies_country.R")
+
+# please note that the country local is defined in the source code
+#country <- "IT"
+
 # checking that the list of companies (cleaned of agencies) is there and backing it up
 str(companies_names_dataframe)
 companies_names_dataframe_backup <- companies_names_dataframe
@@ -17,7 +22,8 @@ companies_to_clean <- companies_names_dataframe[companies_names_dataframe$Freq>9
 write.csv(companies_to_clean[ , 1] , "companies_to_clean_export.csv")
 # reading the keywords for data cleaning from imported files
 # NB if it fails to refresh the file, use a slightly different file name
-clean_names <- read.csv("Other scripts/companies_to_clean_import.csv" , sep = ";")
+companies_to_clean_import <- paste0( "Other scripts/companies_to_clean_import_" , country , ".csv")
+clean_names <- read.csv(companies_to_clean_import , sep = ";")
 #  clean_names <- read.csv("companies_to_clean.csv" , sep = ";")
 head(clean_names)
 
