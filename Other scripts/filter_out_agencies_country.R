@@ -40,6 +40,7 @@ companies_names_dataframe$companyname <- str_to_lower(companies_names_dataframe$
 #companies_names_dataframe$companyname <- gsub(",|;|.","",companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- str_trim(companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- gsub(" ","_",companies_names_dataframe$companyname)
+companies_names_dataframe$companyname <- gsub("é","e",companies_names_dataframe$companyname)
 companies_names_dataframe$notgood <- ifelse(companies_names_dataframe$companyname=="",1,0)
 companies_names_dataframe <- companies_names_dataframe[companies_names_dataframe$notgood != 1 , -3]
 dim(companies_names_dataframe)
