@@ -429,11 +429,16 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   output1 <- as.data.frame(cbind(nam,mydata$autom_flag))
   colnames(output1) <- c(names, "autom_flag")
   
-  output4 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
-  colnames(output4) <- c(names, "autom_flag", "comb")
-  output4$comboflag <- 0
-  output4$comboflag[output4$autom_flag==1 & output4$comb!=0] <- 1
-  output4 <- output4$companyname[output4$comboflag==1]
+  output45 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
+  colnames(output45) <- c(names, "autom_flag", "comb")
+  output45$autom_flag <- as.numeric(output45$autom_flag)
+  output45$comb <- as.numeric(output45$comb)
+  output45$comboflag <- 0
+  output45$comboflag[output45$autom_flag==1 & output45$comb!=0] <- 1
+  output45$newflag <- 0
+  output45$newflag[output45$comb!=0 & output45$comb!=1 & output45$autom_flag==1] <- 1
+  output4 <- output45$companyname[output45$comboflag==1]
+  output5 <- output45$companyname[output45$newflag==1]
   
   # calculate number of false/true positives/negatives and store it as output2
   mydata$true_pos <- mydata$autom_flag==1 & fl == 1
@@ -451,6 +456,6 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
   colnames(output2) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
   
-  output <- list(output1, output2, output3, output4)
+  output <- list(output1, output2, output3, output4, output5)
   return(output)
 }
