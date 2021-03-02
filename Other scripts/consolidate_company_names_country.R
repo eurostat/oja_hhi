@@ -100,10 +100,8 @@ subsample_import <- paste0( "Other scripts/subsample_companynames_import_" , cou
 add_clean_names <- read.csv(subsample_import , sep = ";")
 
 #generate vectors of companynames identified as agencies or companies
-add_filteredout <-  as.data.frame(c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==1]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==1]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==1]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==1]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==1]) ))
-colnames(add_filteredout) <- "companyname"
-add_keep <-  as.data.frame(c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==0]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==0]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==0]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==0]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==0]) ))
-colnames(add_keep) <- "companyname"
+add_filteredout <-  c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==1]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==1]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==1]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==1]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==1]) )
+add_keep <-  c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==0]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==0]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==0]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==0]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==0]) )
 str(add_filteredout)
 str(add_keep)
 

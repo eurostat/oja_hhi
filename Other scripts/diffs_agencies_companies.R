@@ -31,13 +31,16 @@ str(general_query)
 
 # "filtereout" variable flagging agencies
 
-filteredout_m <- as.data.frame(table(filteredout$companyname))
+
+filterlist <- c(filteredout$companyname , add_filteredout)
+filteredout_m <- as.data.frame(table(filterlist))
 filteredout_m$Freq <- 1
 colnames(filteredout_m) <- c("companyname", "filteredout")
 
 # "keep" variable identifying companynames that have been identified as belonging to a company
 
 keep_m <- companies_names_dataframe[companies_names_dataframe$Freq>109 , ]
+str(keep_m)
 keep_m <- as.data.frame(table(keep_m$companyname))
 keep_m$Freq <- 1
 colnames(keep_m) <- c("companyname", "keep")
@@ -322,20 +325,20 @@ sumstats_by_company$small <- ifelse(sumstats_by_company$tot_n<6,1,0)
 
 automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
   
-  mydata <- sumstats_by_company[ln_undup_n>3,]
-  flag <- "filteredout"
-  names <- "companyname"
-  yvar <- "ln_esco3"
-  xvar1 <- "ln_undup_n"
-  xvar2 <- "sqln_undup_n"
-  xvar3 <- ""
-  xvar4 <- ""
-  percentile <- 50
-  flag_threshold<-1.96
-  flag_above <- TRUE
-  flag_below <- FALSE
-  method <- "error"
-  error_pctile <- 90
+  #mydata <- sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
+  #flag <- "filteredout"
+  #names <- "companyname"
+  #yvar <- "ln_esco3"
+  #xvar1 <- "ln_undup_n"
+  #xvar2 <- "sqln_undup_n"
+  #xvar3 <- ""
+  #xvar4 <- ""
+  #percentile <- 50
+  #flag_threshold<-1.96
+  #flag_above <- TRUE
+  #flag_below <- FALSE
+  #method <- "error"
+  #error_pctile <- 90
   
   
   #create a vector of one (for model constant) and filter the data (myregdata)
@@ -465,11 +468,16 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   output1 <- as.data.frame(cbind(nam,mydata$autom_flag))
   colnames(output1) <- c(names, "autom_flag")
   
-  output4 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
-  colnames(output4) <- c(names, "autom_flag", "comb")
-  output4$comboflag <- 0
-  output4$comboflag[output4$autom_flag==1 & output4$comb!=0] <- 1
-  output4 <- output4$companyname[output4$comboflag==1]
+  output45 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
+  colnames(output45) <- c(names, "autom_flag", "comb")
+  output45$autom_flag <- as.numeric(output45$autom_flag)
+  output45$comb <- as.numeric(output45$comb)
+  output45$comboflag <- 0
+  output45$comboflag[output45$autom_flag==1 & output45$comb!=0] <- 1
+  output45$newflag <- 0
+  output45$newflag[output45$comb!=0 & output45$comb!=1 & output45$autom_flag==1] <- 1
+  output4 <- output45$companyname[output45$comboflag==1]
+  output5 <- output45$companyname[output45$newflag==1]
   
   
   # calculate number of false/true positives/negatives and store it as output2
