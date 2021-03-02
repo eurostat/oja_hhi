@@ -134,17 +134,9 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
-  #GM following three  lines can be deleted
-  filteredout <- as.data.frame(table(dframe$companyname))
-  filteredout$Freq <- 1
-  colnames(filteredout) <- c("companyname", "filteredout")
-  #GM filterlist <- filteredout$companyname
-  
-  # # companies_names_dataframe <- as.data.frame(table(dframe$companyname))
-  # # companies_names_dataframe <- mutate(companies_names_dataframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" , NA))
-  # # companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
-  
-  #keep <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
+ 
+  filterlist <- as.character(filteredout$companyname)
+
   keep <- as.data.frame(clean_names$replace_with)
   colnames(keep) <- "companyname" 
 
@@ -159,29 +151,20 @@ lmcirun <- function(x){
   sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
   
   automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
-  comboflag <- automflag_output[[4]]
+  comboflag <- as.character(automflag_output[[4]])
   automflag_output[[2]]
   
-  #combofiltered <- merge(filteredout,comboflag, all.x = TRUE, all.y = TRUE)
-  #GM filterlist <- c(filterlist,comboflag)
+  #Add other list of companies to be filtered
+  filterlist <- c(filterlist,comboflag)
   
-  #dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
-  
-  #merge tra filteredout e comboflag
-  
-  #GM following line can be deleted  
-  combofiltered$filteredout <- 1
-  #GM filterlist_m <- as.data.frame(filterlist)
-  #GM filterlist_m$agency <- 1
-  #GM colnames(filterlist_m) <- c("companyname","agency")
-  #GM following line can be deleted
-  dframe2 <- merge(dframe, combofiltered, all.x = TRUE)
-  #GM dframe2 <- merge(dframe, filterlist, all.x = TRUE)
+  filterlist_m <- as.data.frame(filterlist)
+  filterlist_m$agency <- 1
+  colnames(filterlist_m) <- c("companyname","agency")
+  filterlist_m <- subset(filterlist_m, !duplicated(filterlist_m$companyname))
 
-  #GM following line can be deleted    
-  dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$filteredout == 1, NA))
-  
-  #GM dframe <- mutate(dframe2, companyname = replace(dframe2$companyname, dframe$agency == 1, NA))
+  dframe <- merge(dframe, filterlist_m, all.x = TRUE)
+
+  dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$agency == 1, NA))
   
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
