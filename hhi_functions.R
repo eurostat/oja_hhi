@@ -19,6 +19,7 @@ sep <- function(linha) {
   resp <- tolower(resp)
 }
 
+# "^[0-9]", "[0-9]$" write line of code to filter out the companynames composed by numbers (e.g. telephone numbers)
 
 ## Function for setting empty values to NA
 
