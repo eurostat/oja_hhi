@@ -105,6 +105,7 @@ lmcirun <- function(x){
   ordered <- sapply(dframe$companyname, function(x) sep(x))
   dframe$companyname <- ordered
   
+  sample <- sample_n(dframe, 1000)
   # basic string standardization operations
   dframe$companyname <- str_to_lower(dframe$companyname)
   dframe$companyname <- str_trim(dframe$companyname)
@@ -114,8 +115,7 @@ lmcirun <- function(x){
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
   #countrycode<-"IT"
-  companies_to_clean_csv <- paste0("companies_to_clean_" , countrycode , ".csv")
-  clean_names <- read.csv(companies_to_clean_csv , sep = ";")
+  clean_names <- read.csv(paste0("companies_to_clean_" , countrycode , ".csv") , sep = ";")
   
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
@@ -134,7 +134,10 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
-  # 
+  filteredout <- as.data.frame(table(dframe$companyname))
+  filteredout$Freq <- 1
+  colnames(filteredout) <- c("companyname", "filteredout")
+  
   # # companies_names_dataframe <- as.data.frame(table(dframe$companyname))
   # # companies_names_dataframe <- mutate(companies_names_dataframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" , NA))
   # # companies_names_dataframe <- companies_names_dataframe[!is.na(companies_names_dataframe$companyname) , ]
@@ -157,10 +160,15 @@ lmcirun <- function(x){
   comboflag <- automflag_output[[4]]
   automflag_output[[2]]
   
+  #combofiltered <- merge(filteredout,comboflag, all.x = TRUE, all.y = TRUE)
+  
   #dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
   
-  filteredout$filteredout <- 1
-  dframe <- merge(dframe, filteredout, all.x = TRUE)
+  #merge tra filteredout e comboflag
+  
+  
+  combofiltered$filteredout <- 1
+  dframe2 <- merge(dframe, combofiltered, all.x = TRUE)
   
   dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$filteredout == 1, NA))
   
