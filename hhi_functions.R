@@ -433,8 +433,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   colnames(output4) <- c(names, "autom_flag", "comb")
   output4$comboflag <- 0
   output4$comboflag[output4$autom_flag==1 & output4$comb!=0] <- 1
-  output4 <- cbind(output4[output4$comboflag==1,1] , output4[output4$comboflag==1,4])
-  colnames(output4) <- c(names, "comboflag")
+  output4 <- output4$companyname[output4$comboflag==1]
   
   # calculate number of false/true positives/negatives and store it as output2
   mydata$true_pos <- mydata$autom_flag==1 & fl == 1

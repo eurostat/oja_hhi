@@ -36,8 +36,9 @@ companies_names_dataframe_bynames <- arrange(companies_names_dataframe , company
 str(companies_names_dataframe)
 
 #doing some standardisation of company names and dropping empty company names
-companies_names_dataframe$companyname <- str_to_lower(companies_names_dataframe$companyname)
-#companies_names_dataframe$companyname <- gsub(",|;|.","",companies_names_dataframe$companyname)
+ordered <- sapply(companies_names_dataframe$companyname, function(x) sep(x))
+companies_names_dataframe$companyname <- ordered
+#companies_names_dataframe$companyname <- str_to_lower(companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- str_trim(companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- gsub(" ","_",companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- gsub("é","e",companies_names_dataframe$companyname)

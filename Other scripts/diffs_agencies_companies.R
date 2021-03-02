@@ -192,21 +192,26 @@ ggplot(data = plotdata) +
 ##############################################################################################
 
 #ante-function
-keep <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
+keep <- as.data.frame(companies_names_dataframe$companyname[companies_names_dataframe$Freq>99])
+colnames(keep) <- "companyname"
+keep <- rbind(keep,add_keep)
+drop <- as.data.frame(filteredout$companyname)
+colnames(drop) <- "companyname"
+drop <- rbind(drop,add_filteredout)
+#View(drop)
 
 
 
-
-gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector ") {
+gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector ") {
   
   ### this function creates a list of summary statistics by key_var (in the default, by companyname) and merge them with some lists that can be used as filters (in the default, with filteredout and keep)
   # this is a list of potential inputs that could be given to the function:
-  #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
-  #idcountry <- "IT"
-  #samplesize <- "1000000"
-  #filterlist <- filteredout$companyname
-  #keeplist <- keep$companyname
-  #key_var <- "companyname"
+  vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
+  idcountry <- "IT"
+  samplesize <- "1000000"
+  filterlist <- filteredout$companyname
+  keeplist <- keep
+  key_var <- "companyname"
   
   
   ### compile and run query
@@ -226,8 +231,8 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   general_query$keyvar <- str_to_lower(general_query$keyvar)
   
   #standardize companyname
-  ordered <- sapply(companies_names_dataframe$companyname, function(x) sep(x))
-  companies_names_dataframe$companyname <- ordered
+  ordered <- sapply(general_query$keyvar, function(x) sep(x))
+  general_query$keyvar <- ordered
   #companies_names_dataframe$companyname <- gsub(",|;|.","",companies_names_dataframe$companyname)
   general_query$keyvar <- str_trim(general_query$keyvar)
   general_query$keyvar <- gsub(" ","_",general_query$keyvar)
@@ -257,7 +262,6 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   # "keep" variable identifying companynames that have been identified as belonging to a company
   keep_m <- as.data.frame(table(keeplist))
   keep_m$Freq <- 1
-  colnames(keep_m) <- c("keyvar", "keep")  
   
   # merge new dataset with "keep" and "filteredout" variables
   sumstats_by_company <- merge(sumstats_by_company, filteredout_m, all.x=TRUE)
@@ -315,22 +319,23 @@ sumstats_by_company$small <- ifelse(sumstats_by_company$tot_n<6,1,0)
 
 
 
+
 automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
   
-  #mydata <- sumstats_by_company
-  #flag <- "filteredout"
-  #names <- "companyname"
-  #yvar <- "ln_esco3"
-  #xvar1 <- "ln_undup_n"
-  #xvar2 <- "sqln_undup_n"
-  #xvar3 <- ""
-  #xvar4 <- ""
-  #percentile <- 50
-  #flag_threshold<-1.96
-  #flag_above <- TRUE
-  #flag_below <- FALSE
-  #method <- "error"
-  #error_pctile <- 90
+  mydata <- sumstats_by_company[ln_undup_n>3,]
+  flag <- "filteredout"
+  names <- "companyname"
+  yvar <- "ln_esco3"
+  xvar1 <- "ln_undup_n"
+  xvar2 <- "sqln_undup_n"
+  xvar3 <- ""
+  xvar4 <- ""
+  percentile <- 50
+  flag_threshold<-1.96
+  flag_above <- TRUE
+  flag_below <- FALSE
+  method <- "error"
+  error_pctile <- 90
   
   
   #create a vector of one (for model constant) and filter the data (myregdata)
@@ -464,8 +469,8 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   colnames(output4) <- c(names, "autom_flag", "comb")
   output4$comboflag <- 0
   output4$comboflag[output4$autom_flag==1 & output4$comb!=0] <- 1
-  output4 <- cbind(output4[output4$comboflag==1,1] , output4[output4$comboflag==1,4])
-  colnames(output4) <- c(names, "comboflag")
+  output4 <- output4$companyname[output4$comboflag==1]
+  
   
   # calculate number of false/true positives/negatives and store it as output2
   mydata$true_pos <- mydata$autom_flag==1 & fl == 1
@@ -487,7 +492,6 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   return(output)
 }
 
-
 #rule 1
 automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
 comboflag <- automflag_output[[4]]
@@ -497,8 +501,9 @@ automflag_output[[2]]
 ### code ends here
 #######################################################################################################
 
-
-
+automflag_output <- automflag(mydata = sumstats_by_company[sumstats_by_company$ln_undup_n>3,], xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+automflag_output[[2]]
+#mydata = sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
 
 test <- automflag(xvar2="sqln_undup_n")
 test[[2]]

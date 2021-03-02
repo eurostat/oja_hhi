@@ -134,9 +134,11 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
+  #GM following three  lines can be deleted
   filteredout <- as.data.frame(table(dframe$companyname))
   filteredout$Freq <- 1
   colnames(filteredout) <- c("companyname", "filteredout")
+  #GM filterlist <- filteredout$companyname
   
   # # companies_names_dataframe <- as.data.frame(table(dframe$companyname))
   # # companies_names_dataframe <- mutate(companies_names_dataframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" , NA))
@@ -161,16 +163,25 @@ lmcirun <- function(x){
   automflag_output[[2]]
   
   #combofiltered <- merge(filteredout,comboflag, all.x = TRUE, all.y = TRUE)
+  #GM filterlist <- c(filterlist,comboflag)
   
   #dframe <- mutate(dframe, companyname = replace(companyname, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "", NA))
   
   #merge tra filteredout e comboflag
   
-  
+  #GM following line can be deleted  
   combofiltered$filteredout <- 1
+  #GM filterlist_m <- as.data.frame(filterlist)
+  #GM filterlist_m$agency <- 1
+  #GM colnames(filterlist_m) <- c("companyname","agency")
+  #GM following line can be deleted
   dframe2 <- merge(dframe, combofiltered, all.x = TRUE)
-  
+  #GM dframe2 <- merge(dframe, filterlist, all.x = TRUE)
+
+  #GM following line can be deleted    
   dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$filteredout == 1, NA))
+  
+  #GM dframe <- mutate(dframe2, companyname = replace(dframe2$companyname, dframe$agency == 1, NA))
   
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)

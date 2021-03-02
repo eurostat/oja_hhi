@@ -62,8 +62,50 @@ companies_names_dataframe <- arrange(companies_names_dataframe , desc(Freq))
 
 
 
+### generate a sample of companies between 20 and 99 ads
 
+#generate 5 subsample with one company per level of ads frequency
+subsample <- companies_names_dataframe[companies_names_dataframe$Freq<100 & companies_names_dataframe$Freq>19 , ]
+subsample1 <- subsample[duplicated(subsample$Freq)==FALSE , ]
+colnames(subsample1) <- c("companyname1", "Freq")
+subsample1$if_agency1 <- NA
+subsample <- subsample[duplicated(subsample$Freq)==TRUE , ]
+subsample2 <- subsample[duplicated(subsample$Freq)==FALSE , ]
+colnames(subsample2) <- c("companyname2", "Freq")
+subsample2$if_agency2 <- NA
+subsample <- subsample[duplicated(subsample$Freq)==TRUE , ]
+subsample3 <- subsample[duplicated(subsample$Freq)==FALSE , ]
+colnames(subsample3) <- c("companyname3", "Freq")
+subsample3$if_agency3 <- NA
+subsample <- subsample[duplicated(subsample$Freq)==TRUE , ]
+subsample4 <- subsample[duplicated(subsample$Freq)==FALSE , ]
+colnames(subsample4) <- c("companyname4", "Freq")
+subsample4$if_agency4 <- NA
+subsample <- subsample[duplicated(subsample$Freq)==TRUE , ]
+subsample5 <- subsample[duplicated(subsample$Freq)==FALSE , ]
+colnames(subsample5) <- c("companyname5", "Freq")
+subsample5$if_agency5 <- NA
 
+#merge the 5 subsamples and write the result as a csv file ready for export
+subsample <- merge(subsample1 , subsample2, all.x=TRUE)
+subsample <- merge(subsample , subsample3, all.x=TRUE)
+subsample <- merge(subsample , subsample4, all.x=TRUE)
+subsample <- merge(subsample , subsample5, all.x=TRUE)
+subsample <- arrange(subsample, desc(Freq))
+write.csv2(subsample, "Other scripts/subsample_companynames.csv")
+
+# -> manual input on the exported file is necessary at this point
+#re-import the file after manual input
+subsample_import <- paste0( "Other scripts/subsample_companynames_import_" , country , ".csv")
+add_clean_names <- read.csv(subsample_import , sep = ";")
+
+#generate vectors of companynames identified as agencies or companies
+add_filteredout <-  as.data.frame(c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==1]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==1]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==1]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==1]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==1]) ))
+colnames(add_filteredout) <- "companyname"
+add_keep <-  as.data.frame(c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==0]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==0]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==0]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==0]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==0]) ))
+colnames(add_keep) <- "companyname"
+str(add_filteredout)
+str(add_keep)
 
 
 
