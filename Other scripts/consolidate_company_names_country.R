@@ -110,34 +110,3 @@ str(add_keep)
 
 
 
-
-
-### generate a table with cumulative distributions
-
-# generate a frequency table from the list of companies
-companies_freqtable_clean <- as.data.frame(table(companies_names_dataframe$Freq))
-colnames(companies_freqtable_clean) <- c("ads_per_company" , "n_companies")
-companies_freqtable_clean <- arrange(companies_freqtable_clean,desc(ads_per_company))
-# ensuring that the variables of this frequency table are numeric. NB: as.numeric does not work well for the variable ads_per_company, so I have to get the numeric value in a different way (through a merge)
-companies_names_dataframe_m <- companies_names_dataframe[duplicated(companies_names_dataframe$ads_per_company)==FALSE , ]
-companies_freqtable_clean <- merge(companies_freqtable_clean , companies_names_dataframe_m , all.x=TRUE)
-companies_freqtable_clean <- arrange(companies_freqtable_clean , desc(ads_per_company))
-companies_freqtable_clean$n_companies <- as.numeric(companies_freqtable_clean$n_companies)
-# generate variables representing cumulative distributions
-companies_freqtable_clean$tot_ads <- companies_freqtable_clean$n_companies * companies_freqtable_clean$ads_per_company
-companies_freqtable_clean$cum_prop_ads <- 100 * cumsum(companies_freqtable_clean$tot_ads) / sum(companies_freqtable_clean$tot_ads)
-companies_freqtable_clean$cum_prop_companies <- 100 * cumsum(companies_freqtable_clean$n_companies) / sum(companies_freqtable_clean$n_companies)
-companies_freqtable_clean$cum_n_companies <- cumsum(companies_freqtable_clean$n_companies)
-head(companies_freqtable_clean)
-
-
-### output
-
-# cumulative distributions
-head(companies_freqtable_clean)
-# consolidated list of companies
-head(companies_names_dataframe)
-# for comparison: pre-consolidation list of companies
-head(companies_names_dataframe_2)
-
-
