@@ -19,12 +19,11 @@ companies_names_dataframe_backup <- companies_names_dataframe
 
 #exporting a file with all entries with >99 jobs ads in the sample. starting from this file, a new file will be manually generated with the keywords used in the companyname consolidation process
 companies_to_clean <- companies_names_dataframe[companies_names_dataframe$Freq>99 , -3]
-write.csv(companies_to_clean[ , 1] , "companies_to_clean_export.csv")
+write.csv(companies_to_clean[ , 1] , "Other scripts/companies_to_clean_export.csv")
 # reading the keywords for data cleaning from imported files
 # NB if it fails to refresh the file, use a slightly different file name
 companies_to_clean_import <- paste0( "Other scripts/companies_to_clean_import_" , country , ".csv")
 clean_names <- read.csv(companies_to_clean_import , sep = ";")
-#  clean_names <- read.csv("companies_to_clean.csv" , sep = ";")
 head(clean_names)
 
 
@@ -43,7 +42,8 @@ names_replaced <- function(i) {
 }
 # run this function for all consolidated companynames and export the results
 names_replaced_list <- apply(as.matrix(1:dim(clean_names)[1]),1,names_replaced)
-write.csv2(names_replaced_list,"names_replaced_list.csv")
+str(names_replaced_list)
+write.csv2(names_replaced_list,"Other scripts/names_replaced_list.csv")
 
 #temp <- companies_names_dataframe$companyname[str_detect(companies_names_dataframe$companyname, clean_names[2,3]) ==TRUE | companies_names_dataframe$companyname==clean_names[2,4] ]
 #View(temp)
@@ -59,7 +59,7 @@ for(i in 1:dim(clean_names)[1]) {
 companies_names_dataframe <- group_by(companies_names_dataframe,companyname)
 companies_names_dataframe <- summarise(companies_names_dataframe, Freq=sum(Freq))
 companies_names_dataframe <- arrange(companies_names_dataframe , desc(Freq))
-
+str(companies_names_dataframe)
 
 
 ### generate a sample of companies between 20 and 99 ads
