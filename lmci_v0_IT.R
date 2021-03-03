@@ -105,7 +105,6 @@ lmcirun <- function(x){
   ordered <- sapply(dframe$companyname, function(x) sep(x))
   dframe$companyname <- ordered
   
-  sample <- sample_n(dframe, 1000)
   # basic string standardization operations
   dframe$companyname <- str_to_lower(dframe$companyname)
   dframe$companyname <- str_trim(dframe$companyname)
