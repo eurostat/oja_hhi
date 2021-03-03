@@ -19,18 +19,24 @@ dim(general_query)
 
 #generating a "duplicate" variable and standardising companynames
 general_query$dup <- ifelse(duplicated(general_query$general_id), 1, 0)
-general_query$companyname <- str_to_lower(general_query$companyname)
-#companies_names_dataframe$companyname <- gsub(",|;|.","",companies_names_dataframe$companyname)
 general_query$companyname <- str_trim(general_query$companyname)
 general_query$companyname <- gsub(" ","_",general_query$companyname)
+general_query$companyname <- gsub("é","e",general_query$companyname)
+temp <- as.character(general_query$companyname)
+ordered <- as.data.frame(sapply(temp, function(x) sep(x)))
+colnames(ordered) <- "companyname_new"
+general_query$companyname <- ordered$companyname_new
+#dropping empty cells
 general_query$notgood <- ifelse(general_query$companyname=="",1,0)
-general_query <- general_query[general_query$notgood != 1 , ]
+general_query <- general_query[general_query$notgood != 1 , -3]
 str(general_query)
+
+
+
 
 ### merge the newly extracted dataset with two variable indicating if the companyname has been flagged as an agency (filteredout) or identified as a company (keep) in the code "check_company_names"
 
 # "filtereout" variable flagging agencies
-
 
 filterlist <- c(filteredout$companyname , add_filteredout)
 filteredout_m <- as.data.frame(table(filterlist))
@@ -39,9 +45,11 @@ colnames(filteredout_m) <- c("companyname", "filteredout")
 
 # "keep" variable identifying companynames that have been identified as belonging to a company
 
-keep_m <- companies_names_dataframe[companies_names_dataframe$Freq>109 , ]
+keep_m <- companies_names_dataframe$companyname[companies_names_dataframe$Freq>109]
 str(keep_m)
-keep_m <- as.data.frame(table(keep_m$companyname))
+keep_m <- c(keep_m , add_keep)
+str(keep_m)
+keep_m <- as.data.frame(table(keep_m))
 keep_m$Freq <- 1
 colnames(keep_m) <- c("companyname", "keep")
 
@@ -50,7 +58,7 @@ colnames(keep_m) <- c("companyname", "keep")
 DF <- merge(general_query, filteredout_m, all.x=TRUE)
 DF <- merge(DF, keep_m, all.x=TRUE)
 dim(DF)
-
+table(DF$keep)
 
 ### generating summary statistics at the companyname level and coding a unique variable (filteredout) identifying agencies and companies
 
@@ -58,7 +66,8 @@ dim(DF)
 # generate summary stats by companyname
 
 DF <- group_by(DF , companyname)
-sumstats_by_company <- summarise(DF , tot_n=n(), nd_esco4=n_distinct(idesco_level_4), nd_esco3=n_distinct(idesco_level_3), tot_dups=sum(dup), nd_city=n_distinct(idcity), m_city=sum(idcity==""&dup==0), nd_prov=n_distinct(idprovince), m_prov=sum(idprovince==""), nd_regi=n_distinct(idregion), nd_sect=n_distinct(idcategory_sector), nd_grab=n_distinct(grab_date),  filteredout=median(filteredout), keep=median(keep))
+sumstats_by_company <- summarise(DF , tot_n=n(), nd_esco4=n_distinct(idesco_level_4), nd_esco3=n_distinct(idesco_level_3), tot_dups=sum(dup), nd_city=n_distinct(idcity), m_city=sum(idcity==""&dup==0), nd_prov=n_distinct(idprovince), m_prov=sum(idprovince==""), nd_regi=n_distinct(idregion), nd_sect=n_distinct(idcategory_sector), filteredout=median(filteredout), keep=median(keep))
+#sumstats_by_company <- summarise(DF , tot_n=n(), nd_esco4=n_distinct(idesco_level_4), nd_esco3=n_distinct(idesco_level_3), tot_dups=sum(dup), nd_city=n_distinct(idcity), m_city=sum(idcity==""&dup==0), nd_prov=n_distinct(idprovince), m_prov=sum(idprovince==""), nd_regi=n_distinct(idregion), nd_sect=n_distinct(idcategory_sector), nd_grab=n_distinct(grab_date),  filteredout=median(filteredout), keep=median(keep))
 sumstats_by_company <- arrange(sumstats_by_company , desc(tot_n))
 sumstats_by_company$r_dup <- 100*sumstats_by_company$tot_dups / sumstats_by_company$tot_n
 sumstats_by_company$r_esco4 <- 100*sumstats_by_company$nd_esco4 / sumstats_by_company$tot_n
@@ -136,8 +145,8 @@ sumstats_by_company$small <- ifelse(sumstats_by_company$tot_n<6,1,0)
 sumstats_by_company$ln_m_city <- log(sumstats_by_company$m_city)
 sumstats_by_company$ln_m_prov <- log(sumstats_by_company$m_prov)
 sumstats_by_company$ln_city <- log(sumstats_by_company$nd_city)
-sumstats_by_company$ln_grab <- log(sumstats_by_company$nd_grab)
-sumstats_by_company$sqln_grab <- log(sumstats_by_company$nd_grab)^2
+#sumstats_by_company$ln_grab <- log(sumstats_by_company$nd_grab)
+#sumstats_by_company$sqln_grab <- log(sumstats_by_company$nd_grab)^2
 
 ### plots
 

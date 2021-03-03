@@ -10,7 +10,7 @@ library(wihoja)
 open_oja_db()
 #install.packages("tidyverse")
 library(tidyverse)
-
+source("hhi_functions.R")
 
 
 
@@ -36,18 +36,19 @@ companies_names_dataframe_bynames <- arrange(companies_names_dataframe , company
 str(companies_names_dataframe)
 
 #doing some standardisation of company names and dropping empty company names
-ordered <- sapply(companies_names_dataframe$companyname, function(x) sep(x))
-companies_names_dataframe$companyname <- ordered
-#companies_names_dataframe$companyname <- str_to_lower(companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- str_trim(companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- gsub(" ","_",companies_names_dataframe$companyname)
 companies_names_dataframe$companyname <- gsub("é","e",companies_names_dataframe$companyname)
+temp <- as.character(companies_names_dataframe$companyname)
+ordered <- as.data.frame(sapply(temp, function(x) sep(x)))
+companies_names_dataframe <- cbind(ordered , companies_names_dataframe$Freq)
+colnames(companies_names_dataframe) <- c("companyname" , "Freq")
 companies_names_dataframe$notgood <- ifelse(companies_names_dataframe$companyname=="",1,0)
 companies_names_dataframe <- companies_names_dataframe[companies_names_dataframe$notgood != 1 , -3]
-dim(companies_names_dataframe)
+str(companies_names_dataframe)
 
 #applying the job agency filter
-filecsv <- paste0("staff_agencies_" , country , ".csv")
+filecsv <- paste0("Other scripts/staff_agencies_" , country , ".csv")
 staff_agencies <- read.csv(filecsv , sep = ";")
 blacklist <- staff_agencies[staff_agencies$exact != "exact" , 2]
 blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
@@ -95,9 +96,9 @@ head(companies_freqtable)
 ### print and view output
 
 #print output
-write.csv(companies_freqtable , "companies_freqtable.csv")
-write.csv(companies_names_dataframe , "companies_names_dataframe.csv")
-write.csv(filteredout , "filteredout.csv")
+#write.csv(companies_freqtable , "companies_freqtable.csv")
+#write.csv(companies_names_dataframe , "companies_names_dataframe.csv")
+#write.csv(filteredout , "filteredout.csv")
 #cumulative distribution of ads and company names
 head(companies_freqtable)
 # list of company names by number of ads and alphabetical order
