@@ -139,7 +139,7 @@ lmcirun <- function(x){
   keep <- as.data.frame(clean_names$replace_with)
   colnames(keep) <- "companyname" 
 
-  sumstats_by_company <-gen_sum_stats(filterlist = filteredout$companyname, keeplist = keep$companyname)
+  sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname)
   str(sumstats_by_company)
   
   #generate logs
