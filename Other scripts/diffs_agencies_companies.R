@@ -138,6 +138,7 @@ sumstats_by_company$ln_undup_n <- log(sumstats_by_company$tot_n - sumstats_by_co
 sumstats_by_company$sqln_undup_n <- sumstats_by_company$ln_undup_n^2
 sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
 sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
+sumstats_by_company$ln_dup_n <- log(sumstats_by_company$tot_dups)
 sumstats_by_company$ln_prov <- log(sumstats_by_company$nd_prov)
 sumstats_by_company$sqln_prov <- log(sumstats_by_company$nd_prov)^2
 sumstats_by_company$ln_regi <- log(sumstats_by_company$nd_regi)
@@ -151,12 +152,14 @@ sumstats_by_company$ln_city <- log(sumstats_by_company$nd_city)
 ### plots
 
 #very good
-plotdata <- sumstats_by_company[sumstats_by_company$tot_n>100 & sumstats_by_company$filteredout != -1, ]
+plotdata <- sumstats_by_company[sumstats_by_company$tot_n>15 & sumstats_by_company$filteredout != -1, ]
 ggplot(data = plotdata) + 
   geom_point(mapping = aes(x = ln_undup_n, y = ln_esco3, colour=filteredout))
+#View(sumstats_by_company[sumstats_by_company$filteredout==0,])
+
 
 #good
-plotdata <- sumstats_by_company[sumstats_by_company$tot_n>100 & sumstats_by_company$filteredout != -1, ]
+plotdata <- sumstats_by_company[sumstats_by_company$tot_n>30 & sumstats_by_company$filteredout != -1, ]
 ggplot(data = plotdata) + 
   geom_point(mapping = aes(x = ln_prov, y = ln_esco4, colour=filteredout))
 
@@ -164,6 +167,14 @@ ggplot(data = plotdata) +
 plotdata <- sumstats_by_company[sumstats_by_company$tot_n>100 & sumstats_by_company$filteredout != -1, ]
 ggplot(data = plotdata) + 
   geom_point(mapping = aes(x = ln_undup_n, y = ln_n, colour=filteredout))
+
+
+plotdata <- sumstats_by_company[sumstats_by_company$tot_n>100 & sumstats_by_company$filteredout != -1, ]
+ggplot(data = plotdata) + 
+  geom_point(mapping = aes(x = ln_dup_n, y = ln_regi, colour=filteredout))
+
+
+
 
 plotdata <- sumstats_by_company[sumstats_by_company$tot_n>100 & sumstats_by_company$filteredout != -1, ]
 ggplot(data = plotdata) + 
@@ -214,15 +225,15 @@ drop <- rbind(drop,add_filteredout)
 
 
 
-gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector ") {
+gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = drop$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector ") {
   
   ### this function creates a list of summary statistics by key_var (in the default, by companyname) and merge them with some lists that can be used as filters (in the default, with filteredout and keep)
   # this is a list of potential inputs that could be given to the function:
   vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
   idcountry <- "IT"
   samplesize <- "1000000"
-  filterlist <- filteredout$companyname
-  keeplist <- keep
+  filterlist <- drop$companyname
+  keeplist <- keep$companyname
   key_var <- "companyname"
   
   
@@ -274,11 +285,12 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   # "keep" variable identifying companynames that have been identified as belonging to a company
   keep_m <- as.data.frame(table(keeplist))
   keep_m$Freq <- 1
+  colnames(keep_m) <- c("keyvar", "keep")
   
   # merge new dataset with "keep" and "filteredout" variables
   sumstats_by_company <- merge(sumstats_by_company, filteredout_m, all.x=TRUE)
   sumstats_by_company <- merge(sumstats_by_company, keep_m, all.x=TRUE)
-  dim(DF)
+  dim(sumstats_by_company)
   
   # classification
   # coding the variable filteredout as follows:
@@ -287,7 +299,7 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   # -1 <- not checked (unknown)
   sumstats_by_company$filteredout[sumstats_by_company$keep==1] <- 0
   sumstats_by_company$filteredout[is.na(sumstats_by_company$filteredout)==TRUE] <- -1
-  
+  table(sumstats_by_company$filteredout)
   
   ### prepare function output
   
@@ -334,20 +346,20 @@ sumstats_by_company$small <- ifelse(sumstats_by_company$tot_n<6,1,0)
 
 automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
   
-  #mydata <- sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
-  #flag <- "filteredout"
-  #names <- "companyname"
-  #yvar <- "ln_esco3"
-  #xvar1 <- "ln_undup_n"
-  #xvar2 <- "sqln_undup_n"
-  #xvar3 <- ""
-  #xvar4 <- ""
-  #percentile <- 50
-  #flag_threshold<-1.96
-  #flag_above <- TRUE
-  #flag_below <- FALSE
-  #method <- "error"
-  #error_pctile <- 90
+  mydata <- sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
+  flag <- "filteredout"
+  names <- "companyname"
+  yvar <- "ln_esco3"
+  xvar1 <- "ln_undup_n"
+  xvar2 <- "sqln_undup_n"
+  xvar3 <- ""
+  xvar4 <- ""
+  percentile <- 50
+  flag_threshold<-1.96
+  flag_above <- TRUE
+  flag_below <- FALSE
+  method <- "fit"
+  error_pctile <- 90
   
   
   #create a vector of one (for model constant) and filter the data (myregdata)
@@ -453,6 +465,7 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   mydata$Stderr_fit_ydata <- sqrt(mydata$Var_fit_ydata)
   mydata$err <- ydata - mydata$fit_ydata
   
+  
   if (flag_above==TRUE & flag_below==TRUE) {
     mydata$autom_flag1 <- ifelse(ydata < mydata$fit_ydata-flag_threshold*mydata$Stderr_fit_ydata | ydata > mydata$fit_ydata+flag_threshold*mydata$Stderr_fit_ydata, 0 , 1)
     mydata$autom_flag2 <- ifelse(mydata$err < quantile(mydata$err,probs=(100-error_pctile)/100) | mydata$err > quantile(mydata$err,probs=error_pctile/100), 0 , 1)
@@ -472,7 +485,8 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   } else {
     mydata$autom_flag <- mydata$autom_flag2
   }
-  
+  #View(mydata[mydata$filteredout==0&mydata$autom_flag1==1,])
+  #View(mydata[mydata$filteredout==1,])
   
   output1 <- as.data.frame(cbind(nam,mydata$autom_flag))
   colnames(output1) <- c(names, "autom_flag")
@@ -510,7 +524,7 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
 }
 
 #rule 1
-automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+automflag_output <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,], xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
 comboflag <- automflag_output[[4]]
 automflag_output[[2]]
 
@@ -518,58 +532,50 @@ automflag_output[[2]]
 ### code ends here
 #######################################################################################################
 
-automflag_output <- automflag(mydata = sumstats_by_company[sumstats_by_company$ln_undup_n>3,], xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
-automflag_output[[2]]
-#mydata = sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
 
-test <- automflag(xvar2="sqln_undup_n")
-test[[2]]
-
-
-test <- automflag(xvar1="ln_prov", xvar2="sqln_prov", flag_threshold=4, flag_above=TRUE, flag_below=FALSE)
-test[[2]]
-
-#rule3
-test <- automflag(yvar="ln_n", xvar1="ln_undup_n", method="err", error_pctile = 90, flag_above=FALSE, flag_below=TRUE)
-test[[2]]
-test[[3]]
-
-test <- automflag(yvar="ln_grab")
-test[[2]]
-
-#rule 2
-test <- automflag(yvar="ln_prov", xvar1="ln_esco4", flag_above=FALSE, flag_below=TRUE)
-test[[2]]
+#View(automflag_output[[1]])
+firstflag <- automflag_output[[1]]
+dim(firstflag)
+colnames(firstflag) <- c("companyname" , "firstflag")
 
 
-#rule1 and merge
-test <- automflag()
-colnames(test[[1]]) <- c("companyname" , "autflag1")
-sumstats_by_company <- merge(sumstats_by_company,test[[1]])
-#rule2 and merge
-test <- automflag(yvar="ln_prov", xvar1="ln_esco4", flag_above=FALSE, flag_below=TRUE)
-colnames(test[[1]]) <- c("companyname" , "autflag2")
-sumstats_by_company <- merge(sumstats_by_company,test[[1]])
-#rule3 and merge
-test <- automflag(yvar="ln_n", xvar1="ln_undup_n", method="err", error_pctile = 90, flag_above=FALSE, flag_below=TRUE)
-colnames(test[[1]]) <- c("companyname" , "autflag3")
-sumstats_by_company <- merge(sumstats_by_company,test[[1]])
 
-sumstats_by_company$totflags <- as.numeric(sumstats_by_company$autflag1) + as.numeric(sumstats_by_company$autflag2) + as.numeric(sumstats_by_company$autflag3)
-View(sumstats_by_company)
-sumstats_by_company$autom_flag <- 0
-sumstats_by_company$autom_flag[sumstats_by_company$totflags>1] <- 1
+#rule2
+automflag_output2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+automflag_output2[[2]]
+secondflag <- automflag_output2[[1]]
+dim(secondflag)
+colnames(secondflag) <- c("companyname" , "secondflag")
 
+twoflags <- merge(firstflag,secondflag)
+dim(twoflags)
 
-sumstats_by_company$true_pos <- sumstats_by_company$autom_flag==1 & flag == 1
-sumstats_by_company$false_pos <-  sumstats_by_company$autom_flag==1 & flag == 0
-sumstats_by_company$true_neg <- sumstats_by_company$autom_flag==0 & flag == 0
-sumstats_by_company$false_neg <-  sumstats_by_company$autom_flag==0 & flag == 1
-true_pos <- sum(sumstats_by_company$true_pos)
-false_pos <- sum(sumstats_by_company$false_pos)
-true_neg <- sum(sumstats_by_company$true_neg)
-false_neg <- sum(sumstats_by_company$false_neg)
-output2 <- as.data.frame(cbind(true_pos, false_pos, true_neg, false_neg))
-colnames(output2) <- cbind("true_pos", "false_pos", "true_neg", "false_neg")
+twoflags <- merge(twoflags, filteredout_m, all.x=TRUE)
+twoflags <- merge(twoflags, keep_m, all.x=TRUE)
+dim(twoflags)
 
-output2
+twoflags$filteredout[twoflags$keep==1] <- 0
+twoflags$filteredout[is.na(twoflags$filteredout)==TRUE] <- -1
+table(twoflags$filteredout)
+
+twoflags$thirdflag <- 0
+twoflags$thirdflag[twoflags$firstflag==1 & twoflags$secondflag==1] <- 1
+
+# View(twoflags)
+# calculate number of false/true positives/negatives and store it as output2
+twoflags$true_pos <- twoflags$thirdflag==1 & twoflags$filteredout == 1
+twoflags$false_pos <-  twoflags$thirdflag==1 & twoflags$filteredout == 0
+twoflags$true_neg <- twoflags$thirdflag==0 & twoflags$filteredout == 0
+twoflags$false_neg <-  twoflags$thirdflag==0 & twoflags$filteredout == 1
+twoflags$unkn_pos <- twoflags$thirdflag==1 & twoflags$filteredout == -1
+twoflags$unkn_neg <-  twoflags$thirdflag==0 & twoflags$filteredout == -1
+true_pos <- sum(twoflags$true_pos)
+true_neg <- sum(twoflags$true_neg)
+false_pos <- sum(twoflags$false_pos)
+false_neg <- sum(twoflags$false_neg)
+unkn_pos <- sum(twoflags$unkn_pos)
+unkn_neg <- sum(twoflags$unkn_neg)
+cmatrix <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
+colnames(cmatrix) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
+cmatrix
+# View(twoflags[twoflags$false_pos==1,])
