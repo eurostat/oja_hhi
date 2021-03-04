@@ -225,16 +225,17 @@ drop <- rbind(drop,add_filteredout)
 
 
 
-gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = drop$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector ") {
+gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = drop$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector ", sumstats = "n_distinct") {
   
   ### this function creates a list of summary statistics by key_var (in the default, by companyname) and merge them with some lists that can be used as filters (in the default, with filteredout and keep)
   # this is a list of potential inputs that could be given to the function:
-  vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
-  idcountry <- "IT"
-  samplesize <- "1000000"
-  filterlist <- drop$companyname
-  keeplist <- keep$companyname
-  key_var <- "companyname"
+  #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
+  #idcountry <- "IT"
+  #samplesize <- "1000000"
+  #filterlist <- drop$companyname
+  #keeplist <- keep$companyname
+  #key_var <- "companyname"
+  #sumstats <- "n_distinct"
   
   
   ### compile and run query
@@ -271,7 +272,7 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   DF <- general_query
   DF <- group_by(DF , keyvar)
   sumstats_by_company_1 <- summarise(DF , tot_n=n(), tot_dups=sum(dup))
-  sumstats_by_company_2 <- summarise_all(DF, n_distinct)
+  sumstats_by_company_2 <- summarise_all(DF, sumstats)
   sumstats_by_company <- merge(sumstats_by_company_1 , sumstats_by_company_2, all.x=TRUE)
 
   
@@ -541,7 +542,7 @@ colnames(firstflag) <- c("companyname" , "firstflag")
 
 
 #rule2
-automflag_output2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+automflag_output2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
 automflag_output2[[2]]
 secondflag <- automflag_output2[[1]]
 dim(secondflag)

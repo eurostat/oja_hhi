@@ -198,19 +198,31 @@ create_hhigeo <- function(hhi = hhi){
   return (hhigeo)
 }
 
-gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector ") {
+gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE) {
   
-  ### this function creates a list of summary statistics by key_var (in the default, by companyname) and merge them with some lists that can be used as filters (in the default, with filteredout and keep)
-  # this is a list of potential inputs that could be given to the function:
+  ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
+  ## this function requires the packages "tidyverse" and "wihoja"; in addition, if the option standardise=TRUE is chosen, it requires calling the function sep() included in the set of functions developed for this project.
+  ## the output of the function is a dataset with one observation per level of key_var, including summary statistics. In addition, the dataset contains identification variables for those levels of keyvar that are included in the lists of keywords.
+  ## this is the list of default arguments given to the function:
   #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
+  ## the variables in the OJA dataset for which sum stats are created
   #idcountry <- "IT"
+  ## the country in the OJA dataset for which sum stats are computed
   #samplesize <- "1000000"
+  ## sum stats are calculated for a sample of observations. this argument (a number expressed as text) determines the sample size
   #filterlist <- filteredout$companyname
+  ## this argument (a "chr" object) provides a list of words/codes which are matched to the key_var argument, flagging observations accordingly. for example, this argument can indicate which observations we want to filter out for some subsequent analysis. an empty string ("") as an argument means that no list is provided.
   #keeplist <- keep$companyname
+  ## this argument (a "chr" object) provides a list of words/codes which are matched to the key_var argument, flagging observations accordingly. for example, this argument can indicate which observations we want to keep for some subsequent analysis.  an empty string ("") as an argument means that no list is provided.
   #key_var <- "companyname"
+  ## this argument (the name of a variable in the OJA dataset) provides the key variable by which sum stats are computing. using the default, the function will calculate summary statistics by companyname
+  #sumstats <- "n_distinct"
+  ## this argument, expressed as one string, identifies the type of functions to be applied to the OJA data and so the type of summary statistics. the default counts the number of distinct values for each variable in vars
+  #standardise <- TRUE
+  ## this argument, when set (as in the default) as "TRUE", standardises the text of the levels of key_var
   
   
-  ### compile and run query.
+  ### compile and run the query in the OJA dataset.
   
   querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM estat_dsl2531b_oja.ft_document_en_v8 WHERE idcountry='" , idcountry , "' ORDER BY RAND()  LIMIT " , samplesize)
   general_query <- query_athena(querytext)
@@ -219,64 +231,65 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   
   ### arrange the new dataframe as needed
   
-  # rename the variable chosen as key_var
+  # rename the variable chosen as key_var, and leave the other names unchanged
   colnames(general_query) <- c("keyvar",colnames(general_query)[2:length(colnames(general_query))])
   
-  #generate a "duplicate" variable
+  #generate a "duplicate" variable indicating if the observation in the OJA dataset is a duplicate
   general_query$dup <- ifelse(duplicated(general_query$general_id), 1, 0)
   general_query$keyvar <- str_to_lower(general_query$keyvar)
   
   #standardize companyname
-  ordered <- sapply(general_query$keyvar, function(x) sep(x))
-  general_query$keyvar <- ordered
-  #companies_names_dataframe$companyname <- gsub(",|;|.","",companies_names_dataframe$companyname)
-  general_query$keyvar <- str_trim(general_query$keyvar)
-  general_query$keyvar <- gsub(" ","_",general_query$keyvar)
-  
-  # eliminate missing data in keyvar
+  if (standardise==TRUE) {
+    ordered <- sapply(general_query$keyvar, function(x) sep(x))
+    general_query$keyvar <- ordered
+    general_query$keyvar <- str_trim(general_query$keyvar)
+    general_query$keyvar <- gsub(" ","_",general_query$keyvar)
+    general_query$keyvar <- gsub("é","e",general_query$keyvar)    
+  }
+
+    # eliminate empty cells in keyvar
   general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
   general_query <- general_query[general_query$notgood != 1 , ]
   
   
-  ### generating summary statistics at the companyname level
+  ### generating summary statistics at the keyvar level. these summary statistics are the main output of the function
   
   # base set of stats
   DF <- general_query
   DF <- group_by(DF , keyvar)
   sumstats_by_company_1 <- summarise(DF , tot_n=n(), tot_dups=sum(dup))
-  sumstats_by_company_2 <- summarise_all(DF, n_distinct)
+  sumstats_by_company_2 <- summarise_all(DF, sumstats)
   sumstats_by_company <- merge(sumstats_by_company_1 , sumstats_by_company_2, all.x=TRUE)
   
   
-  ### merge the newly extracted dataset with the lists provided as input (filteredout and keep in the default) and code a unique variable (filteredout) identifying agencies and companies
+  ### merge the newly extracted dataset with the lists provided as input (filterlist and keeplist) and code a variable (filteredout) that combines the two
   
-  # "filteredout" variable flagging agencies
+  # preparing filterlist for merge
   filteredout_m <- as.data.frame(table(filterlist))
   filteredout_m$Freq <- 1
   colnames(filteredout_m) <- c("keyvar", "filteredout")
   
-  # "keep" variable identifying companynames that have been identified as belonging to a company
+  # preparing keeplist for merge
   keep_m <- as.data.frame(table(keeplist))
   keep_m$Freq <- 1
   colnames(keep_m) <- c("keyvar", "keep")  
   
-  # merge new dataset with "keep" and "filteredout" variables
+  # merge new dataset with "keep" and "filter" variables
   sumstats_by_company <- merge(sumstats_by_company, filteredout_m, all.x=TRUE)
   sumstats_by_company <- merge(sumstats_by_company, keep_m, all.x=TRUE)
   dim(DF)
   
-  # classification
-  # coding the variable filteredout as follows:
-  # 1 <- flagged as agency
-  # 0 <- identified as company
-  # -1 <- not checked (unknown)
+  # coding a new variable (filteredout) combining the keeplist and the filterlist as follows:
+  # 1 <- included in filterlist (in our first application of this function, this means flagged as agency)
+  # 0 <- included in keeplist (in our first application of this function, this means identified as company)
+  # -1 <- not included in either of the two lists
   sumstats_by_company$filteredout[sumstats_by_company$keep==1] <- 0
   sumstats_by_company$filteredout[is.na(sumstats_by_company$filteredout)==TRUE] <- -1
   
   
   ### prepare function output
   
-  # rename keyvar back to its original name
+  # rename keyvar back to its original name (the name of other variables have not been changed)
   colnames(sumstats_by_company) <- c(key_var,colnames(sumstats_by_company)[2:length(colnames(sumstats_by_company))])
   
   #define output
@@ -286,6 +299,15 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
 
 automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
   
+  ### this function flags observations in a dataset, using an empirical rule based on a regression.
+  ## this function does not require any particular package to be installed; it can be run with base R.
+  ## this function has multiple outputs:
+  # 1. a 2-column dataset where the observation name/code is in the first column and a binary (0/1) flag derived from the specified empirical rule in the second column. the flag essentially says if the observed value for the observation lies far away from a curve estimated from a subset of the observations. if so, the flag is set =1 and it means that the observation likely belongs to that group. 
+  # 2. a matrix to evaluate the flag. this matrix is a confusion matrix counting true positives, false positives, etc.
+  # 3. a table with the regression's coefficients
+  # 4. a list of the names/codes of the observations that are flagged
+  # 5. a list of the names/codes of the observations that are flagged and are not included in the list of flagged observations given as input to train the model
+  ## this is the list of default argument of the function:  
   #mydata <- sumstats_by_company
   #flag <- "filteredout"
   #names <- "companyname"
