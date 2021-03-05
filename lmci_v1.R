@@ -131,13 +131,10 @@ lmcirun <- function(x){
   #################################################################################################  
   
   # import list of keywords to be used as filters
-  if (countrycode=="IT"|countrycode=="RO") {
-    staff_agencies_csv <- paste0("staff_agencies_" , countrycode , ".csv")
-    staff_agencies <- read.csv(staff_agencies_csv , sep = ";")
-  } else {
-    staff_agencies_csv <- paste0("staff_agencies_" , "EU" , ".csv")
-    staff_agencies <- read.csv(staff_agencies_csv , sep = ";")
-  }
+  
+  staff_agencies <- read.csv("staff_agencies_EU.csv" , sep = ";")
+  staff_agencies <- staff_agencies[staff_agencies$Language=="EN"|staff_agencies$Language==countrycode , ]
+  
   blacklist <- staff_agencies[staff_agencies$exact != "exact" , 2]
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
@@ -243,7 +240,7 @@ lmcirun <- function(x){
   dframe <- dframe[startsWith(dframe$idregion, countrycode), ]
   
   # write.fst(dframe,paste0(path,"OJA",countrycode, "step3.fst"), 100)
-  
+  dframe$companyname[dframe$companyname == ""] <- NA
   dframeupper <- dframe[!is.na(dframe$companyname) , ]
   
   ####IMPUTATION OF MISSING COMPANYNAMES (i.e. Staffing agencies removed by the filter)####
