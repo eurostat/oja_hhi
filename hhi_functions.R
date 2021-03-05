@@ -200,7 +200,9 @@ create_hhigeo <- function(hhi = hhi){
 
 gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE) {
   
+  
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
+  
   ## this function requires the packages "tidyverse" and "wihoja"; in addition, if the option standardise=TRUE is chosen, it requires calling the function sep() included in the set of functions developed for this project.
   ## the output of the function is a dataset with one observation per level of key_var, including summary statistics. In addition, the dataset contains identification variables for those levels of keyvar that are included in the lists of keywords.
   ## this is the list of default arguments given to the function:
@@ -299,7 +301,9 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
 
 automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
   
-  ### this function flags observations in a dataset, using an empirical rule based on a regression.
+  
+  ### this function flags observations in a dataset, using an empirical rule based on a regression. the regression is run on a list of observations which have already been flagged by the user. this function identifies (and flags) other observations that are close to the estimated regression curve, and that had not been previously coded or flagged by the user
+  
   ## this function does not require any particular package to be installed; it can be run with base R.
   ## this function has multiple outputs:
   # 1. a 2-column dataset where the observation name/code is in the first column and a binary (0/1) flag derived from the specified empirical rule in the second column. the flag essentially says if the observed value for the observation lies far away from a curve estimated from a subset of the observations. if so, the flag is set =1 and it means that the observation likely belongs to that group. 
@@ -309,24 +313,44 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   # 5. a list of the names/codes of the observations that are flagged and are not included in the list of flagged observations given as input to train the model
   ## this is the list of default argument of the function:  
   #mydata <- sumstats_by_company
+  ## this is a dataset containing the variables needed to estimate the model. it must contain all the following variables as explained below: names, yvar, xvars, flag
   #flag <- "filteredout"
+  ## this is a crucial input to the function. flag is a string identifying the name of the variable that, within mydata, identifies observations belonging to different groups. Observations , meaning that they can be flagged (1), identified as not to be flagged (0), or w. Ideally, flag is a binary (0/1) variable, but the function will work as long as 1 is included in the values of flag. The regression model will be estimated only for observations for which flag==1.
   #names <- "companyname"
+  ## this is a variable containing the observation identifier (name/code/id)
   #yvar <- "ln_esco3"
+  ## this is the dependent variable in the model. this argument is required.
   #xvar1 <- "ln_undup_n"
-  #xvar2 <- "sqln_undup_n"
+  ## this is an indipendent variable in the model. this argument is required.
+  #xvar2 <- ""
+  ## this is an indipendent variable in the model. this argument is not required, and is empty in the default.
   #xvar3 <- ""
+  ## this is an indipendent variable in the model. this argument is not required, and is empty in the default.
   #xvar4 <- ""
+  ## this is an indipendent variable in the model. this argument is not required, and is empty in the default.
   #percentile <- 50
+  ## the regression model is estimated twice, the first including all observations for which flag==1, the second removing observations lying far away from the curve (outliers). The observations removed from the second estimate are those with the larget error terms derived from the first estimates. The argument "percentile" identifies the percentage of observations to be removed before running the second estimate. 
+  #method <- "fit"
+  ## after calculating the second and final regression model, observations with yvar substantially different from the value predicted by the model are not flagged (they are assigned a value of 0 in the new variable "autom_flag"). In contrast, observations with relatively small deviations from the estimated curve are flagged (they are assigned 1 in the new variable "autom_flag"). What is "substantially different" is determined through a set of arguments. if method is set as "fit", as in the default, the model residual for an observation (i.e. the difference between the actual value and the fitted value) is compared to the standard error of the fitted value to see if the actual value lies within the confidence interval of the estimate. If method=="error", then the observations which are not flagged are those with the largest model residuals. 
   #flag_threshold<-1.96
-  #flag_above <- TRUE
-  #flag_below <- FALSE
-  #method <- "error"
+  ## if method=="fit", then this argument determines how wide to make the confidence interval. The default value of 1.96 means that observations for which the actual value of yvar is outside the range {fitted value +/- 1.96 * standard error of fitted value} are not flagged
   #error_pctile <- 90
+  ## if method=="error", then this argument determines what percentage of observation are not flagged based on the fact that they have the largest error. In the default, the 10% of observations with the largest error is not flagged
+  #flag_above <- TRUE
+  ## this argument, when TRUE, means that only observations with negative residuals may not be flagged. In other words, observations are flagged in they are close to the curve or above the curve.
+  #flag_below <- FALSE
+  ## this argument, when TRUE, means that only observations with positive residuals may not be flagged. In other words, observations are flagged in they are close to the curve or above the curve.
   
   
-  #create a vector of one (for model constant) and filter the data (myregdata)
+  ### create a vector of one (for model constant), filter the data so that only observations with flag==1 are used for the regression model, and create a Y and X matrices. a back-up of the unfiltered data (myfulldata) is also created. a number of "if" conditions is used because the user can specify different numbers of xvars
+
+  # create vector of 1
   mydata$one <- 1
+  
+  # data backup
   myfulldata <- mydata
+  
+  # using the function string arguments to define the relevant variables
   fl <- eval(parse(text=paste("mydata$", flag, sep = "")))
   mydata <- mydata[fl==1,]  
   y <- eval(parse(text=paste("mydata$", yvar, sep = "")))
@@ -341,8 +365,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
     x4 <- eval(parse(text=paste("mydata$", xvar4, sep = "")))
   } 
   
-  
-  #create matrices of Y and X
+  # create matrices Y and X
   Y <- as.matrix(y)
   if (xvar2=="") {
     X <- as.matrix(cbind(mydata$one , x1))
@@ -355,7 +378,9 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   }
   
   
-  # calculate regression coefficients and squared residuals
+  ### estimate the regression model
+  
+  # calculate regression coefficients and squared residuals for the first model (with all observations for which flag==1)
   b <- solve(t(X)%*%X)%*%t(X)%*%Y
   sq_e <- (Y - (X%*%b))^2
   
@@ -369,7 +394,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   s2 <- sum(sq_e2) / (dim(X2)[1] - dim(X2)[2])
   Var_b2 <- s2*solve(t(X2)%*%X2)
   
-  # format regression output
+  # format regression output: coefficients and standard errors. these will be included in the final output of the function.
   output3 <- cbind(b2,sqrt(diag(Var_b2)))
   colnames(output3) <- c("coeffs" , "std_err")
   if (xvar2=="") {
@@ -383,7 +408,9 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   }
   
   
-  # apply automatic filter and save it as output1
+  ### automatically flag observations lying close to the curve
+  
+  # generate a data matrix with all observations. this data matrix contains the observation identifier, the original flag variable inputted by the user and the variabe that have been included in the regression model
   mydata <- myfulldata
   nam <- eval(parse(text=paste("mydata$", names, sep = "")))
   ydata <- eval(parse(text=paste("mydata$", yvar, sep = "")))
@@ -405,7 +432,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   }
   fl <- eval(parse(text=paste("mydata$", flag, sep = "")))
   
-  #adapt the size of the matrices b2 and Var_b2 to different numbers of regressors
+  #adapt the size of the matrices b2 and Var_b2 (previously estimated) to different numbers of regressors, so that they can be used more easily to estimate fitted values and standard errors
   if (xvar2=="") {
     b2 <- rbind(b2,0,0,0)
     Var_b2 <- cbind( rbind(Var_b2,c(0,0),c(0,0),c(0,0)) , c(0,0,0,0,0),c(0,0,0,0,0),c(0,0,0,0,0) )
@@ -417,7 +444,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
     Var_b2 <- cbind( rbind(Var_b2,c(0,0,0,0)) , c(0,0,0,0,0) )
   }
   
-  
+  # estimate fitted values, their standard errors and residuals based on the data
   mydata$fit_ydata <- b2[1] + b2[2]*xdata1 + b2[3]*xdata2 + b2[4]*xdata3 + b2[5]*xdata4
   mydata$Var_fit_ydata <- Var_b2[1,1] + Var_b2[2,2]*xdata1^2 + Var_b2[3,3]*xdata2^2 +  + Var_b2[4,4]*xdata3^2 + Var_b2[5,5]*xdata4^2 + 
     + 2*Var_b2[1,2]*xdata1 + 2*Var_b2[1,3]*xdata2 + 2*Var_b2[1,4]*xdata3 + 2*Var_b2[1,5]*xdata4 + 
@@ -427,6 +454,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   mydata$Stderr_fit_ydata <- sqrt(mydata$Var_fit_ydata)
   mydata$err <- ydata - mydata$fit_ydata
   
+  # flag observations lying close to the curve. if flag_above=TRUE, then also all values above the curve are flagged. if flag_below=TRUE, then also all values below the curve are flagged. two different flags (autom_flag1 and autom_flag2) are generated, and then one is chosen based on the chosen flagging method ("fit" or "error")
   if (flag_above==TRUE & flag_below==TRUE) {
     mydata$autom_flag1 <- ifelse(ydata < mydata$fit_ydata-flag_threshold*mydata$Stderr_fit_ydata | ydata > mydata$fit_ydata+flag_threshold*mydata$Stderr_fit_ydata, 0 , 1)
     mydata$autom_flag2 <- ifelse(mydata$err < quantile(mydata$err,probs=(100-error_pctile)/100) | mydata$err > quantile(mydata$err,probs=error_pctile/100), 0 , 1)
@@ -437,47 +465,70 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
     mydata$autom_flag1 <- ifelse(ydata > mydata$fit_ydata+flag_threshold*mydata$Stderr_fit_ydata , 0 , 1)
     mydata$autom_flag2 <- ifelse(mydata$err > quantile(mydata$err,probs=error_pctile/100), 0 , 1)
   } else {
-    mydata$autom_flag1 <- 0
-    mydata$autom_flag2 <- 0
+    mydata$autom_flag1 <- 1
+    mydata$autom_flag2 <- 1
   }
   
+  # determine the flag to be used based on the argument of the function "method"
   if (method=="fit") {
     mydata$autom_flag <- mydata$autom_flag1
   } else {
     mydata$autom_flag <- mydata$autom_flag2
   }
   
-  
+  # compile a list of all observations with a variable indicating if they have been flagged or not based on the regression model. this is going to be part of the function output. 
   output1 <- as.data.frame(cbind(nam,mydata$autom_flag))
   colnames(output1) <- c(names, "autom_flag")
+
   
+  ### combine the flagging variable provided by the user with the flag automatically generated through this function. the idea is that the values (0s and 1s) assigned by the user in its flag variable should not be overwritten. the automatically assigned flag applies only to observations that have not been coded by the user.
+   
+  # generate a data matrix containing the observation identifier (nam), the flag variable provided by the user (fl), and the flag variable automatically generated through the regression model (autom_flag)  
   output45 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
   colnames(output45) <- c(names, "autom_flag", "comb")
   output45$autom_flag <- as.numeric(output45$autom_flag)
   output45$comb <- as.numeric(output45$comb)
+  
+  # generate a comboflag that combines the user-provided flag and the automatic flag. The values of the user-provided flag have priority, and the automatically generated values are used only for those observations for which the user had not provided input
   output45$comboflag <- 0
   output45$comboflag[output45$autom_flag==1 & output45$comb!=0] <- 1
+
+  # generate a variable indicating only those observations that have been flagged on top of those already flagged by the user
   output45$newflag <- 0
   output45$newflag[output45$comb!=0 & output45$comb!=1 & output45$autom_flag==1] <- 1
+
+  # define two lists of observation identifiers, which are going to be included among the function's outputs. one list (output 4) includes all observation names/codes that are flagged using the previously described combo-approach; the other list (output5) contains only only the names/codes of those flagged observations that were not previously coded by the user
   output4 <- output45$companyname[output45$comboflag==1]
   output5 <- output45$companyname[output45$newflag==1]
   
-  # calculate number of false/true positives/negatives and store it as output2
+  
+  ### calculate number of false/true positives/negatives that can be identified by comparing the automatically generated flag with the ("true") classification provided by the user for a subset of the observations. this is going to be included in the function's output
+  
+  # generate variables identifying true/false positives/negatives
   mydata$true_pos <- mydata$autom_flag==1 & fl == 1
   mydata$false_pos <-  mydata$autom_flag==1 & fl == 0
   mydata$true_neg <- mydata$autom_flag==0 & fl == 0
   mydata$false_neg <-  mydata$autom_flag==0 & fl == 1
-  mydata$unkn_pos <- mydata$autom_flag==1 & fl == -1
-  mydata$unkn_neg <-  mydata$autom_flag==0 & fl == -1
+  
+  # generate variables identifying unknown positives/negatives. unknown positives/negatives are those observations for which the user has provided no information regarding which group they belong to.
+  mydata$unkn_pos <- mydata$autom_flag==1 & fl != 1 & fl != 0
+  mydata$unkn_neg <-  mydata$autom_flag==0 & fl != 1 & fl != 0
+  
+  # count true/false/unknown positives/negatives
   true_pos <- sum(mydata$true_pos)
   true_neg <- sum(mydata$true_neg)
   false_pos <- sum(mydata$false_pos)
   false_neg <- sum(mydata$false_neg)
   unkn_pos <- sum(mydata$unkn_pos)
   unkn_neg <- sum(mydata$unkn_neg)
+  
+  # store the information in a confusion matrix that is included in the output of the function
   output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
   colnames(output2) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
+ 
   
+  ### compile output
+   
   output <- list(output1, output2, output3, output4, output5)
   return(output)
 }
