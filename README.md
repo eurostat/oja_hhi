@@ -1,6 +1,6 @@
 # OJA_HHI
 
-R code for calculating the Herfindahl-Hirschmann Index (HHI) from Online Job Advertisements (OJA).
+R code for calculating the [Herfindahl-Hirschmann Index  (HHI)](https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_Index) from Online Job Advertisements (OJA).
 
 The main code is contained in the script _"lmci_v1.R"_
 
