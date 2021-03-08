@@ -540,18 +540,34 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
 #8. automflag_combine
 
 
-automflag_combine <- function(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , automflag1 , automflag2, condition="AND") {
+automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , automflag1 , automflag2, condition="AND") {
   
+  
+  ### this function flags observations in a dataset, combining two empirical rules based on regressions. the two empirical rules are derived through the function automflag. In essence, this function uses two automflag functions as arguments and combines them through an AND or an OR condition. therefore, each observation is flagged if it is flagged by both empirical rules (AND) or by at least one empirical rule (OR).
+  
+  ## this function does not require any particular package to be installed; it can be run with base R.
+  ## this function has the identical outputs (with identical names) as the automflag function:
+  # 1. a 2-column dataset where the observation name/code is in the first column and a binary (0/1) flag derived from the specified empirical rule in the second column. the flag essentially says if the observed value for the observation lies far away from a curve estimated from a subset of the observations. if so, the flag is set =1 and it means that the observation likely belongs to that group. 
+  # 2. a matrix to evaluate the flag. this matrix is a confusion matrix counting true positives, false positives, etc.
+  # 3. a table with the regression's coefficients
+  # 4. a list of the names/codes of the observations that are flagged
+  # 5. a list of the names/codes of the observations that are flagged and are not included in the list of flagged observations given as input to train the model
+  ## this is the list of default argument of the function:  
   #automflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,], xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+  ## an automflag function
   #automflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
-  ##automflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", flag_above=TRUE, flag_below=TRUE)
+  ## another automflag function. this function should have the same dataset, observation identifier and user-provided flag variable as automflag1
   #mydata <- sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
+  ## the same dataset indicated as an argument in the two automflag functions
   #flag <- "filteredout"
+  ## the same user-provided flag variable used as an argument in the two automflag functions
   #names <- "companyname"
+  ## the same observation identifier used as an argument in the two automflag functions
   #condition <- "AND"
+  ## the condition to join the two automflag functions. This argument can be equal to "AND" (an observation is flagged by the combined rule if it is flagged by both automflag functions) or to "OR" (an observation is flagged by the combined rule if it is flagged by at least one of the two automflag functions) 
   
   
-  ### merge the two automatic flags and compare them withthe user-provided flag
+  ### merge the two automatic flags and compare them with the user-provided flag
   
   # merge the two automatic flags
   firstflag <- automflag1[[1]]
@@ -562,16 +578,17 @@ automflag_combine <- function(mydata=sumstats_by_company , flag="filteredout" , 
   secondflag$secondflag <- as.numeric(secondflag$secondflag)
   twoflags <- merge(firstflag,secondflag)
   
-  # store the underlying regression coefficients as function output
+  # store the underlying regression coefficients as function output. output 3 is the same type of output as the homonimous output in the automflag function. 
   output3 <- rbind(automflag1[[3]] , automflag2[[3]])
   
-  # gen a combined flag based on the two automatic flags and store as function output
+  # gen a combined flag based on the two automatic flags and store as function output. to combine the two flags, the "OR" condition is used if specified in the function arguments, and the condition "AND" in all other cases
   twoflags$thirdflag <- 0
   if (condition=="OR") {
     twoflags$thirdflag[twoflags$firstflag==1 | twoflags$secondflag==1] <- 1
   } else {
     twoflags$thirdflag[twoflags$firstflag==1 & twoflags$secondflag==1] <- 1
   }
+  #output 1 is the same type of output as the homonimous output in the automflag function. 
   output1 <- as.data.frame(cbind(twoflags$companyname , twoflags$thirdflag))
   colnames(output1) <- c("companyname" , "autom_flag")
   
@@ -582,7 +599,7 @@ automflag_combine <- function(mydata=sumstats_by_company , flag="filteredout" , 
   twoflags$filteredout <- as.numeric(twoflags$filteredout)
   
   
-  ### calculate number of false/true positives/negatives and store it as output2
+  ### calculate number of false/true positives/negatives and store it as output2, in the same way as is done for the automflag function
   
   twoflags$true_pos <- twoflags$thirdflag==1 & twoflags$filteredout == 1
   twoflags$false_pos <-  twoflags$thirdflag==1 & twoflags$filteredout == 0
@@ -596,6 +613,8 @@ automflag_combine <- function(mydata=sumstats_by_company , flag="filteredout" , 
   false_neg <- sum(twoflags$false_neg)
   unkn_pos <- sum(twoflags$unkn_pos)
   unkn_neg <- sum(twoflags$unkn_neg)
+  
+  #output 2 is the same type of output as the homonimous output in the automflag function. 
   output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
   colnames(output2) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
   output2
@@ -603,6 +622,7 @@ automflag_combine <- function(mydata=sumstats_by_company , flag="filteredout" , 
   
   ### generate lists of observation identifiers equivalent to output4 and output5 in the automflag function
   
+  #output 4 and output5 are the same type of outputs as the homonimous outputs in the automflag function. 
   output4 <- twoflags$companyname[twoflags$true_pos==TRUE | twoflags$unkn_pos==TRUE]
   output5 <- twoflags$companyname[twoflags$unkn_pos==TRUE]
   # View(twoflags[twoflags$false_pos==1,])

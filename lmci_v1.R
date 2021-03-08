@@ -155,6 +155,10 @@ lmcirun <- function(x){
   sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
   sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
   
+  #testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+  #testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+  #automflag_output <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
+  
   automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
   comboflag <- as.character(automflag_output[[4]])
   automflag_output[[2]]
