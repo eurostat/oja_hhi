@@ -9,7 +9,7 @@
 
 getwd()
 source("Other scripts/filter_out_agencies_country.R")
-
+source("Other scripts/consolidate_company_names_country.R")
 
 ### making a query many variables with respect to which we could expect to find some differencies between agencies and non-agencies
 
@@ -221,7 +221,7 @@ keep <- rbind(keep,add_keep)
 drop <- as.data.frame(filteredout$companyname)
 colnames(drop) <- "companyname"
 drop <- rbind(drop,add_filteredout)
-#View(drop)
+#View(keep)
 
 
 
@@ -315,6 +315,7 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
 
 sumstats_by_company <-gen_sum_stats(filterlist = filteredout$companyname, keeplist = keep$companyname)
 str(sumstats_by_company)
+table(sumstats_by_company$keep)
 
 #generate logs
 sumstats_by_company$ln_esco3 <- log(sumstats_by_company$idesco_level_3)
@@ -322,8 +323,8 @@ sumstats_by_company$ln_undup_n <- log(sumstats_by_company$tot_n - sumstats_by_co
 sumstats_by_company$sqln_undup_n <- sumstats_by_company$ln_undup_n^2
 sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
 sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
-
 sumstats_by_company$ln_n <- log(sumstats_by_company$tot_n)
+
 sumstats_by_company$ln_esco4 <- log(sumstats_by_company$idesco_level_4)
 sumstats_by_company$sqln_esco4 <- log(sumstats_by_company$idesco_level_4)^2
 sumstats_by_company$ln_prov <- log(sumstats_by_company$idprovince)
@@ -534,49 +535,96 @@ automflag_output[[2]]
 #######################################################################################################
 
 
-#View(automflag_output[[1]])
-firstflag <- automflag_output[[1]]
-dim(firstflag)
-colnames(firstflag) <- c("companyname" , "firstflag")
 
 
 
-#rule2
-automflag_output2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
-automflag_output2[[2]]
-secondflag <- automflag_output2[[1]]
-dim(secondflag)
-colnames(secondflag) <- c("companyname" , "secondflag")
 
-twoflags <- merge(firstflag,secondflag)
-dim(twoflags)
 
-twoflags <- merge(twoflags, filteredout_m, all.x=TRUE)
-twoflags <- merge(twoflags, keep_m, all.x=TRUE)
-dim(twoflags)
+automflag_combine <- function(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , automflag1 , automflag2, condition="AND") {
+  
+  #automflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,], xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+  #automflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+  ##automflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", flag_above=TRUE, flag_below=TRUE)
+  #mydata <- sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
+  #flag <- "filteredout"
+  #names <- "companyname"
+  #condition <- "AND"
 
-twoflags$filteredout[twoflags$keep==1] <- 0
-twoflags$filteredout[is.na(twoflags$filteredout)==TRUE] <- -1
-table(twoflags$filteredout)
+    
+  ### merge the two automatic flags and compare them withthe user-provided flag
+  
+  # merge the two automatic flags
+  firstflag <- automflag1[[1]]
+  colnames(firstflag) <- c("companyname" , "firstflag")
+  firstflag$firstflag <- as.numeric(firstflag$firstflag)
+  secondflag <- automflag2[[1]]
+  colnames(secondflag) <- c("companyname" , "secondflag")
+  secondflag$secondflag <- as.numeric(secondflag$secondflag)
+  twoflags <- merge(firstflag,secondflag)
 
-twoflags$thirdflag <- 0
-twoflags$thirdflag[twoflags$firstflag==1 & twoflags$secondflag==1] <- 1
+  # store the underlying regression coefficients as function output
+  output3 <- rbind(automflag1[[3]] , automflag2[[3]])
+  
+  # gen a combined flag based on the two automatic flags and store as function output
+  twoflags$thirdflag <- 0
+  if (condition=="OR") {
+    twoflags$thirdflag[twoflags$firstflag==1 | twoflags$secondflag==1] <- 1
+  } else {
+    twoflags$thirdflag[twoflags$firstflag==1 & twoflags$secondflag==1] <- 1
+  }
+  output1 <- as.data.frame(cbind(twoflags$companyname , twoflags$thirdflag))
+  colnames(output1) <- c("companyname" , "autom_flag")
+  
+  # merge with the user-provided flag
+  filterdata <- cbind( eval(parse(text=paste("mydata$", names, sep = ""))) , eval(parse(text=paste("mydata$", flag, sep = ""))) )
+  colnames(filterdata) <- c("companyname" , "filteredout")
+  twoflags <- merge(twoflags, filterdata, all.x=TRUE)
+  twoflags$filteredout <- as.numeric(twoflags$filteredout)
+  
+  
+  ### calculate number of false/true positives/negatives and store it as output2
+  
+  twoflags$true_pos <- twoflags$thirdflag==1 & twoflags$filteredout == 1
+  twoflags$false_pos <-  twoflags$thirdflag==1 & twoflags$filteredout == 0
+  twoflags$true_neg <- twoflags$thirdflag==0 & twoflags$filteredout == 0
+  twoflags$false_neg <-  twoflags$thirdflag==0 & twoflags$filteredout == 1
+  twoflags$unkn_pos <- twoflags$thirdflag==1 & twoflags$filteredout == -1
+  twoflags$unkn_neg <-  twoflags$thirdflag==0 & twoflags$filteredout == -1
+  true_pos <- sum(twoflags$true_pos)
+  true_neg <- sum(twoflags$true_neg)
+  false_pos <- sum(twoflags$false_pos)
+  false_neg <- sum(twoflags$false_neg)
+  unkn_pos <- sum(twoflags$unkn_pos)
+  unkn_neg <- sum(twoflags$unkn_neg)
+  output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
+  colnames(output2) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
+  output2
+  
+  
+  ### generate lists of observation identifiers equivalent to output4 and output5 in the automflag function
+  
+  output4 <- twoflags$companyname[twoflags$true_pos==TRUE | twoflags$unkn_pos==TRUE]
+  output5 <- twoflags$companyname[twoflags$unkn_pos==TRUE]
+  # View(twoflags[twoflags$false_pos==1,])
+  
+  ### compile output
+  output <- list(output1, output2, output3, output4, output5)
+  return(output)  
+  
+}
 
-# View(twoflags)
-# calculate number of false/true positives/negatives and store it as output2
-twoflags$true_pos <- twoflags$thirdflag==1 & twoflags$filteredout == 1
-twoflags$false_pos <-  twoflags$thirdflag==1 & twoflags$filteredout == 0
-twoflags$true_neg <- twoflags$thirdflag==0 & twoflags$filteredout == 0
-twoflags$false_neg <-  twoflags$thirdflag==0 & twoflags$filteredout == 1
-twoflags$unkn_pos <- twoflags$thirdflag==1 & twoflags$filteredout == -1
-twoflags$unkn_neg <-  twoflags$thirdflag==0 & twoflags$filteredout == -1
-true_pos <- sum(twoflags$true_pos)
-true_neg <- sum(twoflags$true_neg)
-false_pos <- sum(twoflags$false_pos)
-false_neg <- sum(twoflags$false_neg)
-unkn_pos <- sum(twoflags$unkn_pos)
-unkn_neg <- sum(twoflags$unkn_neg)
-cmatrix <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
-colnames(cmatrix) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
-cmatrix
-# View(twoflags[twoflags$false_pos==1,])
+
+testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,], xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+testflag1[[2]]
+testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+testflag2[[2]]
+testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", flag_above=TRUE, flag_below=TRUE)
+testflag3[[2]]
+
+prova <- automflag_combine(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , automflag1= testflag1, automflag2= testflag2 , condition="AND" )
+prova[[2]]
+prova3 <- automflag_combine(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , automflag1= prova, automflag2= testflag3 , condition="OR" )
+prova3[[2]]
+
+str(testflag1[[1]])
+str(prova[[1]])
