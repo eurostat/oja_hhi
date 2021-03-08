@@ -540,7 +540,7 @@ automflag_output[[2]]
 
 
 
-automflag_combine <- function(mydata=sumstats_by_company , flag="filteredout" , names="companyname" , automflag1 , automflag2, condition="AND") {
+automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , automflag1 , automflag2, condition="AND") {
   
   #automflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,], xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
   #automflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
