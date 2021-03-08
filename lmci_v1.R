@@ -397,3 +397,7 @@ ggplot(hhigeoTOTq32018) +
   #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
   geom_sf(data=geoinfoTOT,alpha = 0)+
   coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000)) + theme_bw()
+
+setDT(hhigeoTOT)
+hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
+write.csv(hhigeoTOT,"hhigeo.csv")
