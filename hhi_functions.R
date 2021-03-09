@@ -3,14 +3,16 @@
 # 1. sep
 # 2. empty_as_na
 # 3. createfua
-# 4. calculate_hhi
-# 5. create_hhigeo
-# 6. gen_sum_stats
-# 7. automflag
-# 8. automflag_combine
+# 4. assignFUA
+# 5. calculate_hhi
+# 6. create_hhigeo
+# 7. gen_sum_stats
+# 8. automflag
+# 9. automflag_combine
 
 ##Function for cleaning the 'companyname' column
 
+#1. sep
 sep <- function(linha) {
   resp <- strsplit(linha," |/|-")
   resp <- unlist(resp)
@@ -24,6 +26,7 @@ sep <- function(linha) {
 
 ## Function for setting empty values to NA
 
+#2. empty_as_na
 empty_as_na <- function(y){
   
   y[!str_detect(y, "")] <- NA
@@ -34,6 +37,7 @@ empty_as_na <- function(y){
 
 ## Function for creating the correspondence table between LAU, NUTS and FUA
 
+#3. createfua
 createfua <- function(){
   ### download file with eurostat classification
   
@@ -45,7 +49,10 @@ createfua <- function(){
   countrylist <- getSheetNames(filename)[4:31]
   #alternatively: countrylist <- c("BE","BG","CZ","DK","DE","EE","IE","EL","ES","FR","HR","IT","CY","LV","LT","LU","HU","MT","NL","AT","PL","PT","RO","SI","SK","FI","SE")
   
-  ###create a function generating the "assign" variable
+  
+  #4. assignFUA
+  #create a function generating the "assign" variable
+  
   assignFUA <- function(country) {
     #importing excel sheet and eliminating spaces from variable names
     DF <- read_excel(filename , sheet = country)
@@ -137,9 +144,9 @@ createfua <- function(){
 }
 
 
+#5. calculate_hhi
 calculate_hhi <- function (dframe = dframe) {
   
-  ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
   grid <- expand.grid(esco = unique(dframe$idesco_level_4), geo = unique(dframe$fua_id), qtr = unique(dframe$qtr), stringsAsFactors = FALSE)
@@ -181,6 +188,7 @@ calculate_hhi <- function (dframe = dframe) {
   return (hhi)
 }
 
+#6. create_hhigeo
 create_hhigeo <- function(hhi = hhi){
   hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
   
@@ -199,6 +207,8 @@ create_hhigeo <- function(hhi = hhi){
   return (hhigeo)
 }
 
+
+#7. gen_sum_stats
 gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE) {
   
   
@@ -300,6 +310,7 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   
 }
 
+#8. automflag
 automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="", xvar3="", xvar4="", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90) {
   
   
@@ -535,11 +546,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
 }
 
 
-
-############################################################
-#8. automflag_combine
-
-
+#9. automflag_combine
 automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , automflag1 , automflag2, condition="AND") {
   
   
