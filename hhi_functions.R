@@ -199,7 +199,7 @@ create_hhigeo <- function(hhi = hhi){
   return (hhigeo)
 }
 
-gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE) {
+gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names) {
   
   
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
@@ -223,6 +223,8 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   ## this argument, expressed as one string, identifies the type of functions to be applied to the OJA data and so the type of summary statistics. the default counts the number of distinct values for each variable in vars
   #standardise <- TRUE
   ## this argument, when set (as in the default) as "TRUE", standardises the text of the levels of key_var
+  #consolidate <- clean_names
+  ## this argument takes the name of a table with keywords and, when different from "" or FALSE, uses this tabe to operate a consolidation of the entries in the observation identifier in the way described in the code consolidate_company_names.R within this project
   
   
   ### compile and run the query in the OJA dataset.
@@ -250,7 +252,16 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
     general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
-    # eliminate empty cells in keyvar
+  #consolidate companyname
+  if (consolidate!="" & consolidate!=FALSE) {
+    # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
+    for(i in 1:dim(consolidate)[1]) {
+    general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
+    general_query$keyvar[general_query$keyvar == consolidate[i,4] ] <- consolidate[i,2]
+    }
+  }
+  
+  # eliminate empty cells in keyvar
   general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
   general_query <- general_query[general_query$notgood != 1 , ]
   
@@ -280,7 +291,7 @@ gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist =
   # merge new dataset with "keep" and "filter" variables
   sumstats_by_company <- merge(sumstats_by_company, filteredout_m, all.x=TRUE)
   sumstats_by_company <- merge(sumstats_by_company, keep_m, all.x=TRUE)
-  dim(DF)
+  dim(sumstats_by_company)
   
   # coding a new variable (filteredout) combining the keeplist and the filterlist as follows:
   # 1 <- included in filterlist (in our first application of this function, this means flagged as agency)

@@ -8,8 +8,136 @@
 ### sourcing the code "check_company_names"
 
 getwd()
-source("Other scripts/filter_out_agencies_country.R")
-source("Other scripts/consolidate_company_names_country.R")
+source("hhi_functions.R")
+source("Other scripts/inspect_smaller_companies.R")
+
+filterlist <- as.character(c(filteredout$companyname, add_filteredout))
+str(filterlist)
+
+#keep <- as.data.frame(clean_names$replace_with)
+#colnames(keep) <- "companyname" 
+keep <- as.character(c(clean_names$replace_with, add_keep))
+str(keep)
+#keeplist <- keep
+
+sumstats_by_company <-gen_sum_stats(idcountry = country, filterlist = filteredout$companyname, keeplist = keep)
+sumstats_by_company <- arrange(sumstats_by_company, desc(tot_n))
+str(sumstats_by_company)
+
+#generate logs
+sumstats_by_company$ln_esco3 <- log(sumstats_by_company$idesco_level_3)
+sumstats_by_company$ln_undup_n <- log(sumstats_by_company$tot_n - sumstats_by_company$tot_dups)
+sumstats_by_company$sqln_undup_n <- sumstats_by_company$ln_undup_n^2
+sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
+sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
+sumstats_by_company$ln_n <- log(sumstats_by_company$tot_n)
+#View(sumstats_by_company)
+#View(keep)
+
+automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+#automflag_output <- automflag()
+automflag_output[[2]]
+
+testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+automflag_output_combo <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
+automflag_output_combo[[2]]
+datacombo <- automflag_output_combo[[1]]
+#View(datacombo[datacombo$false_pos==TRUE,])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### making a query many variables with respect to which we could expect to find some differencies between agencies and non-agencies
 
