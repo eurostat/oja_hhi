@@ -207,14 +207,10 @@ create_hhigeo <- function(hhi = hhi){
   return (hhigeo)
 }
 
-<<<<<<< HEAD
-gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names) {
-=======
 
 #7. gen_sum_stats
-gen_sum_stats <- function(idcountry = "IT", samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE) {
->>>>>>> 5359ef74ca1d2d6ddcd244473d77ada72767719b
-  
+  gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names) {
+    
   
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
   
