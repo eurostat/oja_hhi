@@ -8,7 +8,6 @@ library(ggplot2)
 library(xlsx)
 library(readxl)
 library(openxlsx)
-library(gmodels)
 library(data.table)
 library(lubridate)
 library(stringr)
@@ -19,6 +18,7 @@ library(hhi)
 library(sf)
 library(stringi)
 library(gdata)
+library(giscoR)
 library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
 #devtools::install_github("eurostat/wihoja", auth_token= "***REMOVED***")
 
@@ -41,14 +41,13 @@ lmcirun <- function(x){
   dir.create (resultspath)
   
   
-  data_table <- "estat_dsl2531b_oja.ft_document_en_v8"
+  data_table <- "estat_dsl2531b_oja.ft_document_en_v9"
   
   query <- paste0("SELECT general_id, grab_date, lang, idesco_level_4, esco_level_4, idcity, city, idprovince, province, idregion, region, idcountry, country, idcontract, contract, idsector, sector, sourcecountry, source, site, companyname  ",
                   "FROM ", data_table, " ",
                   "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND idcontract != 'Internship'",
                   ";")
   data <- query_athena(query)
-  uniqueads <- length(unique(data$general_id))
   
   saveRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
   
@@ -64,7 +63,7 @@ lmcirun <- function(x){
   #remove observations already marked as duplicate by CEDEFOP
   #"duplicate" observations differ in their content
   #therefore we keep, from each duplicate group, the observation with the lowest number of missing variables
-  
+  num_raw_obs <- nrow(dframe)
   dframe$na_count <- rowSums(is.na(dframe))
   
   dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
@@ -85,18 +84,31 @@ lmcirun <- function(x){
   
   #write.fst(dframe,paste0(path,"OJA",countrycode, ".fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, ".fst"), as.data.table = TRUE)
-  
+  num_duplicates <- as.numeric(sum(dframe$dup == 1))
   dframe <- subset(dframe, dup == 0)
+  num_obs_undup <- as.numeric(length(unique(dframe$general_id)))
   
   dframe <- subset(dframe, select =  -c(grab_date))
+  
+  no_geo <- as.numeric(sum(!startsWith(dframe$idprovince, countrycode)))
+  no_contract <- as.numeric(sum(is.na(dframe$contract) | dframe$contract=="Internship"))
+  no_isco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
+  
+  
   
   # write.fst(dframe,paste0(path,"OJA",countrycode, "step1.fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
   
   dframe <- subset(dframe, !is.na(contract))
   dframe <- subset(dframe, contract!="Internship")
-  
+
   dframe <- subset(dframe, !is.na(idesco_level_4))
+  #num_obs_noisco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
+  
+  
+  dframe <- dframe[startsWith(dframe$idprovince, countrycode), ]
+  
+  num_obs_after_filters <- nrow(dframe) 
   
   #write.fst(dframe,paste0(path,"ITtest.fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
@@ -139,7 +151,11 @@ lmcirun <- function(x){
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
- 
+  
+  obs_agency_table <- as.data.frame(table(filteredout$companyname))
+  obs_agency_list <- sum(as.numeric(obs_agency_$Freq))
+  obs_agency_table <- arrange(obs_agency_table, desc(Freq))
+  
   filterlist <- as.character(filteredout$companyname)
 
   keep <- as.data.frame(clean_names$replace_with)
@@ -162,10 +178,10 @@ lmcirun <- function(x){
   
   # automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
   # comboflag <- as.character(automflag_output[[4]])
-  # automflag_output[[2]]
+  automflag_output[[2]]
   
   #Add other list of companies to be filtered
-  filterlist <- c(filterlist,comboflag)
+  filterlist <- c(filterlist,as.character(automflag_output[[4]]))
   
   filterlist_m <- as.data.frame(filterlist)
   filterlist_m$agency <- 1
@@ -175,6 +191,7 @@ lmcirun <- function(x){
   dframe <- merge(dframe, filterlist_m, all.x = TRUE)
 
   dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$agency == 1, NA))
+  obs_agency_model <- as.numeric((sum(is.na(dframe$companyname))- obs_agency_list))
   
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
@@ -197,16 +214,16 @@ lmcirun <- function(x){
   
   #keep only obs with nuts non-missing
   # dframe <- read_fst((paste0(path,"OJA",countrycode, "step3.fst")), as.data.table = TRUE)
-  dframe <- subset(dframe, !is.na(idprovince))
   
   #source code for matching LAU codes, NUTS codes and FUAid downloaded from Eurostat website
   fua <- createfua()
   
   fua <- subset(fua, fua$country == countrycode)
+ 
   totfuanum <- length(unique(fua$fua_id))-1
   
   #Handle country exceptions
-  if (countrycode == "HR"){  fua$city <- capitalize(fua$city <- tolower(fua$city)) }
+  if (countrycode == "HR"){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
   if (countrycode == "PL"){dframe$fua_id = substr(dframe$fua_id,1,nchar(dframe$fua_id)-1)}
   if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
   if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
@@ -218,14 +235,17 @@ lmcirun <- function(x){
   
   #corrects idcity (LAU code) in input OJA data by looking at cityname (LAU national name)
   if (countrycode %in% c("PT", "SE", "FR", "EL", "IE", "PL", "EE", "HR", "MT", "FI", "SK", "SI", "CY"))
-  {dframe <- left_join(dframe,fua, by= "city")
+  {
+  fuadup <- fua %>% count(idprovince, city)
+  fua2 <- merge (fua, fuadup)
+  fua2 <- subset (fua2, fua2$n == 1)  
+  dframe <- left_join(dframe,fua2, by=c ("city", "idprovince"))
   dframe$idcity <- coalesce(dframe$idcity.y, dframe$idcity.x)
-  dframe$idprovince <- coalesce(dframe$idprovince.y, dframe$idprovince.x)
-  dframe$fua_id <- dframe$fua_id.y
-  dframe <- select(dframe, -c("idcity.x", "idcity.y", "fua_id.x", "fua_id.x", "country.x", "country.y", "var1.x", "idprovince.y", "idprovince.x", "city_latin.y"))
+  dframe <- select(dframe, -c("idcity.x", "idcity.y", "fua_id", "country.x", "country.y", "var1", "city_latin"))
   }
-  
   #include quality check?How the matching by city name works.
+  
+
   
   # Left join first by both idprovince and idcity
   dframe <- left_join(dframe,fua,by=c("idprovince","idcity"))
@@ -238,14 +258,16 @@ lmcirun <- function(x){
   names(dframe)[names(dframe) == 'idcity.x'] <- 'idcity'
   dframe <- select(dframe, -c("fua_id.y", "fua_id.x", "country.x", "country.y", "var1.x", "var1.y", "idcity.y"))
   
+  num_obs_nofua <- as.numeric(sum(is.na(dframe$fua_id)))
   dframe <- dframe[!is.na(dframe$fua_id),]
   
   fuanum <- length(unique(dframe$fua_id))
   
-  dframe <- dframe[startsWith(dframe$idregion, countrycode), ]
   
+  num_obs_final <- as.numeric(length(unique(dframe$general_id)))
   # write.fst(dframe,paste0(path,"OJA",countrycode, "step3.fst"), 100)
   dframe$companyname[dframe$companyname == ""] <- NA
+  num_imputed_companynames <- as.numeric(sum(is.na(dframe$companyname)))
   dframeupper <- dframe[!is.na(dframe$companyname) , ]
   
   ####IMPUTATION OF MISSING COMPANYNAMES (i.e. Staffing agencies removed by the filter)####
@@ -263,6 +285,10 @@ lmcirun <- function(x){
   ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
   hhi <- calculate_hhi(dframe)
   hhiupper <- calculate_hhi(dframe=dframeupper)
+  
+  ###Quality Indicators
+  quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, obs_agency_list, obs_agency_model, num_imputed_companynames, num_obs_nofua, num_obs_final))
+  saveRDS(quality, paste0(resultspath,"quality_",countrycode, ".rds"))
   
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
   
@@ -406,3 +432,6 @@ ggplot(hhigeoTOTq32018) +
 setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,"hhigeo.csv")
+
+
+
