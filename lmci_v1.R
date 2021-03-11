@@ -99,8 +99,8 @@ lmcirun <- function(x){
   # write.fst(dframe,paste0(path,"OJA",countrycode, "step1.fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
   
-  dframe <- subset(dframe, !is.na(contract))
-  dframe <- subset(dframe, contract!="Internship")
+  # dframe <- subset(dframe, !is.na(contract))
+  # dframe <- subset(dframe, contract!="Internship")
 
   dframe <- subset(dframe, !is.na(idesco_level_4))
   #num_obs_noisco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
@@ -153,8 +153,9 @@ lmcirun <- function(x){
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
   
   obs_agency_table <- as.data.frame(table(filteredout$companyname))
-  obs_agency_list <- sum(as.numeric(obs_agency_$Freq))
   obs_agency_table <- arrange(obs_agency_table, desc(Freq))
+  num_obs_agency_list <- sum(as.numeric(obs_agency_table$Freq))
+  num_distinct_agency_list <- nrow(obs_agency_table)
   
   filterlist <- as.character(filteredout$companyname)
 
@@ -181,7 +182,7 @@ lmcirun <- function(x){
   automflag_output[[2]]
   
   #Add other list of companies to be filtered
-  filterlist <- c(filterlist,as.character(automflag_output[[4]]))
+  filterlist <- c(filterlist,as.character(automflag_output[[5]]))
   
   filterlist_m <- as.data.frame(filterlist)
   filterlist_m$agency <- 1
@@ -190,9 +191,20 @@ lmcirun <- function(x){
 
   dframe <- merge(dframe, filterlist_m, all.x = TRUE)
 
-  dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$agency == 1, NA))
-  obs_agency_model <- as.numeric((sum(is.na(dframe$companyname))- obs_agency_list))
+  filterlist_model <- as.data.frame(automflag_output[[5]])
+  filterlist_model$agency <- 1
+  colnames(filterlist_model) <- c("companyname","agency_model")
+  filterlist_model <- subset(filterlist_model, !duplicated(filterlist_model$companyname))
+  dframe <- merge(dframe, filterlist_model, all.x = TRUE)
   
+  filteredout_model <- subset(dframe, dframe$agency_model == 1 )
+  obs_agency_model <- as.data.frame(table(filteredout_model$companyname))
+  obs_agency_model <- arrange(obs_agency_model, desc(Freq))
+  num_obs_agency_model <- sum(as.numeric(obs_agency_model$Freq))
+  num_distinct_agency_model <- nrow(obs_agency_model)
+ # num_distinct_agency_model <- length(automflag_output[[5]])
+  
+  dframe <- mutate(dframe, companyname = replace(dframe$companyname, dframe$agency == 1, NA))
   #save step2
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step2.fst"), 100)
   
@@ -287,9 +299,11 @@ lmcirun <- function(x){
   hhiupper <- calculate_hhi(dframe=dframeupper)
   
   ###Quality Indicators
-  quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, obs_agency_list, obs_agency_model, num_imputed_companynames, num_obs_nofua, num_obs_final))
+  quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))
   saveRDS(quality, paste0(resultspath,"quality_",countrycode, ".rds"))
   
+  companyname_stats <- as.data.frame(cbind(countrycode, num_obs_agency_list, num_obs_agency_model, num_imputed_companynames, num_distinct_agency_list, num_distinct_agency_model, automflag_output[[2]]))
+  saveRDS(companyname_stats, paste0(resultspath,"companyname_stats_",countrycode, ".rds"))
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
   
   hhigeo <- create_hhigeo(hhi)
@@ -434,4 +448,8 @@ hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,"hhigeo.csv")
 
 
+filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
+quality_TOT <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
 
+filenamesc <- list.files(getwd(), recursive=T, pattern="companynames_stats",full.names=T)
+companynames_stats_TOT <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
