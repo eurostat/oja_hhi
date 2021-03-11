@@ -358,7 +358,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   #flag_threshold<-1.96
   ## if method=="fit", then this argument determines how wide to make the confidence interval. The default value of 1.96 means that observations for which the actual value of yvar is outside the range {fitted value +/- 1.96 * standard error of fitted value} are not flagged
   #error_pctile <- 90
-  ## if method=="error", then this argument determines what percentage of observation are not flagged based on the fact that they have the largest error. In the default, the 10% of observations with the largest error is not flagged
+  ## if method=="error", then this argument determines what percentage of observation are not flagged based on the fact that they have the largest error. In the default, with error_pctile=90, the 10% of observations with the largest error is flagged
   #flag_above <- TRUE
   ## this argument, when TRUE, means that only observations with negative residuals may not be flagged. In other words, observations are flagged in they are close to the curve or above the curve.
   #flag_below <- FALSE
@@ -480,13 +480,13 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   # flag observations lying close to the curve. if flag_above=TRUE, then also all values above the curve are flagged. if flag_below=TRUE, then also all values below the curve are flagged. two different flags (autom_flag1 and autom_flag2) are generated, and then one is chosen based on the chosen flagging method ("fit" or "error")
   if (flag_above==TRUE & flag_below==TRUE) {
     mydata$autom_flag1 <- ifelse(ydata < mydata$fit_ydata-flag_threshold*mydata$Stderr_fit_ydata | ydata > mydata$fit_ydata+flag_threshold*mydata$Stderr_fit_ydata, 0 , 1)
-    mydata$autom_flag2 <- ifelse(mydata$err < quantile(mydata$err,probs=(100-error_pctile)/100) | mydata$err > quantile(mydata$err,probs=error_pctile/100), 0 , 1)
+    mydata$autom_flag2 <- ifelse(mydata$err < quantile(mydata$err,probs=(error_pctile)/100) | mydata$err > quantile(mydata$err,probs=(100-error_pctile)/100), 0 , 1)
   } else if (flag_above==TRUE) {
     mydata$autom_flag1 <- ifelse(ydata < mydata$fit_ydata-flag_threshold*mydata$Stderr_fit_ydata , 0 , 1)
-    mydata$autom_flag2 <- ifelse(mydata$err < quantile(mydata$err,probs=(100-error_pctile)/100) , 0 , 1)
+    mydata$autom_flag2 <- ifelse(mydata$err < quantile(mydata$err,probs=(error_pctile)/100) , 0 , 1)
   } else if (flag_below==TRUE) {
     mydata$autom_flag1 <- ifelse(ydata > mydata$fit_ydata+flag_threshold*mydata$Stderr_fit_ydata , 0 , 1)
-    mydata$autom_flag2 <- ifelse(mydata$err > quantile(mydata$err,probs=error_pctile/100), 0 , 1)
+    mydata$autom_flag2 <- ifelse(mydata$err > quantile(mydata$err,probs=(100-error_pctile)/100), 0 , 1)
   } else {
     mydata$autom_flag1 <- 1
     mydata$autom_flag2 <- 1
