@@ -34,8 +34,8 @@ sumstats_by_company$ln_n <- log(sumstats_by_company$tot_n)
 #View(sumstats_by_company)
 #View(keep)
 
+#automflag_output <- automflag(method="error", error_pctile=90)
 automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
-#automflag_output <- automflag()
 automflag_output[[2]]
 
 testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
@@ -45,7 +45,7 @@ automflag_output_combo[[2]]
 datacombo <- automflag_output_combo[[1]]
 #View(datacombo[datacombo$false_pos==TRUE,])
 
-
+automflag_output_combo[[5]]
 
 
 
@@ -482,8 +482,8 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   yvar <- "ln_esco3"
   xvar1 <- "ln_undup_n"
   xvar2 <- "sqln_undup_n"
-  xvar3 <- ""
-  xvar4 <- ""
+  xvar3 <- "culn_undup_n"
+  xvar4 <- "quln_undup_n"
   percentile <- 50
   flag_threshold<-1.96
   flag_above <- TRUE
@@ -648,6 +648,8 @@ automflag <- function(mydata=sumstats_by_company , flag="filteredout" , names="c
   unkn_neg <- sum(mydata$unkn_neg)
   output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))
   colnames(output2) <- cbind("true_pos", "true_neg", "false_pos", "false_neg", "unkn_pos", "unkn_neg")
+  
+  #View(mydata[mydata$false_pos==1,])
   
   output <- list(output1, output2, output3, output4)
   return(output)
