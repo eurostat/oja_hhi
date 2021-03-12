@@ -3,12 +3,12 @@
 # 1. sep
 # 2. empty_as_na
 # 3. createfua
-# 4. assignFUA
-# 5. calculate_hhi
-# 6. create_hhigeo
-# 7. gen_sum_stats
-# 8. automflag
-# 9. automflag_combine
+# 3b. assignFUA
+# 4. calculate_hhi
+# 5. create_hhigeo
+# 6. gen_sum_stats
+# 7. automflag
+# 8. automflag_combine
 
 ##Function for cleaning the 'companyname' column
 
@@ -50,7 +50,7 @@ createfua <- function(){
   #alternatively: countrylist <- c("BE","BG","CZ","DK","DE","EE","IE","EL","ES","FR","HR","IT","CY","LV","LT","LU","HU","MT","NL","AT","PL","PT","RO","SI","SK","FI","SE")
   
   
-  #4. assignFUA
+  #3b. assignFUA
   #create a function generating the "assign" variable
   
   assignFUA <- function(country) {
@@ -78,7 +78,7 @@ createfua <- function(){
     DF$assign <- 0
     DF$assign[DF$dup_count == 1] <- 1 
     DF$assign[DF$FUAID_count < DF$count] <- 0
-    DF <- select(DF, NUTS_3_CODE , LAU_CODE , FUA_ID, LAU_NAME_NA , LAU_NAME_LA , assign)
+    DF <- select(DF, NUTS_3_CODE , LAU_CODE , FUA_ID, LAU_NAME_NA , LAU_NAME_LA , POPULATION, TOTAL_AREA_, assign)
     
     #defining the output of the function
     return(DF)
@@ -87,8 +87,8 @@ createfua <- function(){
   ###applying the previous function to the countries selected at the beginning of this code
   DFlist <- lapply(countrylist,assignFUA)
   
-  x <- cbind.data.frame(0,0,0,0,0,0)[-1,]
-  colnames(x) <- c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID" , "LAU_NAME_NA" , "LAU_NAME_LA" , "assign")
+  x <- cbind.data.frame(0,0,0,0,0,0,0,0)[-1,]
+  colnames(x) <- c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID" , "LAU_NAME_NA" , "LAU_NAME_LA" , "POPULATION", "TOTAL_AREA_", "assign")
   for(i in 1:length(countrylist)) {
     x <- rbind(x,DFlist[[i]])
   }
@@ -133,8 +133,8 @@ createfua <- function(){
   
   # final vector to be used for the calculation of the LMCI
   
-  fua <- select(x, country , NUTS_3_CODE , LAU_CODE , FUA_ID, LAU_NAME_NA , LAU_NAME_LA , recoded , assign)
-  colnames(fua) <- c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1")
+  fua <- select(x, country , NUTS_3_CODE , LAU_CODE , FUA_ID, LAU_NAME_NA , LAU_NAME_LA , recoded , assign, POPULATION, TOTAL_AREA_)
+  colnames(fua) <- c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area")
   
   rm(DF)
   rm(DFlist)
