@@ -234,6 +234,8 @@ lmcirun <- function(x){
  
   totfuanum <- length(unique(fua$fua_id))-1
   
+  fua_pop <- aggregate(cbind(population = as.numeric(fua$population), tot_area = round((fua$tot_area)/1000000)), by=list(fua_id=fua$fua_id), FUN=sum )
+  
   #Handle country exceptions
   if (countrycode == "HR"){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
   if (countrycode == "PL"){dframe$fua_id = substr(dframe$fua_id,1,nchar(dframe$fua_id)-1)}
@@ -308,6 +310,8 @@ lmcirun <- function(x){
   
   hhigeo <- create_hhigeo(hhi)
   hhigeoupper <- create_hhigeo(hhi=hhiupper)
+  
+  hhigeo <- merge(hhigeo, fua_pop)
   
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
