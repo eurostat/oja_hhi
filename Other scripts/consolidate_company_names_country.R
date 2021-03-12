@@ -34,12 +34,14 @@ companies_names_dataframe_backup <- companies_names_dataframe
 ### exporting and importing files for the manual extraction and input of keywords
 
 # exporting a file with all entries with >99 unduplicated jobs ads in the sample with 1 million job ads. starting from this file, a new file needs to be be manually generated with the keywords used in the companyname consolidation process (see explanation at the beginning of this code)
-companies_to_clean <- companies_names_dataframe[companies_names_dataframe$Freq>99 , -3]
-write.csv(companies_to_clean[ , 1] , "Other scripts/companies_to_clean_export.csv")
+companies_to_clean <- companies_names_dataframe[companies_names_dataframe$Freq>99 , ]
+colnames(companies_to_clean) <- "raw_input"
+companies_to_clean <- companies_to_clean[ , 1]
+write.csv(companies_to_clean , "Data/companies_to_clean_export.csv")
 
 # reading the keywords for data cleaning from the file companies_to_clean_import_COUNTRY.csv
 # NB if it fails to refresh the file, use a slightly different file name
-companies_to_clean_import <- paste0( "Other scripts/companies_to_clean_import_" , country , ".csv")
+companies_to_clean_import <- paste0( "Data/companies_to_clean_import_" , country , ".csv")
 clean_names <- read.csv(companies_to_clean_import , sep = ";" , colClasses = "character")
 head(clean_names)
 
@@ -65,7 +67,7 @@ names_replaced_list <- apply(as.matrix(1:dim(clean_names)[1]),1,names_replaced)
 str(names_replaced_list)
 
 # export the file names_replaced_list.csv (see a description of this file at the beginning of this code). this file can be used to iteratively improve the list of keywords in companies_to_clean_import_COUNTRY.csv
-write.csv2(names_replaced_list,"Other scripts/names_replaced_list.csv")
+write.csv2(names_replaced_list,"Data/names_replaced_list.csv")
 
 # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
 # this loop executes the replacements that have been recorded in the file names_replaced_list.csv 

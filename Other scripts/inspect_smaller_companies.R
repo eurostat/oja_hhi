@@ -45,11 +45,11 @@ subsample <- merge(subsample , subsample3, all.x=TRUE)
 subsample <- merge(subsample , subsample4, all.x=TRUE)
 subsample <- merge(subsample , subsample5, all.x=TRUE)
 subsample <- arrange(subsample, desc(Freq))
-write.csv2(subsample, "Other scripts/subsample_companynames.csv")
+write.csv2(subsample, "Data/subsample_companynames.csv")
 
 # -> manual editing (or at least renaming) of the exported file is necessary at this point
 # -> re-import the file after manual input or renaming
-subsample_import <- paste0( "Other scripts/subsample_companynames_import_" , country , ".csv")
+subsample_import <- paste0( "Data/subsample_companynames_import_" , country , ".csv")
 add_clean_names <- read.csv(subsample_import , sep = ";")
 
 #generate vectors of companynames identified as agencies or companies
