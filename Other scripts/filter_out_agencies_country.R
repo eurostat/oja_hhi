@@ -8,9 +8,10 @@ country <- "RO"
 
 ### this code helps with the development a list of recruiting agencies that can be removed from the OJA dataset when the analysis focuses on actual employers. it is divided in 4 main parts:
 #1 -> a query for a data sample is launched and some standardisation operations are executed on the data
-#2 -> based on a csv file (filled with keywords) provided by the user and properly formatted and saved, some observations are filtered out because they are considered agencies (and stored in a matrix called "filteredout"), and some others are kept in the sample of actual employers (and stored in a matrix called "companies_names_dataframe".
-#3 -> summary statistics (e.g. number of ads by companyname and cumulative frequencies) are calculated for the sample of actual employers 
-#4 -> quick ways to visualise the information in the data are suggested
+#2 -> a csv containing a list of all companynames with at least 100 observations is produced. this helps understanding which agencies are in the sample
+#3 -> based on a csv file (filled with keywords) provided by the user and properly formatted and saved, some observations are filtered out because they are considered agencies (and stored in a matrix called "filteredout"), and some others are kept in the sample of actual employers (and stored in a matrix called "companies_names_dataframe".
+#4 -> summary statistics (e.g. number of ads by companyname and cumulative frequencies) are calculated for the sample of actual employers 
+#5 -> quick ways to visualise the information in the data are suggested
 
 
 ### input needed for this code to work: 
@@ -33,7 +34,7 @@ library(tidyverse)
 source("hhi_functions.R")
 
 
-### creating a table with company names' frequency, sorted by frequency or company name
+### creating and exporting a table with company names' frequency, sorted by frequency or company name
 
 # query and deduplication
 query <- paste0("SELECT companyname, general_id FROM estat_dsl2531b_oja.ft_document_en_v8 WHERE idcountry='",country,"' ORDER BY RAND()  LIMIT 1000000")
@@ -66,11 +67,14 @@ companies_names_dataframe$notgood <- ifelse(companies_names_dataframe$companynam
 companies_names_dataframe <- companies_names_dataframe[companies_names_dataframe$notgood != 1 , -3]
 str(companies_names_dataframe)
 
+# export list of companynames with at least 100 ads
+write.csv2(companies_names_dataframe[companynames_names_dataframe$Freq>99,], "Data/companies_list_atleast100ads.csv")
+
 
 ### applying the job agency filter
 
 # importing the file with job agency filter keywords
-filecsv <- paste0("Other scripts/staff_agencies_" , country , ".csv")
+filecsv <- paste0("Data/staff_agencies_" , country , ".csv")
 staff_agencies <- read.csv(filecsv , sep = ";" , colClasses = "character")
 
 # defining the lists of keywords to filter job agencies
@@ -127,10 +131,10 @@ head(companies_freqtable)
 
 ### print and view output
 
-# print output (remove the hashtag if you want to export the csv files)
-#write.csv(companies_freqtable , "companies_freqtable.csv")
-#write.csv(companies_names_dataframe , "companies_names_dataframe.csv")
-#write.csv(filteredout , "filteredout.csv")
+# print output
+write.csv(companies_freqtable , "Data/companies_freqtable.csv")
+write.csv(companies_names_dataframe , "Data/companies_names_dataframe.csv")
+write.csv(filteredout , "Data/filteredout.csv")
 
 # top view of the cumulative distribution of ads and company names
 head(companies_freqtable)
