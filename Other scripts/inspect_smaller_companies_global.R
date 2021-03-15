@@ -18,7 +18,7 @@ source("Other scripts/consolidate_company_names_country.R")
 ### generate a sample of companies between 20 and 99 ads
 
 #generate 5 subsamples with one company per level of ads frequency. note that company names have been selected in random order in the script filter_out_agencies_country.R, which underpins this script 
-subsample <- companies_names_dataframe[companies_names_dataframe$Freq<100 & companies_names_dataframe$Freq>19 , ]
+subsample <- companies_names_dataframe_original[companies_names_dataframe_original$Freq<100 & companies_names_dataframe_original$Freq>19 , ]
 subsample1 <- subsample[duplicated(subsample$Freq)==FALSE , ]
 colnames(subsample1) <- c("companyname1", "Freq")
 subsample1$if_agency1 <- NA
