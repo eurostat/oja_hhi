@@ -67,8 +67,9 @@ companies_names_dataframe$notgood <- ifelse(companies_names_dataframe$companynam
 companies_names_dataframe <- companies_names_dataframe[companies_names_dataframe$notgood != 1 , -3]
 str(companies_names_dataframe)
 
-# export list of companynames with at least 100 ads
-write.csv2(companies_names_dataframe[companynames_names_dataframe$Freq>99,], "Data/companies_list_atleast100ads.csv")
+# create a back-up list of all companies before applying the agency filter and export list of companynames with at least 100 ads
+companies_names_dataframe_original <- companies_names_dataframe
+write.csv2(companies_names_dataframe[companies_names_dataframe$Freq>99,], "Data/companies_list_atleast100ads.csv")
 
 
 ### applying the job agency filter
