@@ -337,6 +337,12 @@ lmcirun <- function(x){
     hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
     
     
+    hhigeo_pop <- subset(hhigeo, wmean > 2500)
+    hhigeo_pop <- aggregate(cbind(population = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
+    hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
+    hhigeo_pop <- merge(hhigeo_pop, hhigeo_wmean)
+    hhigeo_pop <- cbind(countrycode, hhigeo_pop, pop_share = hhigeo_pop$population/sum(as.numeric(fua$population)))
+    
     # Graphs ===========
     
     ggplot(hhigeo_q3_2018) +
