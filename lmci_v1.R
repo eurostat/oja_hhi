@@ -126,12 +126,15 @@ lmcirun <- function(x){
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
   #countrycode<-"IT"
-  if (countrycode=="IT"|countrycode=="RO") {
-    clean_names <- read.csv(paste0("companies_to_clean_" , countrycode , ".csv") , sep = ";")
-  } else {
-    clean_names <- read.csv(paste0("companies_to_clean_" , "EU" , ".csv") , sep = ";")
-  }
+  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ";")
+  clean_names <- clean_names[clean_names$country=="EU"|staff_agencies$Language==countrycode , ]
   
+  # if (countrycode=="IT"|countrycode=="RO") {
+  #   clean_names <- read.csv(paste0("companies_to_clean_" , countrycode , ".csv") , sep = ";")
+  # } else {
+  #   clean_names <- read.csv(paste0("companies_to_clean_" , "EU" , ".csv") , sep = ";")
+  # }
+  # 
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
     #cleaning the company name
@@ -183,6 +186,8 @@ lmcirun <- function(x){
   
   #Add other list of companies to be filtered
   filterlist <- c(filterlist,as.character(automflag_output[[5]]))
+  
+  staff_agencies_from_model <- as.character(automflag_output[[5]])
   
   filterlist_m <- as.data.frame(filterlist)
   filterlist_m$agency <- 1
