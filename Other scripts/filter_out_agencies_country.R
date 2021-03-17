@@ -3,7 +3,7 @@
 
 ### please insert below the country for which you want to run this code (2-letter isocode)
 
-country <- "RO"
+country <- "IT"
 
 
 ### this code helps with the development a list of recruiting agencies that can be removed from the OJA dataset when the analysis focuses on actual employers. it is divided in 4 main parts:
