@@ -209,7 +209,7 @@ create_hhigeo <- function(hhi = hhi){
 
 
 #7. gen_sum_stats
-  gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names) {
+  gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats <- c("avg_duration = mean(duration)" , "sd_duration = sd(duration)") ) {
     
   
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
@@ -217,7 +217,7 @@ create_hhigeo <- function(hhi = hhi){
   ## this function requires the packages "tidyverse" and "wihoja"; in addition, if the option standardise=TRUE is chosen, it requires calling the function sep() included in the set of functions developed for this project.
   ## the output of the function is a dataset with one observation per level of key_var, including summary statistics. In addition, the dataset contains identification variables for those levels of keyvar that are included in the lists of keywords.
   ## this is the list of default arguments given to the function:
-  #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
+  #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration "
   ## the variables in the OJA dataset for which sum stats are created
   #idcountry <- "IT"
   ## the country in the OJA dataset for which sum stats are computed
@@ -225,7 +225,7 @@ create_hhigeo <- function(hhi = hhi){
   ## sum stats are calculated for a sample of observations. this argument (a number expressed as text) determines the sample size
   #filterlist <- filteredout$companyname
   ## this argument (a "chr" object) provides a list of words/codes which are matched to the key_var argument, flagging observations accordingly. for example, this argument can indicate which observations we want to filter out for some subsequent analysis. an empty string ("") as an argument means that no list is provided.
-  #keeplist <- keep$companyname
+  #keeplist <- keep
   ## this argument (a "chr" object) provides a list of words/codes which are matched to the key_var argument, flagging observations accordingly. for example, this argument can indicate which observations we want to keep for some subsequent analysis.  an empty string ("") as an argument means that no list is provided.
   #key_var <- "companyname"
   ## this argument (the name of a variable in the OJA dataset) provides the key variable by which sum stats are computing. using the default, the function will calculate summary statistics by companyname
@@ -235,13 +235,14 @@ create_hhigeo <- function(hhi = hhi){
   ## this argument, when set (as in the default) as "TRUE", standardises the text of the levels of key_var
   #consolidate <- clean_names
   ## this argument takes the name of a table with keywords and, when different from "" or FALSE, uses this tabe to operate a consolidation of the entries in the observation identifier in the way described in the code consolidate_company_names.R within this project
-  
+  #otherstats <- c("avg_duration = mean(duration)" , "sd_duration = sd(duration)")
+  ## this argument must be written in strings that can be included as arguments in the tidyverse summarise() function. if supply additional aggregate stats to be calculated. if more than one additional stat is desired, then several strings must be concatenated. for the variable names to be formatted nicely, it must be separated by a space from the "=" sign.
   
   ### compile and run the query in the OJA dataset.
   
   querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM estat_dsl2531b_oja.ft_document_en_v8 WHERE idcountry='" , idcountry , "' ORDER BY RAND()  LIMIT " , samplesize)
   general_query <- query_athena(querytext)
-  dim(general_query)
+  str(general_query)
   
   
   ### arrange the new dataframe as needed
@@ -285,6 +286,14 @@ create_hhigeo <- function(hhi = hhi){
   sumstats_by_company_2 <- summarise_all(DF, sumstats)
   sumstats_by_company <- merge(sumstats_by_company_1 , sumstats_by_company_2, all.x=TRUE)
   
+  # optional stats
+  if (otherstats!="") {
+    for(i in 1:length(otherstats)) {
+      otherstats_by_company <- summarise(DF , eval(parse(text=otherstats[i])) )
+      colnames(otherstats_by_company) <- c("keyvar" , word(otherstats[i],1))
+      sumstats_by_company <- merge(sumstats_by_company , otherstats_by_company , all.x=TRUE)
+    }
+  }
   
   ### merge the newly extracted dataset with the lists provided as input (filterlist and keeplist) and code a variable (filteredout) that combines the two
   
