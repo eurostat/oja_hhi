@@ -191,6 +191,8 @@ lmcirun <- function(x){
   #Add other list of companies to be filtered
   filterlist <- c(filterlist,as.character(automflag_output[[5]]))
   
+  staff_agencies_from_model <- as.character(automflag_output[[5]])
+  
   filterlist_m <- as.data.frame(filterlist)
   filterlist_m$agency <- 1
   colnames(filterlist_m) <- c("companyname","agency")
