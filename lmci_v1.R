@@ -127,7 +127,7 @@ lmcirun <- function(x){
   # reading the keywords for data cleaning from imported file
   #countrycode<-"IT"
   clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ";")
-  clean_names <- clean_names[clean_names$country=="EU"|staff_agencies$Language==countrycode , ]
+  clean_names <- clean_names[clean_names$country=="EU"|staff_agencies$country==countrycode , ]
   
   # if (countrycode=="IT"|countrycode=="RO") {
   #   clean_names <- read.csv(paste0("companies_to_clean_" , countrycode , ".csv") , sep = ";")
@@ -147,8 +147,8 @@ lmcirun <- function(x){
   
   # import list of keywords to be used as filters
   
-  staff_agencies <- read.csv("staff_agencies_EU.csv" , sep = ";")
-  staff_agencies <- staff_agencies[staff_agencies$Language=="EN"|staff_agencies$Language==countrycode , ]
+  staff_agencies <- read.csv("staff_agencies_EU.csv" , sep = ",")
+  staff_agencies <- staff_agencies[staff_agencies$country=="EU"|staff_agencies$country==countrycode , ]
   
   blacklist <- staff_agencies[staff_agencies$exact != "exact" , 2]
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
