@@ -209,7 +209,7 @@ create_hhigeo <- function(hhi = hhi){
 
 
 #7. gen_sum_stats
-  gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats <- c("avg_duration = mean(duration)" , "sd_duration = sd(duration)") ) {
+  gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats = c("avg_duration = mean(duration)" , "avg_grab = mean(grab_date)") ) {
     
   
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
@@ -361,7 +361,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   #xvar4 <- ""
   ## this is an indipendent variable in the model. this argument is not required, and is empty in the default.
   #percentile <- 50
-  ## the regression model is estimated twice, the first including all observations for which flag==1, the second removing observations lying far away from the curve (outliers). The observations removed from the second estimate are those with the larget error terms derived from the first estimates. The argument "percentile" identifies the percentage of observations to be removed before running the second estimate. 
+  ## the regression model is estimated twice, the first including all observations for which flag==1, the second removing observations lying far away from the curve (outliers). The observations removed from the second estimate are those with the largest error terms derived from the first estimate. The argument "percentile" identifies the percentage of observations to be removed before running the second estimate. 
   #method <- "fit"
   ## after calculating the second and final regression model, observations with yvar substantially different from the value predicted by the model are not flagged (they are assigned a value of 0 in the new variable "autom_flag"). In contrast, observations with relatively small deviations from the estimated curve are flagged (they are assigned 1 in the new variable "autom_flag"). What is "substantially different" is determined through a set of arguments. if method is set as "fit", as in the default, the model residual for an observation (i.e. the difference between the actual value and the fitted value) is compared to the standard error of the fitted value to see if the actual value lies within the confidence interval of the estimate. If method=="error", then the observations which are not flagged are those with the largest model residuals. 
   #flag_threshold<-1.96
