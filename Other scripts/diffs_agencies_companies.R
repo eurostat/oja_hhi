@@ -31,24 +31,53 @@ sumstats_by_company$sqln_undup_n <- sumstats_by_company$ln_undup_n^2
 sumstats_by_company$culn_undup_n <- sumstats_by_company$ln_undup_n^3
 sumstats_by_company$quln_undup_n <- sumstats_by_company$ln_undup_n^4
 sumstats_by_company$ln_n <- log(sumstats_by_company$tot_n)
+
+sumstats_by_company$ln_esco4 <- log(sumstats_by_company$idesco_level_4)
+sumstats_by_company$ln_province <- log(sumstats_by_company$idprovince)
+sumstats_by_company$ln_city <- log(sumstats_by_company$idcity)
+sumstats_by_company$ln_region <- log(sumstats_by_company$idregion)
+sumstats_by_company$ln_sector <- log(sumstats_by_company$idsector)
+sumstats_by_company$ln_undup_prov <- sumstats_by_company$ln_province * sumstats_by_company$ln_undup_n
+sumstats_by_company$sqln_sector <- log(sumstats_by_company$idsector)^2
+sumstats_by_company$culn_sector <- log(sumstats_by_company$idsector)^3
+sumstats_by_company$quln_sector <- log(sumstats_by_company$idsector)^4
+sumstats_by_company$ln_grab <- log(sumstats_by_company$grab_date)
+sumstats_by_company$ln_duration <- log(sumstats_by_company$duration)
+sumstats_by_company$sqavg_duration <- sumstats_by_company$avg_duration^2
+sumstats_by_company$cuavg_duration <- sumstats_by_company$avg_duration^3
+sumstats_by_company$quavg_duration <- sumstats_by_company$avg_duration^4
+sumstats_by_company$duration120 <- 0
+sumstats_by_company$duration120[sumstats_by_company$avg_duration==120] <- 1
+sumstats_by_company$durationneg <- 0
+sumstats_by_company$durationneg[sumstats_by_company$avg_duration <= (-120)] <- 1
+
 #View(sumstats_by_company)
 #View(keep)
 
 #automflag_output <- automflag(method="error", error_pctile=90)
-automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+automflag_output <- automflag(yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
+automflag_output[[2]]
+automflag_output <- automflag(yvar="ln_prov", xvar1="ln_sector", xvar2="ln_undup_n", flag_above=FALSE, flag_below=TRUE)
 automflag_output[[2]]
 
 testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
 testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+#testflag3 <- automflag(yvar="ln_undup_n", xvar1="ln_sector", xvar2="sqln_sector" , xvar3="culn_sector", xvar4="quln_sector", flag_above=FALSE, flag_below=TRUE)
+testflag3 <- automflag(yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
 automflag_output_combo <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
+automflag_output_combo <- automflag_combine(automflag1= automflag_output_combo, automflag2= testflag3 )
 automflag_output_combo[[2]]
+
 datacombo <- automflag_output_combo[[1]]
 #View(datacombo[datacombo$false_pos==TRUE,])
 
 automflag_output_combo[[5]]
 
 
-
+plotdata <- sumstats_by_company[sumstats_by_company$tot_n>15 & sumstats_by_company$filteredout != -1, ]
+ggplot(data = plotdata) + 
+  geom_point(mapping = aes(x = ln_grab, y = ln_esco4, colour=filteredout))
+  
 
 
 
