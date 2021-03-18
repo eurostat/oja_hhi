@@ -56,6 +56,7 @@ parallel::mclapply(countrycodes,lmci_load)
   #########################
 lmci_calc<-function(countrycode){
   path <- paste0(countrycode, "/")
+  resultspath <- paste0(path,"Results/")
   
   options(scipen = 999)
   
@@ -327,8 +328,8 @@ lmci_calc<-function(countrycode){
   
   if (nrow(hhigeo) > 0){
     quarters<-c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q3","2019-q4")
-    lapply(quarters,hhigeo_subset,data=hhigeo)
-    
+    hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
+    names(hhigeo_q)<-quarters
     # hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
     # hhigeo_q3_2018$label <- paste0(hhigeo_q3_2018$fua_name, "\n ", as.character(hhigeo_q3_2018$wmean))
     # 
@@ -356,37 +357,40 @@ lmci_calc<-function(countrycode){
     
     # Graphs ===========
     
-    ggplot(hhigeo_q3_2018) +
-      geom_sf( aes(fill = wmean)) + theme_void() +
-      theme(panel.grid.major = element_line(colour = "transparent")) +
-      labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
-      scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
-      geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-      geom_sf(data=geoinfo,alpha = 0)
-    
-    ggsave(paste0(resultspath,"HHI_q32018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    lapply(quarters, hhigeo_plot)
     
     
-    ggplot(hhigeo_q4_2018) +
-      geom_sf(aes(fill = wmean)) + theme_void() +
-      theme(panel.grid.major = element_line(colour = "transparent")) +
-      labs(title = "Labour market concentration index Q4-2018\naverage over all occupations") +
-      scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
-      geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-      geom_sf(data=geoinfo,alpha = 0)
-    
-    ggsave(paste0(resultspath,"HHI_q42018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
-    
-    
-    ggplot(hhigeo_q1_2019) +
-      geom_sf(aes(fill = wmean)) + theme_void() +
-      theme(panel.grid.major = element_line(colour = "transparent")) +
-      labs(title = "Labour market concentration index Q1-2019\naverage over all occupations") +
-      scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
-      geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-      geom_sf(data=geoinfo,alpha = 0)
-    
-    ggsave(paste0(resultspath,"HHI_q12019_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    # ggplot(hhigeo_q3_2018) +
+    #   geom_sf( aes(fill = wmean)) + theme_void() +
+    #   theme(panel.grid.major = element_line(colour = "transparent")) +
+    #   labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
+    #   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+    #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    #   geom_sf(data=geoinfo,alpha = 0)
+    # 
+    # ggsave(paste0(resultspath,"HHI_q32018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    # 
+    # 
+    # ggplot(hhigeo_q4_2018) +
+    #   geom_sf(aes(fill = wmean)) + theme_void() +
+    #   theme(panel.grid.major = element_line(colour = "transparent")) +
+    #   labs(title = "Labour market concentration index Q4-2018\naverage over all occupations") +
+    #   scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
+    #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    #   geom_sf(data=geoinfo,alpha = 0)
+    # 
+    # ggsave(paste0(resultspath,"HHI_q42018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    # 
+    # 
+    # ggplot(hhigeo_q1_2019) +
+    #   geom_sf(aes(fill = wmean)) + theme_void() +
+    #   theme(panel.grid.major = element_line(colour = "transparent")) +
+    #   labs(title = "Labour market concentration index Q1-2019\naverage over all occupations") +
+    #   scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
+    #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    #   geom_sf(data=geoinfo,alpha = 0)
+    # 
+    # ggsave(paste0(resultspath,"HHI_q12019_", countrycode, ".png"), width = 15, height = 10, units = "cm")
     
     
     
