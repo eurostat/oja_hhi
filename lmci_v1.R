@@ -31,10 +31,10 @@ source("hhi_functions.R")
 open_oja_db()
 
 ####declaring function for calculating Labour market concentration index. Creates subfolder for each country####
+countrycodes <- get("cc",.restatapi_env)$EU27_2020
+# countrycode<-countrycodes[x]
 
-lmcirun <- function(x){
-  countrycodes <- get("cc",.restatapi_env)$EU27_2020
-  countrycode<-countrycodes[x]
+lmci_load <- function(countrycode){
   path <- paste0(countrycode, "/")
   dir.create(countrycode)
   resultspath <- paste0(path,"Results/")
@@ -50,14 +50,17 @@ lmcirun <- function(x){
   data <- query_athena(query)
   
   saveRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
-  
+}  
+
+parallel::mclapply(countrycodes,lmci_load)
   #########################
+lmci_calc<-function(countrycode){
+  path <- paste0(countrycode, "/")
   
   options(scipen = 999)
   
   dframe <- readRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
   setDT(dframe)
-  rm(data)
   
   # mark deduplication
   #remove observations already marked as duplicate by CEDEFOP
@@ -323,24 +326,26 @@ lmcirun <- function(x){
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   
   if (nrow(hhigeo) > 0){
+    quarters<-c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q3","2019-q4")
+    lapply(quarters,hhigeo_subset,data=hhigeo)
     
-    hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
-    hhigeo_q3_2018$label <- paste0(hhigeo_q3_2018  $fua_name, "\n ", as.character(hhigeo_q3_2018$wmean))
-    
-    hhigeo_q4_2018 <- subset(hhigeo, qtr == "2018-q4")
-    hhigeo_q4_2018$label <- paste0(hhigeo_q4_2018$fua_name, "\n ", as.character(hhigeo_q4_2018$wmean))
-    
-    hhigeo_q1_2019 <- subset(hhigeo, qtr == "2019-q1")
-    hhigeo_q1_2019$label <- paste0(hhigeo_q1_2019$fua_name, "\n ", as.character(hhigeo_q1_2019$wmean))
-    
-    hhigeo_q2_2019 <- subset(hhigeo, qtr == "2019-q2")
-    hhigeo_q2_2019$label <- paste0(hhigeo_q2_2019$fua_name, "\n ", as.character(hhigeo_q2_2019$wmean))
-    
-    hhigeo_q3_2019 <- subset(hhigeo, qtr == "2019-q3")
-    hhigeo_q3_2019$label <- paste0(hhigeo_q3_2019$fua_name, "\n ", as.character(hhigeo_q3_2019$wmean))
-    
-    hhigeo_q4_2019 <- subset(hhigeo, qtr == "2019-q4")
-    hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
+    # hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
+    # hhigeo_q3_2018$label <- paste0(hhigeo_q3_2018$fua_name, "\n ", as.character(hhigeo_q3_2018$wmean))
+    # 
+    # hhigeo_q4_2018 <- subset(hhigeo, qtr == "2018-q4")
+    # hhigeo_q4_2018$label <- paste0(hhigeo_q4_2018$fua_name, "\n ", as.character(hhigeo_q4_2018$wmean))
+    # 
+    # hhigeo_q1_2019 <- subset(hhigeo, qtr == "2019-q1")
+    # hhigeo_q1_2019$label <- paste0(hhigeo_q1_2019$fua_name, "\n ", as.character(hhigeo_q1_2019$wmean))
+    # 
+    # hhigeo_q2_2019 <- subset(hhigeo, qtr == "2019-q2")
+    # hhigeo_q2_2019$label <- paste0(hhigeo_q2_2019$fua_name, "\n ", as.character(hhigeo_q2_2019$wmean))
+    # 
+    # hhigeo_q3_2019 <- subset(hhigeo, qtr == "2019-q3")
+    # hhigeo_q3_2019$label <- paste0(hhigeo_q3_2019$fua_name, "\n ", as.character(hhigeo_q3_2019$wmean))
+    # 
+    # hhigeo_q4_2019 <- subset(hhigeo, qtr == "2019-q4")
+    # hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
     
     
     hhigeo_pop <- subset(hhigeo, wmean > 2500)
@@ -439,6 +444,7 @@ lmcirun <- function(x){
   }
 }
 
+lapply(1,  lmci_calc)
 #run function to all 27MS
 lapply(1:27,lmcirun)
 
