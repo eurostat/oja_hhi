@@ -126,7 +126,7 @@ lmcirun <- function(x){
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
 
-  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
+  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ";")
   clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
