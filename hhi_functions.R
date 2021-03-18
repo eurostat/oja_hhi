@@ -10,6 +10,7 @@
 # 8. automflag
 # 9. automflag_combine
 # 10. hhigeo_subset
+# 11. hhigeo_plot
 
 ##Function for cleaning the 'companyname' column
 
@@ -177,11 +178,11 @@ calculate_hhi <- function (dframe = dframe) {
   
   hhi <- na.omit(hhi)
   
-  totalmean <- mean(hhi$hhi)
-  totalmean
-  totalmedian <- median(hhi$hhi)
-  totalmedian  
-  
+  # totalmean <- mean(hhi$hhi)
+  # totalmean
+  # totalmedian <- median(hhi$hhi)
+  # totalmedian  
+  # 
   #describe(hhi$hhi)
   
   #empirical cumulative distribution function for value 2500
@@ -652,9 +653,23 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
 }
 
 
-# subsetting hhigeo per quarter
-hhigeo_susbset<-function(quarter,hhigeo){
-  hhigeo_q <- subset(hhigeo, qtr == quarter)
+# 10. subsetting hhigeo per quarter
+hhigeo_subset<-function(quarter,data){
+  hhigeo_q <- subset(data, qtr == quarter)
   hhigeo_q$label <- paste0(hhigeo_q$fua_name, "\n ", as.character(hhigeo_q$wmean))
   return(hhigeo_q)
+}
+
+
+# 11. plotting hhigeo
+hhigeo_plot<-function(qrtr){
+  ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
+    geom_sf( aes(fill = wmean)) + theme_void() +
+    theme(panel.grid.major = element_line(colour = "transparent")) +
+    labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
+    scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+    geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    geom_sf(data=geoinfo,alpha = 0)
+  
+  ggsave(paste0(resultspath,"HHI_",qrtr,"_", countrycode, ".png"), width = 15, height = 10, units = "cm")
 }
