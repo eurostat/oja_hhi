@@ -209,13 +209,10 @@ create_hhigeo <- function(hhi = hhi){
 
 
 #7. gen_sum_stats
-<<<<<<< HEAD
+
   gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats = c("avg_duration = mean(duration)" , "avg_grab = mean(grab_date)") ) {
-=======
-  gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names) {
->>>>>>> 9175bcfe7499cc6f4ebdc1c254cbf235bdbea349
-    
-  
+
+
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
   
   ## this function requires the packages "tidyverse" and "wihoja"; in addition, if the option standardise=TRUE is chosen, it requires calling the function sep() included in the set of functions developed for this project.
