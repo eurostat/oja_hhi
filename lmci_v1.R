@@ -125,12 +125,9 @@ lmcirun <- function(x){
   ####COMPANYNAME CONSOLIDATION#################################################################################################
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
-  #countrycode<-"IT"
-  if (countrycode=="IT"|countrycode=="RO") {
-    clean_names <- read.csv(paste0("companies_to_clean_" , countrycode , ".csv") , sep = ";")
-  } else {
-    clean_names <- read.csv(paste0("companies_to_clean_" , "EU" , ".csv") , sep = ";")
-  }
+
+  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
+  clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
@@ -144,8 +141,8 @@ lmcirun <- function(x){
   
   # import list of keywords to be used as filters
   
-  staff_agencies <- read.csv("staff_agencies_EU.csv" , sep = ";")
-  staff_agencies <- staff_agencies[staff_agencies$Language=="EN"|staff_agencies$Language==countrycode , ]
+  staff_agencies <- read.csv("staff_agencies_EU.csv" , sep = ",")
+  staff_agencies <- staff_agencies[staff_agencies$country=="EU"|staff_agencies$country==countrycode , ]
   
   blacklist <- staff_agencies[staff_agencies$exact != "exact" , 2]
   blacklist_exact <- staff_agencies[staff_agencies$exact == "exact" , 2]
