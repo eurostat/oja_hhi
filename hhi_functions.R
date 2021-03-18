@@ -4,11 +4,12 @@
 # 2. empty_as_na
 # 3. createfua
 # 3b. assignFUA
-# 4. calculate_hhi
-# 5. create_hhigeo
-# 6. gen_sum_stats
-# 7. automflag
-# 8. automflag_combine
+# 5. calculate_hhi
+# 6. create_hhigeo
+# 7. gen_sum_stats
+# 8. automflag
+# 9. automflag_combine
+# 10. hhigeo_subset
 
 ##Function for cleaning the 'companyname' column
 
@@ -650,3 +651,10 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   
 }
 
+
+# subsetting hhigeo per quarter
+hhigeo_susbset<-function(quarter,hhigeo){
+  hhigeo_q <- subset(hhigeo, qtr == quarter)
+  hhigeo_q$label <- paste0(hhigeo_q$fua_name, "\n ", as.character(hhigeo_q$wmean))
+  return(hhigeo_q)
+}
