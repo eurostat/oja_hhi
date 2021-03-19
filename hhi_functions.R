@@ -585,10 +585,10 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   ### merge the two automatic flags and compare them with the user-provided flag
   
   # merge the two automatic flags
-  firstflag <- automflag1[[1]]
+  firstflag <- automflag1[[1]][,1:2]
   colnames(firstflag) <- c("companyname" , "firstflag")
   firstflag$firstflag <- as.numeric(firstflag$firstflag)
-  secondflag <- automflag2[[1]]
+  secondflag <- automflag2[[1]][,1:2]
   colnames(secondflag) <- c("companyname" , "secondflag")
   secondflag$secondflag <- as.numeric(secondflag$secondflag)
   twoflags <- merge(firstflag,secondflag)
@@ -603,9 +603,7 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   } else {
     twoflags$thirdflag[twoflags$firstflag==1 & twoflags$secondflag==1] <- 1
   }
-  #output 1 is the same type of output as the homonimous output in the automflag function. 
-  output1 <- as.data.frame(cbind(twoflags$companyname , twoflags$thirdflag))
-  colnames(output1) <- c("companyname" , "autom_flag")
+  
   
   # merge with the user-provided flag
   filterdata <- cbind( eval(parse(text=paste("mydata$", names, sep = ""))) , eval(parse(text=paste("mydata$", flag, sep = ""))) )
@@ -628,6 +626,12 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   false_neg <- sum(twoflags$false_neg)
   unkn_pos <- sum(twoflags$unkn_pos)
   unkn_neg <- sum(twoflags$unkn_neg)
+  
+  #output 1 is the same type of output as the homonimous output in the automflag function. 
+  output1 <- as.data.frame(cbind(twoflags$companyname,twoflags$thirdflag,twoflags$filteredout))
+  colnames(output1) <- c("companyname" , "autom_flag" , "comb")
+  output1$comboflag <- output1$comb
+  output1$comboflag[output1$comb!=0&output1$comb!=1] <- output1$autom_flag[output1$comb!=0&output1$comb!=1]
   
   #output 2 is the same type of output as the homonimous output in the automflag function. 
   output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))

@@ -64,6 +64,7 @@ automflag_output <- automflag(yvar="ln_grab", xvar1="ln_esco4", xvar2="sqln_esco
 automflag_output[[2]]
 automflag_output <- automflag(yvar="ln_grab", xvar1="ln_undup_n", xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", flag_above=TRUE, flag_below=FALSE)
 automflag_output[[2]]
+#View(automflag_output[[1]])
 
 testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
 testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
@@ -87,14 +88,21 @@ ggplot(data = plotdata) +
 ### evaluate
 datacombo <- automflag_output_combo[[1]]
 #View(datacombo)
-#View(datacombo[datacombo$false_pos==TRUE,])
 modelevaluation <- merge(datacombo , evaluation_filteredout_m , all = TRUE)
 modelevaluation <- merge(modelevaluation , evaluation_keep_m , all = TRUE)
+modelevaluation$agency[modelevaluation$actualemployer==1] <- 0
+filteredout_m <- filteredout
+filteredout_m$Freq <- 1
+colnames(filteredout_m) <- c("companyname","filteredout_m")
+modelevaluation <- merge(modelevaluation , filteredout_m , all.x = TRUE)
+modelevaluation$comboflag[modelevaluation$filteredout_m==1] <- 1
 #View(modelevaluation)
+table(modelevaluation$agency)
+table(modelevaluation$agency[modelevaluation$comboflag==1])
+table(modelevaluation$agency[modelevaluation$comboflag==0])
+table(modelevaluation$agency[is.na(modelevaluation$comboflag)==TRUE])
 
-
-
-
+str(filteredout)
 
 
 
