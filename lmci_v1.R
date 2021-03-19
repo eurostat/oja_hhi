@@ -22,7 +22,7 @@ library(giscoR)
 library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
 #devtools::install_github("eurostat/wihoja", auth_token= "***REMOVED***")
 
-####SOOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
+####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
 
@@ -129,7 +129,9 @@ lmcirun <- function(x){
   clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
   clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
-  # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
+  message(class(clean_names))
+ 
+   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
     #cleaning the company name
     dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
@@ -159,7 +161,7 @@ lmcirun <- function(x){
   keep <- as.data.frame(clean_names$replace_with)
   colnames(keep) <- "companyname" 
 
-  sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname)
+  sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname, consolidate=clean_names)
   str(sumstats_by_company)
   
   #generate logs
@@ -174,9 +176,9 @@ lmcirun <- function(x){
   sumstats_by_company$ln_undup_prov <- sumstats_by_company$ln_province * sumstats_by_company$ln_undup_n
   
   
-  testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
-  testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
-  testflag3 <- automflag(yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
+  testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+  testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+  testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
   automflag_output <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
   automflag_output <- automflag_combine(automflag1= automflag_output, automflag2= testflag3 )
   
@@ -323,6 +325,7 @@ lmcirun <- function(x){
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   
   if (nrow(hhigeo) > 0){
+    
     
     hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
     hhigeo_q3_2018$label <- paste0(hhigeo_q3_2018  $fua_name, "\n ", as.character(hhigeo_q3_2018$wmean))
