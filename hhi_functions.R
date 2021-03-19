@@ -213,7 +213,9 @@ create_hhigeo <- function(hhi = hhi){
 
 
 #7. gen_sum_stats
+
   gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats = c("avg_duration = mean(duration)" , "avg_grab = mean(grab_date)") ) {
+
 
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
   
@@ -502,30 +504,26 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
     mydata$autom_flag <- mydata$autom_flag2
   }
   
-  # compile a list of all observations with a variable indicating if they have been flagged or not based on the regression model. this is going to be part of the function output. 
-  output1 <- as.data.frame(cbind(nam,mydata$autom_flag))
-  colnames(output1) <- c(names, "autom_flag")
-
   
   ### combine the flagging variable provided by the user with the flag automatically generated through this function. the idea is that the values (0s and 1s) assigned by the user in its flag variable should not be overwritten. the automatically assigned flag applies only to observations that have not been coded by the user.
    
-  # generate a data matrix containing the observation identifier (nam), the flag variable provided by the user (fl), and the flag variable automatically generated through the regression model (autom_flag)  
-  output45 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
-  colnames(output45) <- c(names, "autom_flag", "comb")
-  output45$autom_flag <- as.numeric(output45$autom_flag)
-  output45$comb <- as.numeric(output45$comb)
+  # generate a data matrix containing the observation identifier (nam), the flag variable provided by the user (fl), and the flag variable automatically generated through the regression model (autom_flag). this is stored as output1  
+  output1 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
+  colnames(output1) <- c(names, "autom_flag", "comb")
+  output1$autom_flag <- as.numeric(output1$autom_flag)
+  output1$comb <- as.numeric(output1$comb)
   
   # generate a comboflag that combines the user-provided flag and the automatic flag. The values of the user-provided flag have priority, and the automatically generated values are used only for those observations for which the user had not provided input
-  output45$comboflag <- 0
-  output45$comboflag[output45$autom_flag==1 & output45$comb!=0] <- 1
+  output1$comboflag <- 0
+  output1$comboflag[output1$autom_flag==1 & output1$comb!=0] <- 1
 
   # generate a variable indicating only those observations that have been flagged on top of those already flagged by the user
-  output45$newflag <- 0
-  output45$newflag[output45$comb!=0 & output45$comb!=1 & output45$autom_flag==1] <- 1
+  output1$newflag <- 0
+  output1$newflag[output1$comb!=0 & output1$comb!=1 & output1$autom_flag==1] <- 1
 
   # define two lists of observation identifiers, which are going to be included among the function's outputs. one list (output 4) includes all observation names/codes that are flagged using the previously described combo-approach; the other list (output5) contains only only the names/codes of those flagged observations that were not previously coded by the user
-  output4 <- output45$companyname[output45$comboflag==1]
-  output5 <- output45$companyname[output45$newflag==1]
+  output4 <- output1$companyname[output1$comboflag==1]
+  output5 <- output1$companyname[output1$newflag==1]
   
   
   ### calculate number of false/true positives/negatives that can be identified by comparing the automatically generated flag with the ("true") classification provided by the user for a subset of the observations. this is going to be included in the function's output
@@ -591,10 +589,10 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   ### merge the two automatic flags and compare them with the user-provided flag
   
   # merge the two automatic flags
-  firstflag <- automflag1[[1]]
+  firstflag <- automflag1[[1]][,1:2]
   colnames(firstflag) <- c("companyname" , "firstflag")
   firstflag$firstflag <- as.numeric(firstflag$firstflag)
-  secondflag <- automflag2[[1]]
+  secondflag <- automflag2[[1]][,1:2]
   colnames(secondflag) <- c("companyname" , "secondflag")
   secondflag$secondflag <- as.numeric(secondflag$secondflag)
   twoflags <- merge(firstflag,secondflag)
@@ -609,9 +607,7 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   } else {
     twoflags$thirdflag[twoflags$firstflag==1 & twoflags$secondflag==1] <- 1
   }
-  #output 1 is the same type of output as the homonimous output in the automflag function. 
-  output1 <- as.data.frame(cbind(twoflags$companyname , twoflags$thirdflag))
-  colnames(output1) <- c("companyname" , "autom_flag")
+  
   
   # merge with the user-provided flag
   filterdata <- cbind( eval(parse(text=paste("mydata$", names, sep = ""))) , eval(parse(text=paste("mydata$", flag, sep = ""))) )
@@ -634,6 +630,12 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   false_neg <- sum(twoflags$false_neg)
   unkn_pos <- sum(twoflags$unkn_pos)
   unkn_neg <- sum(twoflags$unkn_neg)
+  
+  #output 1 is the same type of output as the homonimous output in the automflag function. 
+  output1 <- as.data.frame(cbind(twoflags$companyname,twoflags$thirdflag,twoflags$filteredout))
+  colnames(output1) <- c("companyname" , "autom_flag" , "comb")
+  output1$comboflag <- output1$comb
+  output1$comboflag[output1$comb!=0&output1$comb!=1] <- output1$autom_flag[output1$comb!=0&output1$comb!=1]
   
   #output 2 is the same type of output as the homonimous output in the automflag function. 
   output2 <- as.data.frame(cbind(true_pos, true_neg, false_pos, false_neg, unkn_pos, unkn_neg ))

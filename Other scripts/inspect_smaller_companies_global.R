@@ -50,13 +50,23 @@ write.csv2(subsample, "Data/subsample_companynames.csv")
 # -> manual editing (or at least renaming) of the exported file is necessary at this point
 # -> re-import the file after manual input or renaming
 subsample_import <- paste0( "Data/subsample_companynames_import_" , country , ".csv")
-add_clean_names <- read.csv(subsample_import , sep = ";")
+evaluation_sample <- read.csv(subsample_import , sep = ";")
 
 #generate vectors of companynames identified as agencies or companies
-add_filteredout <-  c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==1]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==1]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==1]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==1]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==1]) )
-add_keep <-  c(na.omit(add_clean_names$companyname1[add_clean_names$if_agency1==0]) , na.omit(add_clean_names$companyname2[add_clean_names$if_agency2==0]) , na.omit(add_clean_names$companyname3[add_clean_names$if_agency3==0]) , na.omit(add_clean_names$companyname4[add_clean_names$if_agency4==0]) , na.omit(add_clean_names$companyname5[add_clean_names$if_agency5==0]) )
-str(add_filteredout)
-str(add_keep)
+evaluation_filteredout <-  c(na.omit(evaluation_sample$companyname1[evaluation_sample$if_agency1==1|evaluation_sample$if_agency1==2]) , na.omit(evaluation_sample$companyname2[evaluation_sample$if_agency2==1|evaluation_sample$if_agency2==2]) , na.omit(evaluation_sample$companyname3[evaluation_sample$if_agency3==1|evaluation_sample$if_agency3==2]) , na.omit(evaluation_sample$companyname4[evaluation_sample$if_agency4==1|evaluation_sample$if_agency4==2]) , na.omit(evaluation_sample$companyname5[evaluation_sample$if_agency5==1|evaluation_sample$if_agency5==2]) )
+evaluation_keep <-  c(na.omit(evaluation_sample$companyname1[evaluation_sample$if_agency1==0]) , na.omit(evaluation_sample$companyname2[evaluation_sample$if_agency2==0]) , na.omit(evaluation_sample$companyname3[evaluation_sample$if_agency3==0]) , na.omit(evaluation_sample$companyname4[evaluation_sample$if_agency4==0]) , na.omit(evaluation_sample$companyname5[evaluation_sample$if_agency5==0]) )
+str(evaluation_filteredout)
+str(evaluation_keep)
+
+#prepare them for an easy merge
+evaluation_filteredout_m <- as.data.frame(evaluation_filteredout)
+evaluation_filteredout_m$agency <- 1
+colnames(evaluation_filteredout_m) <- c("companyname" , "agency")
+evaluation_keep_m <- as.data.frame(evaluation_keep)
+evaluation_keep_m$actualemployer <- 1
+colnames(evaluation_keep_m) <- c("companyname" , "actualemployer")
+str(evaluation_filteredout_m)
+str(evaluation_keep_m)
 
 
 

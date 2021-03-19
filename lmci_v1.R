@@ -22,10 +22,11 @@ library(giscoR)
 library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
 #devtools::install_github("eurostat/wihoja", auth_token= "a1XXXXXXXXXXXXXXXXXXXXXXea4a2ab9621f")
 
+
 # set number of cores to be used for parallel processing
 options(mc.cores=4)
 
-####SOOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
+####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
 
@@ -139,6 +140,7 @@ lmci_calc<-function(countrycode){
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
 
+
   clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
   clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
@@ -179,7 +181,7 @@ lmci_calc<-function(countrycode){
 
   sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname)
   # str(sumstats_by_company)
-  
+
   #generate logs
   sumstats_by_company$ln_esco3 <- log(sumstats_by_company$idesco_level_3)
   sumstats_by_company$ln_undup_n <- log(sumstats_by_company$tot_n - sumstats_by_company$tot_dups)
@@ -192,6 +194,7 @@ lmci_calc<-function(countrycode){
   sumstats_by_company$ln_undup_prov <- sumstats_by_company$ln_province * sumstats_by_company$ln_undup_n
   
   
+
   testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
   testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
   testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
@@ -341,6 +344,7 @@ lmci_calc<-function(countrycode){
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   
   if (nrow(hhigeo) > 0){
+
     quarters<-c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
     hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
     names(hhigeo_q)<-quarters
@@ -361,6 +365,7 @@ lmci_calc<-function(countrycode){
     # 
     # hhigeo_q4_2019 <- subset(hhigeo, qtr == "2019-q4")
     # hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
+
     
     
     hhigeo_pop <- subset(hhigeo, wmean > 2500)
