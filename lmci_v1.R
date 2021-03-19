@@ -56,6 +56,8 @@ lmci_load <- function(countrycode){
 }  
 
 parallel::mclapply(countrycodes,lmci_load)
+
+
   #########################
 lmci_calc<-function(countrycode){
   path <- paste0(countrycode, "/")
@@ -71,16 +73,20 @@ lmci_calc<-function(countrycode){
   #"duplicate" observations differ in their content
   #therefore we keep, from each duplicate group, the observation with the lowest number of missing variables
   num_raw_obs <- nrow(dframe)
-  dframe$na_count <- rowSums(is.na(dframe))
+  # dframe$na_count <- rowSums(is.na(dframe))
+  dframe[,na_count:=rowSums(is.na(.SD))]
   
-  dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
-  setDT(dframe)
+  # dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
+  # setDT(dframe)
+  dframe <- setorder(dframe,by=general_id,na_count)
   
-  dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
+  # dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
+  dframe[,dup:=as.numeric(duplicated(general_id))]
   
   # convert dates
   
-  dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
+  # dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
+  dframe[,grab_date:=as.Date(grab_date, origin = "1970-01-01")]
   
   # add quarter column 
   
@@ -172,7 +178,7 @@ lmci_calc<-function(countrycode){
   colnames(keep) <- "companyname" 
 
   sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname)
-  str(sumstats_by_company)
+  # str(sumstats_by_company)
   
   #generate logs
   sumstats_by_company$ln_esco3 <- log(sumstats_by_company$idesco_level_3)
@@ -186,11 +192,11 @@ lmci_calc<-function(countrycode){
   sumstats_by_company$ln_undup_prov <- sumstats_by_company$ln_province * sumstats_by_company$ln_undup_n
   
   
-  testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
-  testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
-  testflag3 <- automflag(yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
-  automflag_output <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
-  automflag_output <- automflag_combine(automflag1= automflag_output, automflag2= testflag3 )
+  testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+  testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+  testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
+  automflag_output <- automflag_combine(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],automflag1= testflag1, automflag2= testflag2 )
+  automflag_output <- automflag_combine(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],automflag1= automflag_output, automflag2= testflag3 )
   
   
   # automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
@@ -335,7 +341,7 @@ lmci_calc<-function(countrycode){
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   
   if (nrow(hhigeo) > 0){
-    quarters<-c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q3","2019-q4")
+    quarters<-c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
     hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
     names(hhigeo_q)<-quarters
     # hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
@@ -405,11 +411,14 @@ lmci_calc<-function(countrycode){
     # HHI tables by region --------------------------
     
     
-    table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
+    # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
+    
+    table <- data.frame(cbind(hhigeo_q[[1]]$fua_id, hhigeo_q[[1]]$fua_name,sapply(quarters,function(x){eval(parse(text=paste0("hhigeo_q$`",x,"`$wmean")))})))
+                       
     
     table <- table[!is.na(table[,2]),]
     
-    colnames(table) <- c("FUA", "Name", "Avg. Q3 2018", "Avg. Q4 2018", "Avg. Q1 2019" )
+    colnames(table) <- c("FUA", "Name", paste("Avg. ",quarters))
     
     write.xlsx(table,
                file = paste0(resultspath,"HHI_FUA_", countrycode, ".xlsx"), sheetName = "Sheet1",
@@ -456,9 +465,11 @@ lmci_calc<-function(countrycode){
   }
 }
 
-lapply("BE",  lmci_calc)
-#run function to all 27MS
-lapply(1:27,lmcirun)
+# test for a sample country
+# lapply("BE",  lmci_calc)
+#run function to all 27MS in parallel
+parallel::mclapply(countrycodes,lmci_calc)
+# lapply(1:27,lmcirun)
 
 #aggregate the results from countries and plot
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo",full.names=T)
