@@ -22,6 +22,9 @@ library(giscoR)
 library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
 #devtools::install_github("eurostat/wihoja", auth_token= "a1XXXXXXXXXXXXXXXXXXXXXXea4a2ab9621f")
 
+# set number of cores to be used for parallel processing
+options(mc.cores=4)
+
 ####SOOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -130,15 +133,20 @@ lmci_calc<-function(countrycode){
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
 
-  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ";")
+  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
   clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-  for(i in 1:dim(clean_names)[1]) {
-    #cleaning the company name
-    dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
-    dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
+  # for(i in 1:dim(clean_names)[1]) {
+  #   #cleaning the company name
+  #   dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
+  #   dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
+  # }
+  f_clean_names<-function(cl,dframe){
+    dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
+    dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
   }
+  lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
   
   #####AGENCY FILTER#################################################################################################
   #################################################################################################  
@@ -448,7 +456,7 @@ lmci_calc<-function(countrycode){
   }
 }
 
-lapply(1,  lmci_calc)
+lapply("BE",  lmci_calc)
 #run function to all 27MS
 lapply(1:27,lmcirun)
 

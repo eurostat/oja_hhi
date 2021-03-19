@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 [A-Z][A-Z]/
+EU-28*
+NUTS2013*
