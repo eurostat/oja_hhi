@@ -500,30 +500,26 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
     mydata$autom_flag <- mydata$autom_flag2
   }
   
-  # compile a list of all observations with a variable indicating if they have been flagged or not based on the regression model. this is going to be part of the function output. 
-  output1 <- as.data.frame(cbind(nam,mydata$autom_flag))
-  colnames(output1) <- c(names, "autom_flag")
-
   
   ### combine the flagging variable provided by the user with the flag automatically generated through this function. the idea is that the values (0s and 1s) assigned by the user in its flag variable should not be overwritten. the automatically assigned flag applies only to observations that have not been coded by the user.
    
-  # generate a data matrix containing the observation identifier (nam), the flag variable provided by the user (fl), and the flag variable automatically generated through the regression model (autom_flag)  
-  output45 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
-  colnames(output45) <- c(names, "autom_flag", "comb")
-  output45$autom_flag <- as.numeric(output45$autom_flag)
-  output45$comb <- as.numeric(output45$comb)
+  # generate a data matrix containing the observation identifier (nam), the flag variable provided by the user (fl), and the flag variable automatically generated through the regression model (autom_flag). this is stored as output1  
+  output1 <- as.data.frame(cbind(nam,mydata$autom_flag,fl))
+  colnames(output1) <- c(names, "autom_flag", "comb")
+  output1$autom_flag <- as.numeric(output1$autom_flag)
+  output1$comb <- as.numeric(output1$comb)
   
   # generate a comboflag that combines the user-provided flag and the automatic flag. The values of the user-provided flag have priority, and the automatically generated values are used only for those observations for which the user had not provided input
-  output45$comboflag <- 0
-  output45$comboflag[output45$autom_flag==1 & output45$comb!=0] <- 1
+  output1$comboflag <- 0
+  output1$comboflag[output1$autom_flag==1 & output1$comb!=0] <- 1
 
   # generate a variable indicating only those observations that have been flagged on top of those already flagged by the user
-  output45$newflag <- 0
-  output45$newflag[output45$comb!=0 & output45$comb!=1 & output45$autom_flag==1] <- 1
+  output1$newflag <- 0
+  output1$newflag[output1$comb!=0 & output1$comb!=1 & output1$autom_flag==1] <- 1
 
   # define two lists of observation identifiers, which are going to be included among the function's outputs. one list (output 4) includes all observation names/codes that are flagged using the previously described combo-approach; the other list (output5) contains only only the names/codes of those flagged observations that were not previously coded by the user
-  output4 <- output45$companyname[output45$comboflag==1]
-  output5 <- output45$companyname[output45$newflag==1]
+  output4 <- output1$companyname[output1$comboflag==1]
+  output5 <- output1$companyname[output1$newflag==1]
   
   
   ### calculate number of false/true positives/negatives that can be identified by comparing the automatically generated flag with the ("true") classification provided by the user for a subset of the observations. this is going to be included in the function's output

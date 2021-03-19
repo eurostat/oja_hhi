@@ -46,13 +46,13 @@ sumstats_by_company$culn_sector <- log(sumstats_by_company$idsector)^3
 sumstats_by_company$quln_sector <- log(sumstats_by_company$idsector)^4
 sumstats_by_company$ln_grab <- log(sumstats_by_company$grab_date)
 sumstats_by_company$ln_duration <- log(sumstats_by_company$duration)
-sumstats_by_company$sqavg_duration <- sumstats_by_company$avg_duration^2
-sumstats_by_company$cuavg_duration <- sumstats_by_company$avg_duration^3
-sumstats_by_company$quavg_duration <- sumstats_by_company$avg_duration^4
-sumstats_by_company$duration120 <- 0
-sumstats_by_company$duration120[sumstats_by_company$avg_duration==120] <- 1
-sumstats_by_company$durationneg <- 0
-sumstats_by_company$durationneg[sumstats_by_company$avg_duration <= (-120)] <- 1
+#sumstats_by_company$sqavg_duration <- sumstats_by_company$avg_duration^2
+#sumstats_by_company$cuavg_duration <- sumstats_by_company$avg_duration^3
+#sumstats_by_company$quavg_duration <- sumstats_by_company$avg_duration^4
+#sumstats_by_company$duration120 <- 0
+#sumstats_by_company$duration120[sumstats_by_company$avg_duration==120] <- 1
+#sumstats_by_company$durationneg <- 0
+#sumstats_by_company$durationneg[sumstats_by_company$avg_duration <= (-120)] <- 1
 
 #View(sumstats_by_company)
 #View(keep)
@@ -76,9 +76,6 @@ automflag_output_combo[[2]]
 #automflag_output_combo[[2]]
 
 
-datacombo <- automflag_output_combo[[1]]
-#View(datacombo[datacombo$false_pos==TRUE,])
-
 automflag_output_combo[[5]]
 
 
@@ -86,6 +83,22 @@ plotdata <- sumstats_by_company[sumstats_by_company$tot_n>15 & sumstats_by_compa
 ggplot(data = plotdata) + 
   geom_point(mapping = aes(x = ln_esco4, y = ln_grab, colour=filteredout))
   
+
+### evaluate
+datacombo <- automflag_output_combo[[1]]
+#View(datacombo)
+#View(datacombo[datacombo$false_pos==TRUE,])
+modelevaluation <- merge(datacombo , evaluation_filteredout_m , all = TRUE)
+modelevaluation <- merge(modelevaluation , evaluation_keep_m , all = TRUE)
+#View(modelevaluation)
+
+
+
+
+
+
+
+
 
 
 
