@@ -192,15 +192,6 @@ lmci_calc<-function(countrycode){
   sumstats_by_company$ln_province <- log(sumstats_by_company$idprovince)
   sumstats_by_company$ln_sector <- log(sumstats_by_company$idsector)
   sumstats_by_company$ln_undup_prov <- sumstats_by_company$ln_province * sumstats_by_company$ln_undup_n
-<<<<<<< HEAD
-    
-  testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] ,flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90)
-  testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", percentile=50, flag_threshold=1.96, flag_above=FALSE, flag_below=TRUE, method="fit", error_pctile=90)
-  testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", xvar4="quln_undup_n", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90)
-  automflag_output <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
-  automflag_output <- automflag_combine(automflag1= automflag_output, automflag2= testflag3 )
-=======
-  
   
 
   testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
@@ -208,8 +199,7 @@ lmci_calc<-function(countrycode){
   testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
   automflag_output <- automflag_combine(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],automflag1= testflag1, automflag2= testflag2 )
   automflag_output <- automflag_combine(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],automflag1= automflag_output, automflag2= testflag3 )
->>>>>>> 29b2983b43d07b2659440a494ff0a9b2bd93cd06
-  
+
   
   # automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
   # comboflag <- as.character(automflag_output[[4]])
