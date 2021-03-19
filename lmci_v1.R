@@ -125,16 +125,12 @@ lmcirun <- function(x){
   ####COMPANYNAME CONSOLIDATION#################################################################################################
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
-  #countrycode<-"IT"
+
+
   clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ";")
-  clean_names <- clean_names[clean_names$country=="EU"|staff_agencies$country==countrycode , ]
+  clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
-  # if (countrycode=="IT"|countrycode=="RO") {
-  #   clean_names <- read.csv(paste0("companies_to_clean_" , countrycode , ".csv") , sep = ";")
-  # } else {
-  #   clean_names <- read.csv(paste0("companies_to_clean_" , "EU" , ".csv") , sep = ";")
-  # }
-  # 
+
   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
   for(i in 1:dim(clean_names)[1]) {
     #cleaning the company name
