@@ -126,7 +126,7 @@ lmcirun <- function(x){
   #################################################################################################  
   # reading the keywords for data cleaning from imported file
 
-  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ";")
+  clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
   clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
   message(class(clean_names))
