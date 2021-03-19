@@ -20,7 +20,7 @@ keep <- as.character(c(clean_names$replace_with, add_keep))
 str(keep)
 #keeplist <- keep
 
-sumstats_by_company <-gen_sum_stats(idcountry = country, filterlist = filteredout$companyname, keeplist = keep)
+sumstats_by_company <-gen_sum_stats(samplesize = "1000000", idcountry = country, filterlist = filteredout$companyname, keeplist = keep)
 sumstats_by_company <- arrange(sumstats_by_company, desc(tot_n))
 str(sumstats_by_company)
 
@@ -96,10 +96,16 @@ filteredout_m$Freq <- 1
 colnames(filteredout_m) <- c("companyname","filteredout_m")
 modelevaluation <- merge(modelevaluation , filteredout_m , all.x = TRUE)
 modelevaluation$comboflag[modelevaluation$filteredout_m==1] <- 1
+modelevaluation$filteredout_m[is.na(modelevaluation$filteredout_m) == TRUE] <- 0
 #View(modelevaluation)
 table(modelevaluation$agency)
-table(modelevaluation$agency[modelevaluation$comboflag==1])
-table(modelevaluation$agency[modelevaluation$comboflag==0])
+
+table(modelevaluation$filteredout_m[modelevaluation$agency==1 & is.na(modelevaluation$comboflag)==FALSE])
+table(modelevaluation$filteredout_m[modelevaluation$agency==0 & is.na(modelevaluation$comboflag)==FALSE])
+table(modelevaluation$filteredout_m[(modelevaluation$agency==0 | modelevaluation$agency==1) & is.na(modelevaluation$comboflag)==TRUE])
+
+table(modelevaluation$comboflag[modelevaluation$agency==1])
+table(modelevaluation$comboflag[modelevaluation$agency==0])
 table(modelevaluation$agency[is.na(modelevaluation$comboflag)==TRUE])
 
 str(filteredout)
