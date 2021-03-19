@@ -1,4 +1,8 @@
+.gitignore
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+[A-Z][A-Z]/
+EU-28*
+NUTS2013*
