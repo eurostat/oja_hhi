@@ -41,11 +41,12 @@ empty_as_na <- function(y){
 
 #3. createfua
 createfua <- function(){
-  ### download file with eurostat classification
+  ### download file with eurostat classification if is not downloaded yet
   
-  download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile="EU-28-LAU-2019-NUTS-2016.xlsx")
-  options (timeout = 100)
   filename <- "EU-28-LAU-2019-NUTS-2016.xlsx"
+  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile=filename)}
+  # options (timeout = 100)
+  
   
   ###selecting countries
   countrylist <- getSheetNames(filename)[4:31]
@@ -99,8 +100,9 @@ createfua <- function(){
   
   ### download the correspondence between NUTS2013 and NUTS2016. the OJA data uses NUTS2013, but the correspondence with FUA is available only for NUTS2016 and the associated LAU units. so it necessary to generate the "assign" variable with NUTS2016, and then change it to NUTS2013
   
-  download.file("https://ec.europa.eu/eurostat/documents/345175/629341/NUTS2013-NUTS2016.xlsx", destfile="NUTS2013-NUTS2016.xlsx")
   filename2 <- "NUTS2013-NUTS2016.xlsx"
+  if (!file.exists(filename2)) {download.file("https://ec.europa.eu/eurostat/documents/345175/629341/NUTS2013-NUTS2016.xlsx", destfile=filename2)}
+  
   
   ### open the table showing the NUTS units for which a change occurred between the 2013 and 2016 classification; generate a new "recoded" variable with the following values:
   # 2 for NUTS2016 units that have no direct (1:1) correspondence with any NUTS2013 units
@@ -242,7 +244,7 @@ create_hhigeo <- function(hhi = hhi){
   
   querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM estat_dsl2531b_oja.ft_document_en_v8 WHERE idcountry='" , idcountry , "' ORDER BY RAND()  LIMIT " , samplesize)
   general_query <- query_athena(querytext)
-  dim(general_query)
+  # dim(general_query)
   
   
   ### arrange the new dataframe as needed
