@@ -4,11 +4,13 @@
 # 2. empty_as_na
 # 3. createfua
 # 3b. assignFUA
-# 4. calculate_hhi
-# 5. create_hhigeo
-# 6. gen_sum_stats
-# 7. automflag
-# 8. automflag_combine
+# 5. calculate_hhi
+# 6. create_hhigeo
+# 7. gen_sum_stats
+# 8. automflag
+# 9. automflag_combine
+# 10. hhigeo_subset
+# 11. hhigeo_plot
 
 ##Function for cleaning the 'companyname' column
 
@@ -39,11 +41,12 @@ empty_as_na <- function(y){
 
 #3. createfua
 createfua <- function(){
-  ### download file with eurostat classification
+  ### download file with eurostat classification if is not downloaded yet
   
-  download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile="EU-28-LAU-2019-NUTS-2016.xlsx")
-  options (timeout = 100)
   filename <- "EU-28-LAU-2019-NUTS-2016.xlsx"
+  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile=filename)}
+  # options (timeout = 100)
+  
   
   ###selecting countries
   countrylist <- getSheetNames(filename)[4:31]
@@ -97,8 +100,9 @@ createfua <- function(){
   
   ### download the correspondence between NUTS2013 and NUTS2016. the OJA data uses NUTS2013, but the correspondence with FUA is available only for NUTS2016 and the associated LAU units. so it necessary to generate the "assign" variable with NUTS2016, and then change it to NUTS2013
   
-  download.file("https://ec.europa.eu/eurostat/documents/345175/629341/NUTS2013-NUTS2016.xlsx", destfile="NUTS2013-NUTS2016.xlsx")
   filename2 <- "NUTS2013-NUTS2016.xlsx"
+  if (!file.exists(filename2)) {download.file("https://ec.europa.eu/eurostat/documents/345175/629341/NUTS2013-NUTS2016.xlsx", destfile=filename2)}
+  
   
   ### open the table showing the NUTS units for which a change occurred between the 2013 and 2016 classification; generate a new "recoded" variable with the following values:
   # 2 for NUTS2016 units that have no direct (1:1) correspondence with any NUTS2013 units
@@ -176,11 +180,11 @@ calculate_hhi <- function (dframe = dframe) {
   
   hhi <- na.omit(hhi)
   
-  totalmean <- mean(hhi$hhi)
-  totalmean
-  totalmedian <- median(hhi$hhi)
-  totalmedian  
-  
+  # totalmean <- mean(hhi$hhi)
+  # totalmean
+  # totalmedian <- median(hhi$hhi)
+  # totalmedian  
+  # 
   #describe(hhi$hhi)
   
   #empirical cumulative distribution function for value 2500
@@ -242,7 +246,7 @@ create_hhigeo <- function(hhi = hhi){
   
   querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM estat_dsl2531b_oja.ft_document_en_v8 WHERE idcountry='" , idcountry , "' ORDER BY RAND()  LIMIT " , samplesize)
   general_query <- query_athena(querytext)
-  dim(general_query)
+  # dim(general_query)
   
   
   ### arrange the new dataframe as needed
@@ -652,3 +656,24 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
   
 }
 
+
+# 10. subsetting hhigeo per quarter
+hhigeo_subset<-function(quarter,data){
+  hhigeo_q <- subset(data, qtr == quarter)
+  hhigeo_q$label <- paste0(hhigeo_q$fua_name, "\n ", as.character(hhigeo_q$wmean))
+  return(hhigeo_q)
+}
+
+
+# 11. plotting hhigeo
+hhigeo_plot<-function(qrtr){
+  ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
+    geom_sf( aes(fill = wmean)) + theme_void() +
+    theme(panel.grid.major = element_line(colour = "transparent")) +
+    labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
+    scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+    geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    geom_sf(data=geoinfo,alpha = 0)
+  
+  ggsave(paste0(resultspath,"HHI_",qrtr,"_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+}

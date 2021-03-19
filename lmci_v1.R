@@ -22,6 +22,10 @@ library(giscoR)
 library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
 #devtools::install_github("eurostat/wihoja", auth_token= "***REMOVED***")
 
+
+# set number of cores to be used for parallel processing
+options(mc.cores=4)
+
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -31,10 +35,10 @@ source("hhi_functions.R")
 open_oja_db()
 
 ####declaring function for calculating Labour market concentration index. Creates subfolder for each country####
+countrycodes <- get("cc",.restatapi_env)$EU27_2020
+# countrycode<-countrycodes[x]
 
-lmcirun <- function(x){
-  countrycodes <- get("cc",.restatapi_env)$EU27_2020
-  countrycode<-countrycodes[x]
+lmci_load <- function(countrycode){
   path <- paste0(countrycode, "/")
   dir.create(countrycode)
   resultspath <- paste0(path,"Results/")
@@ -50,30 +54,40 @@ lmcirun <- function(x){
   data <- query_athena(query)
   
   saveRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
-  
+}  
+
+parallel::mclapply(countrycodes,lmci_load)
+
+
   #########################
+lmci_calc<-function(countrycode){
+  path <- paste0(countrycode, "/")
+  resultspath <- paste0(path,"Results/")
   
   options(scipen = 999)
   
   dframe <- readRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
   setDT(dframe)
-  rm(data)
   
   # mark deduplication
   #remove observations already marked as duplicate by CEDEFOP
   #"duplicate" observations differ in their content
   #therefore we keep, from each duplicate group, the observation with the lowest number of missing variables
   num_raw_obs <- nrow(dframe)
-  dframe$na_count <- rowSums(is.na(dframe))
+  # dframe$na_count <- rowSums(is.na(dframe))
+  dframe[,na_count:=rowSums(is.na(.SD))]
   
-  dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
-  setDT(dframe)
+  # dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
+  # setDT(dframe)
+  dframe <- setorder(dframe,by=general_id,na_count)
   
-  dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
+  # dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
+  dframe[,dup:=as.numeric(duplicated(general_id))]
   
   # convert dates
   
-  dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
+  # dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
+  dframe[,grab_date:=as.Date(grab_date, origin = "1970-01-01")]
   
   # add quarter column 
   
@@ -130,14 +144,17 @@ lmcirun <- function(x){
   clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
   clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
   
-  message(class(clean_names))
- 
-   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-  for(i in 1:dim(clean_names)[1]) {
-    #cleaning the company name
-    dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
-    dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
+  # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
+  # for(i in 1:dim(clean_names)[1]) {
+  #   #cleaning the company name
+  #   dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
+  #   dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
+  # }
+  f_clean_names<-function(cl,dframe){
+    dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
+    dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
   }
+  lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
   
   #####AGENCY FILTER#################################################################################################
   #################################################################################################  
@@ -162,9 +179,9 @@ lmcirun <- function(x){
   keep <- as.data.frame(clean_names$replace_with)
   colnames(keep) <- "companyname" 
 
-  sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname, consolidate=clean_names)
-  str(sumstats_by_company)
-  
+  sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname)
+  # str(sumstats_by_company)
+
   #generate logs
   sumstats_by_company$ln_esco3 <- log(sumstats_by_company$idesco_level_3)
   sumstats_by_company$ln_undup_n <- log(sumstats_by_company$tot_n - sumstats_by_company$tot_dups)
@@ -175,12 +192,23 @@ lmcirun <- function(x){
   sumstats_by_company$ln_province <- log(sumstats_by_company$idprovince)
   sumstats_by_company$ln_sector <- log(sumstats_by_company$idsector)
   sumstats_by_company$ln_undup_prov <- sumstats_by_company$ln_province * sumstats_by_company$ln_undup_n
+<<<<<<< HEAD
     
   testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] ,flag="filteredout" , names="companyname" , yvar="ln_esco3", xvar1="ln_undup_n", xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90)
   testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", percentile=50, flag_threshold=1.96, flag_above=FALSE, flag_below=TRUE, method="fit", error_pctile=90)
   testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,] , flag="filteredout" , names="companyname" , yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", xvar4="quln_undup_n", percentile=50, flag_threshold=1.96, flag_above=TRUE, flag_below=FALSE, method="fit", error_pctile=90)
   automflag_output <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
   automflag_output <- automflag_combine(automflag1= automflag_output, automflag2= testflag3 )
+=======
+  
+  
+
+  testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
+  testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
+  testflag3 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
+  automflag_output <- automflag_combine(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],automflag1= testflag1, automflag2= testflag2 )
+  automflag_output <- automflag_combine(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],automflag1= automflag_output, automflag2= testflag3 )
+>>>>>>> 29b2983b43d07b2659440a494ff0a9b2bd93cd06
   
   
   # automflag_output <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
@@ -325,25 +353,28 @@ lmcirun <- function(x){
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   
   if (nrow(hhigeo) > 0){
-    
-    
-    hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
-    hhigeo_q3_2018$label <- paste0(hhigeo_q3_2018  $fua_name, "\n ", as.character(hhigeo_q3_2018$wmean))
-    
-    hhigeo_q4_2018 <- subset(hhigeo, qtr == "2018-q4")
-    hhigeo_q4_2018$label <- paste0(hhigeo_q4_2018$fua_name, "\n ", as.character(hhigeo_q4_2018$wmean))
-    
-    hhigeo_q1_2019 <- subset(hhigeo, qtr == "2019-q1")
-    hhigeo_q1_2019$label <- paste0(hhigeo_q1_2019$fua_name, "\n ", as.character(hhigeo_q1_2019$wmean))
-    
-    hhigeo_q2_2019 <- subset(hhigeo, qtr == "2019-q2")
-    hhigeo_q2_2019$label <- paste0(hhigeo_q2_2019$fua_name, "\n ", as.character(hhigeo_q2_2019$wmean))
-    
-    hhigeo_q3_2019 <- subset(hhigeo, qtr == "2019-q3")
-    hhigeo_q3_2019$label <- paste0(hhigeo_q3_2019$fua_name, "\n ", as.character(hhigeo_q3_2019$wmean))
-    
-    hhigeo_q4_2019 <- subset(hhigeo, qtr == "2019-q4")
-    hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
+
+    quarters<-c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
+    hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
+    names(hhigeo_q)<-quarters
+    # hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
+    # hhigeo_q3_2018$label <- paste0(hhigeo_q3_2018$fua_name, "\n ", as.character(hhigeo_q3_2018$wmean))
+    # 
+    # hhigeo_q4_2018 <- subset(hhigeo, qtr == "2018-q4")
+    # hhigeo_q4_2018$label <- paste0(hhigeo_q4_2018$fua_name, "\n ", as.character(hhigeo_q4_2018$wmean))
+    # 
+    # hhigeo_q1_2019 <- subset(hhigeo, qtr == "2019-q1")
+    # hhigeo_q1_2019$label <- paste0(hhigeo_q1_2019$fua_name, "\n ", as.character(hhigeo_q1_2019$wmean))
+    # 
+    # hhigeo_q2_2019 <- subset(hhigeo, qtr == "2019-q2")
+    # hhigeo_q2_2019$label <- paste0(hhigeo_q2_2019$fua_name, "\n ", as.character(hhigeo_q2_2019$wmean))
+    # 
+    # hhigeo_q3_2019 <- subset(hhigeo, qtr == "2019-q3")
+    # hhigeo_q3_2019$label <- paste0(hhigeo_q3_2019$fua_name, "\n ", as.character(hhigeo_q3_2019$wmean))
+    # 
+    # hhigeo_q4_2019 <- subset(hhigeo, qtr == "2019-q4")
+    # hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
+
     
     
     hhigeo_pop <- subset(hhigeo, wmean > 2500)
@@ -354,48 +385,54 @@ lmcirun <- function(x){
     
     # Graphs ===========
     
-    ggplot(hhigeo_q3_2018) +
-      geom_sf( aes(fill = wmean)) + theme_void() +
-      theme(panel.grid.major = element_line(colour = "transparent")) +
-      labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
-      scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
-      geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-      geom_sf(data=geoinfo,alpha = 0)
-    
-    ggsave(paste0(resultspath,"HHI_q32018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    lapply(quarters, hhigeo_plot)
     
     
-    ggplot(hhigeo_q4_2018) +
-      geom_sf(aes(fill = wmean)) + theme_void() +
-      theme(panel.grid.major = element_line(colour = "transparent")) +
-      labs(title = "Labour market concentration index Q4-2018\naverage over all occupations") +
-      scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
-      geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-      geom_sf(data=geoinfo,alpha = 0)
-    
-    ggsave(paste0(resultspath,"HHI_q42018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
-    
-    
-    ggplot(hhigeo_q1_2019) +
-      geom_sf(aes(fill = wmean)) + theme_void() +
-      theme(panel.grid.major = element_line(colour = "transparent")) +
-      labs(title = "Labour market concentration index Q1-2019\naverage over all occupations") +
-      scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
-      geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-      geom_sf(data=geoinfo,alpha = 0)
-    
-    ggsave(paste0(resultspath,"HHI_q12019_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    # ggplot(hhigeo_q3_2018) +
+    #   geom_sf( aes(fill = wmean)) + theme_void() +
+    #   theme(panel.grid.major = element_line(colour = "transparent")) +
+    #   labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
+    #   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+    #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    #   geom_sf(data=geoinfo,alpha = 0)
+    # 
+    # ggsave(paste0(resultspath,"HHI_q32018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    # 
+    # 
+    # ggplot(hhigeo_q4_2018) +
+    #   geom_sf(aes(fill = wmean)) + theme_void() +
+    #   theme(panel.grid.major = element_line(colour = "transparent")) +
+    #   labs(title = "Labour market concentration index Q4-2018\naverage over all occupations") +
+    #   scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
+    #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    #   geom_sf(data=geoinfo,alpha = 0)
+    # 
+    # ggsave(paste0(resultspath,"HHI_q42018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+    # 
+    # 
+    # ggplot(hhigeo_q1_2019) +
+    #   geom_sf(aes(fill = wmean)) + theme_void() +
+    #   theme(panel.grid.major = element_line(colour = "transparent")) +
+    #   labs(title = "Labour market concentration index Q1-2019\naverage over all occupations") +
+    #   scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
+    #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+    #   geom_sf(data=geoinfo,alpha = 0)
+    # 
+    # ggsave(paste0(resultspath,"HHI_q12019_", countrycode, ".png"), width = 15, height = 10, units = "cm")
     
     
     
     # HHI tables by region --------------------------
     
     
-    table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
+    # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
+    
+    table <- data.frame(cbind(hhigeo_q[[1]]$fua_id, hhigeo_q[[1]]$fua_name,sapply(quarters,function(x){eval(parse(text=paste0("hhigeo_q$`",x,"`$wmean")))})))
+                       
     
     table <- table[!is.na(table[,2]),]
     
-    colnames(table) <- c("FUA", "Name", "Avg. Q3 2018", "Avg. Q4 2018", "Avg. Q1 2019" )
+    colnames(table) <- c("FUA", "Name", paste("Avg. ",quarters))
     
     write.xlsx(table,
                file = paste0(resultspath,"HHI_FUA_", countrycode, ".xlsx"), sheetName = "Sheet1",
@@ -442,8 +479,11 @@ lmcirun <- function(x){
   }
 }
 
-#run function to all 27MS
-lapply(1:27,lmcirun)
+# test for a sample country
+# lapply("BE",  lmci_calc)
+#run function to all 27MS in parallel
+parallel::mclapply(countrycodes,lmci_calc)
+# lapply(1:27,lmcirun)
 
 #aggregate the results from countries and plot
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo",full.names=T)
