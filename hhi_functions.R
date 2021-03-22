@@ -149,7 +149,7 @@ createfua <- function(){
 
 
 #5. calculate_hhi
-calculate_hhi <- function (dframe = dframe) {
+calculate_hhi <- function (dframe = dframe,resultspath,countrycode) {
   
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
@@ -175,7 +175,7 @@ calculate_hhi <- function (dframe = dframe) {
     subset <- subset[1, !c("companyname") ] 
     hhi <- rbind(hhi, subset)
   }
-  save(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
+  
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
   
   hhi <- na.omit(hhi)
@@ -193,7 +193,7 @@ calculate_hhi <- function (dframe = dframe) {
 }
 
 #6. create_hhigeo
-create_hhigeo <- function(hhi = hhi){
+create_hhigeo <- function(hhi = hhi,sfile){
   hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
   
   hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean")])
@@ -666,7 +666,7 @@ hhigeo_subset<-function(quarter,data){
 
 
 # 11. plotting hhigeo
-hhigeo_plot<-function(qrtr){
+hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
   ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
     geom_sf( aes(fill = wmean)) + theme_void() +
     theme(panel.grid.major = element_line(colour = "transparent")) +
