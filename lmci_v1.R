@@ -40,7 +40,7 @@ countrycodes <- get("cc",.restatapi_env)$EU27_2020
 
 lmci_load <- function(countrycode){
   path <- paste0(countrycode, "/")
-  dir.create(countrycode)
+  dir.create(path)
   resultspath <- paste0(path,"Results/")
   dir.create (resultspath)
   
@@ -62,7 +62,7 @@ lmci_load <- function(countrycode){
   #########################
 lmci_calc<-function(countrycode){
   path <- paste0(countrycode, "/")
-  dir.create(countrycode)
+  dir.create(path)
   resultspath <- paste0(path,"Results/")
   dir.create (resultspath)
   options(scipen = 999)
