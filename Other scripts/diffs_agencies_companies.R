@@ -54,24 +54,39 @@ sumstats_by_company$ln_duration <- log(sumstats_by_company$duration)
 #sumstats_by_company$durationneg <- 0
 #sumstats_by_company$durationneg[sumstats_by_company$avg_duration <= (-120)] <- 1
 
+# dataset for model
+dataset_model <- merge(sumstats_by_company , evaluation_filteredout_m , all.x = TRUE)
+dataset_model <- merge(dataset_model , evaluation_keep_m , all.x = TRUE)
+dim(dataset_model)
+dataset_model$keepme <- 0
+dataset_model$keepme[dataset_model$ln_undup_n>3] <- 1
+sum(dataset_model$keepme)
+dataset_model$keepme[dataset_model$agency==1] <- 1
+sum(dataset_model$keepme)
+dataset_model$keepme[dataset_model$actualemployer==1] <- 1
+sum(dataset_model$keepme)
+dataset_model <- dataset_model[dataset_model$keepme==1,]
+dim(dataset_model)
 #View(sumstats_by_company)
+#View(dataset_model)
 #View(keep)
 
 #automflag_output <- automflag(method="error", error_pctile=90)
-automflag_output <- automflag(yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
+automflag_output <- automflag(yvar="ln_sector", xvar1="ln_province", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
 automflag_output[[2]]
-automflag_output <- automflag(yvar="ln_grab", xvar1="ln_esco4", xvar2="sqln_esco4", xvar3="culn_esco4", xvar4="quln_esco4", flag_above=FALSE, flag_below=TRUE)
+automflag_output <- automflag(yvar="ln_grab", xvar1="ln_esco4", xvar2="sqln_esco4", xvar3="culn_esco4", xvar4="quln_esco4", mydata=dataset_model, flag_above=FALSE, flag_below=TRUE)
 automflag_output[[2]]
-automflag_output <- automflag(yvar="ln_grab", xvar1="ln_undup_n", xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", flag_above=TRUE, flag_below=FALSE)
+automflag_output <- automflag(yvar="ln_grab", xvar1="ln_undup_n", xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", mydata=dataset_model, flag_above=TRUE, flag_below=FALSE)
 automflag_output[[2]]
 #View(automflag_output[[1]])
 
-testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
-testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
-testflag3 <- automflag(yvar="ln_sector", xvar1="ln_prov", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE)
+#dataset_model <- sumstats_by_company[sumstats_by_company$ln_undup_n>3,]
+testflag1 <- automflag(xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n", mydata=dataset_model)
+testflag2 <- automflag(yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE, mydata=dataset_model,)
+testflag3 <- automflag(yvar="ln_sector", xvar1="ln_province", xvar2="ln_undup_n", xvar3="ln_undup_prov", flag_above=TRUE, flag_below=FALSE, mydata=dataset_model)
 #testflag4 <- automflag(yvar="ln_grab", xvar1="ln_esco4", xvar2="sqln_esco4", xvar3="culn_esco4", xvar4="quln_esco4", flag_above=FALSE, flag_below=TRUE)
-automflag_output_combo <- automflag_combine(automflag1= testflag1, automflag2= testflag2 )
-automflag_output_combo <- automflag_combine(automflag1= automflag_output_combo, automflag2= testflag3 )
+automflag_output_combo <- automflag_combine(automflag1= testflag1, automflag2= testflag2, mydata=dataset_model )
+automflag_output_combo <- automflag_combine(automflag1= automflag_output_combo, automflag2= testflag3, mydata=dataset_model, )
 automflag_output_combo[[2]]
 #automflag_output_combo <- automflag_combine(automflag1= automflag_output_combo, automflag2= testflag4 )
 #automflag_output_combo[[2]]
@@ -110,9 +125,9 @@ table(modelevaluation$agency[is.na(modelevaluation$comboflag)==TRUE])
 
 str(filteredout)
 
-
-
-
+#View(modelevaluation[is.na(modelevaluation$comboflag)==TRUE,])
+modelevaluation <- arrange(modelevaluation , companyname)
+#View(modelevaluation)
 
 
 
