@@ -56,14 +56,15 @@ lmci_load <- function(countrycode){
   saveRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
 }  
 
-parallel::mclapply(countrycodes,lmci_load)
+#parallel::mclapply(countrycodes,lmci_load)
 
 
   #########################
 lmci_calc<-function(countrycode){
   path <- paste0(countrycode, "/")
+  dir.create(countrycode)
   resultspath <- paste0(path,"Results/")
-  
+  dir.create (resultspath)
   options(scipen = 999)
   
   dframe <- readRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
@@ -179,7 +180,7 @@ lmci_calc<-function(countrycode){
   keep <- as.data.frame(clean_names$replace_with)
   colnames(keep) <- "companyname" 
 
-  sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname)
+  sumstats_by_company <-gen_sum_stats(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname, , consolidate=clean_names)
   # str(sumstats_by_company)
 
   #generate logs
@@ -321,10 +322,10 @@ lmci_calc<-function(countrycode){
   
   #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
   #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
-  
-  ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
+
+####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
   hhi <- calculate_hhi(dframe)
-  hhiupper <- calculate_hhi(dframe=dframeupper)
+ # hhiupper <- calculate_hhi(dframe=dframeupper)
   
   ###Quality Indicators
   quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))
@@ -335,12 +336,12 @@ lmci_calc<-function(countrycode){
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
   
   hhigeo <- create_hhigeo(hhi)
-  hhigeoupper <- create_hhigeo(hhi=hhiupper)
+ # hhigeoupper <- create_hhigeo(hhi=hhiupper)
   
   hhigeo <- merge(hhigeo, fua_pop)
   
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
-  saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
+  #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   
   if (nrow(hhigeo) > 0){
 
@@ -424,9 +425,9 @@ lmci_calc<-function(countrycode){
     
     colnames(table) <- c("FUA", "Name", paste("Avg. ",quarters))
     
-    write.xlsx(table,
-               file = paste0(resultspath,"HHI_FUA_", countrycode, ".xlsx"), sheetName = "Sheet1",
-               col.names = TRUE, append = FALSE
+     write.xlsx(table,
+                file = paste0(resultspath,"HHI_FUA_", countrycode, ".xlsx"), sheetName = "Sheet1",
+                col.names = TRUE, append = FALSE
     )
     
     
@@ -470,7 +471,8 @@ lmci_calc<-function(countrycode){
 }
 
 # test for a sample country
-# lapply("BE",  lmci_calc)
+parallel::mclapply("BE",  lmci_calc)
+parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
