@@ -343,7 +343,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   #mydata <- sumstats_by_company
   ## this is a dataset containing the variables needed to estimate the model. it must contain all the following variables as explained below: names, yvar, xvars, flag
   #flag <- "filteredout"
-  ## this is a crucial input to the function. flag is a string identifying the name of the variable that, within mydata, identifies observations belonging to different groups. Observations , meaning that they can be flagged (1), identified as not to be flagged (0), or w. Ideally, flag is a binary (0/1) variable, but the function will work as long as 1 is included in the values of flag. The regression model will be estimated only for observations for which flag==1.
+  ## this is a crucial input to the function. flag is a string identifying the name of the variable that, within mydata, identifies observations belonging to different groups. Observations can be flagged as agencies (value = 1) or identified as actual employers (0). Ideally, flag is a binary (0/1) variable, but the function will work as long as 1 is included in the values of flag. The regression model will be estimated only for observations for which flag==1.
   #names <- "companyname"
   ## this is a variable containing the observation identifier (name/code/id)
   #yvar <- "ln_esco3"
