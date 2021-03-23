@@ -11,7 +11,6 @@ library(openxlsx)
 library(data.table)
 library(lubridate)
 library(stringr)
-library(fst)
 library(tidyr)
 library(openxlsx)
 library(hhi)
@@ -22,9 +21,11 @@ library(giscoR)
 library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
 #devtools::install_github("eurostat/wihoja", auth_token= "a1XXXXXXXXXXXXXXXXXXXXXXea4a2ab9621f")
 
+# clear up before start
+rm(list=ls())
 
 # set number of cores to be used for parallel processing
-options(mc.cores=4)
+options(mc.cores=6)
 
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
@@ -36,9 +37,10 @@ open_oja_db()
 
 ####declaring function for calculating Labour market concentration index. Creates subfolder for each country####
 countrycodes <- get("cc",.restatapi_env)$EU27_2020
-# countrycode<-countrycodes[x]
+# countrycode<-countrycodes[1]
 
 lmci_load <- function(countrycode){
+  stime<- Sys.time()
   path <- paste0(countrycode, "/")
   dir.create(path)
   resultspath <- paste0(path,"Results/")
@@ -51,18 +53,31 @@ lmci_load <- function(countrycode){
                   "FROM ", data_table, " ",
                   "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND idcontract != 'Internship'",
                   ";")
-  data <- query_athena(query)
+  filename<-paste0(path,"OJA",countrycode, ".rds")
+  if(!file.exists(filename)){
+    data <- query_athena(query)
+    saveRDS(data,filename)
+  }
+  key_var = "companyname"
+  vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " 
+  samplesize = "1000000"
+  querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM ", data_table ," WHERE idcountry='" , countrycode , "' ORDER BY RAND()  LIMIT " , samplesize)
   
-  saveRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
+  filename<-file.path(countrycode,paste0("gen_sum_stat_",countrycode,".rds"))
+  if(!file.exists(filename)){
+    data <- query_athena(querytext)
+    saveRDS(data,filename)
+  }
+  return(paste(Sys.time(),"-",countrycode,"-",format(difftime(Sys.time(),stime))))
 }  
 
-#parallel::mclapply(countrycodes,lmci_load)
+parallel::mclapply(countrycodes,lmci_load)
 
 
-  #########################
+#########################
 lmci_calc<-function(countrycode){
-
-  tryCatch({
+  # tryCatch({
+    cat(format(Sys.time()),"-",countrycode,"\n")
     path <- paste0(countrycode, "/")
     resultspath <- paste0(path,"Results/")
     
@@ -156,10 +171,10 @@ lmci_calc<-function(countrycode){
     f_clean_names<-function(cl,dframe){
       dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
       dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
+      return(NULL)
     }
-    lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
+    fout<-lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
 
-    
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
     
@@ -328,7 +343,7 @@ lmci_calc<-function(countrycode){
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
     
     ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
-    hhi <- calculate_hhi(dframe,resultspath,countrycode)
+    hhi <- calculate_hhi(dframe)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
     hhiupper <- calculate_hhi(dframe=dframeupper)
     
@@ -349,8 +364,8 @@ lmci_calc<-function(countrycode){
     saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
     
     if (nrow(hhigeo) > 0){
-      
-      quarters<-c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
+      # table(hhigeo$qtr)
+      quarters<-unique(hhigeo$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
       hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
       names(hhigeo_q)<-quarters
       # hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
@@ -423,10 +438,11 @@ lmci_calc<-function(countrycode){
       
       # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
       
-      table <- data.frame(cbind(hhigeo_q[[1]]$fua_id, hhigeo_q[[1]]$fua_name,sapply(quarters,function(x){eval(parse(text=paste0("hhigeo_q$`",x,"`$wmean")))})))
+      table<-dcast(st_set_geometry(hhigeo[,c("fua_id","fua_name","wmean","qtr")],NULL),fua_id+fua_name~qtr,value.var = "wmean")
+      # table <- data.frame(cbind(hhigeo_q[[i]]$fua_id, hhigeo_q[[i]]$fua_name,rbindlist(sapply(quarters,function(x){eval(parse(text=paste0("hhigeo_q$`",x,"`$wmean")))}))
       
-      
-      table <- table[!is.na(table[,2]),]
+      table<-na.omit(table,cols="fua_name")
+      # table <- table[!is.na(table[,2]),]
       
       colnames(table) <- c("FUA", "Name", paste("Avg. ",quarters))
       
@@ -442,7 +458,7 @@ lmci_calc<-function(countrycode){
       #hhi_tmean <- hhi %>% group_by(fua_id, idesco_level_4) %>% summarise(totalmean = mean(hhi))
       
       
-      hhi_tmean <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, tmean = mean(hhi)), by = list(fua_id) ]
+      hhi_tmean <- hhi[, .(idesco_level_4, ncount, hhi, tmean = mean(hhi)), by = list(fua_id) ]
       
       hhigeo_tmean <- unique(hhi_tmean[, c("fua_id", "tmean")])
       
@@ -473,13 +489,13 @@ lmci_calc<-function(countrycode){
       ggsave(paste0(resultspath,"HHI_avgfrom_q32018_toq12019_", countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
     }
-  }, error=function(e){message(e)})
+  # }, error=function(e){message(e)})
   
 }
 
 # test for a sample country
-parallel::mclapply("BE",  lmci_calc)
-parallel::mclapply(countrycode, lmci_calc)
+# parallel::mclapply("BE",  lmci_calc)
+# parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
 lapply(countrycodes,lmci_calc)
 parallel::mclapply(countrycodes,lmci_calc)
