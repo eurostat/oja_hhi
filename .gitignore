@@ -6,3 +6,5 @@
 [A-Z][A-Z]/
 EU-28*
 NUTS2013*
+*.fst
+*.Rout
