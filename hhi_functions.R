@@ -149,7 +149,7 @@ createfua <- function(){
 
 
 #5. calculate_hhi
-calculate_hhi <- function (dframe = dframe,resultspath,countrycode) {
+calculate_hhi <- function (dframe = dframe) {
   
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
@@ -163,19 +163,30 @@ calculate_hhi <- function (dframe = dframe,resultspath,countrycode) {
   dframe[, ccount := .N, by = list(idesco_level_4, fua_id, qtr, companyname)]
   
   #market shares
-  dframe$mshare <- ((dframe$ccount) / (dframe$ncount)) * 100
-  dframe$ms2 <- (dframe$mshare)^2
+  # dframe$mshare <- ((dframe$ccount) / (dframe$ncount)) * 100
+  # dframe$ms2 <- (dframe$mshare)^2
+  dframe[,mshare:=ccount/ncount*100][,ms2:=mshare^2]
   
-  hhi <- data.frame()
+  # Sys.time()
+  # hhi <- data.frame()
+  # 
+  # for (i in 1:dim(grid)[1]) {
+  #   # count obs per cell and company
+  #   subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
+  #   subset$hhi <- sum(subset$ms2)
+  #   subset <- subset[1, !c("companyname") ] 
+  #   hhi <- rbind(hhi, subset)
+  # }
+  # Sys.time()
   
-  for (i in 1:dim(grid)[1]) {
-    # count obs per cell and company
-    subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
+  f_calc_hhi<-function(gr,dframe){
+    subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
     subset$hhi <- sum(subset$ms2)
-    subset <- subset[1, !c("companyname") ] 
-    hhi <- rbind(hhi, subset)
-  }
+    subset[1, !c("companyname") ]
+   }
+  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe))
   
+  # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
   
   hhi <- na.omit(hhi)
@@ -214,7 +225,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
 
 #7. gen_sum_stats
 
-  gen_sum_stats <- function(idcountry = countrycode, samplesize = "1000000", filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname", vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " , sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats = c("avg_duration = mean(duration)" , "avg_grab = mean(grab_date)") ) {
+  gen_sum_stats <- function(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname",sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats = c("avg_duration = mean(duration)" , "avg_grab = mean(grab_date)") ) {
 
 
   ### this function creates a list of summary statistics (sum stats) by key_var (in the default, by companyname) and merge them with some word lists that can be used as filter or categorise observations (in the default, with some lists called filteredout and keep). In addition, it creates a variable in the output dataset that combines the two lists (this variable is called filteredout).
@@ -244,8 +255,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   
   ### compile and run the query in the OJA dataset.
   
-  querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM estat_dsl2531b_oja.ft_document_en_v8 WHERE idcountry='" , idcountry , "' ORDER BY RAND()  LIMIT " , samplesize)
-  general_query <- query_athena(querytext)
+  general_query <- readRDS(paste0(idcountry,"/gen_sum_stat_",idcountry,".rds"))
   # dim(general_query)
   
   
