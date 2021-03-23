@@ -149,8 +149,9 @@ createfua <- function(){
 
 
 #5. calculate_hhi
+
 calculate_hhi <- function (dframe = dframe) {
-  
+
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
   grid <- expand.grid(esco = unique(dframe$idesco_level_4), geo = unique(dframe$fua_id), qtr = unique(dframe$qtr), stringsAsFactors = FALSE)
@@ -676,7 +677,9 @@ hhigeo_subset<-function(quarter,data){
 
 
 # 11. plotting hhigeo
+
 hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
+
   ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
     geom_sf( aes(fill = wmean)) + theme_void() +
     theme(panel.grid.major = element_line(colour = "transparent")) +
