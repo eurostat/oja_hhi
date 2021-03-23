@@ -40,7 +40,7 @@ countrycodes <- get("cc",.restatapi_env)$EU27_2020
 lmci_load <- function(countrycode){
   stime<- Sys.time()
   path <- paste0(countrycode, "/")
-  dir.create(countrycode)
+  dir.create(path)
   resultspath <- paste0(path,"Results/")
   dir.create (resultspath)
   
@@ -72,7 +72,7 @@ lmci_load <- function(countrycode){
 parallel::mclapply(countrycodes,lmci_load)
 
 
-  #########################
+#########################
 lmci_calc<-function(countrycode){
   # tryCatch({
     path <- paste0(countrycode, "/")
@@ -121,7 +121,7 @@ lmci_calc<-function(countrycode){
     no_geo <- as.numeric(sum(!startsWith(dframe$idprovince, countrycode)))
     no_contract <- as.numeric(sum(is.na(dframe$contract) | dframe$contract=="Internship"))
     no_isco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
-    
+
     
     
     # write.fst(dframe,paste0(path,"OJA",countrycode, "step1.fst"), 100)
@@ -158,6 +158,7 @@ lmci_calc<-function(countrycode){
     clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
     clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
     
+
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
     # for(i in 1:dim(clean_names)[1]) {
     #   #cleaning the company name
@@ -170,7 +171,7 @@ lmci_calc<-function(countrycode){
       return(NULL)
     }
     fout<-lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
-    
+
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
     
@@ -489,7 +490,8 @@ lmci_calc<-function(countrycode){
 }
 
 # test for a sample country
-# lapply("BE",  lmci_calc)
+parallel::mclapply("BE",  lmci_calc)
+parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
 lapply(countrycodes,lmci_calc)
 parallel::mclapply(countrycodes,lmci_calc)
