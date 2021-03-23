@@ -11,7 +11,6 @@ library(openxlsx)
 library(data.table)
 library(lubridate)
 library(stringr)
-library(fst)
 library(tidyr)
 library(openxlsx)
 library(hhi)
@@ -24,7 +23,7 @@ library(wihoja) # wihoja package is not available on CRAN and the repository is 
 
 
 # set number of cores to be used for parallel processing
-options(mc.cores=4)
+options(mc.cores=6)
 
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
@@ -36,9 +35,10 @@ open_oja_db()
 
 ####declaring function for calculating Labour market concentration index. Creates subfolder for each country####
 countrycodes <- get("cc",.restatapi_env)$EU27_2020
-# countrycode<-countrycodes[x]
+# countrycode<-countrycodes[1]
 
 lmci_load <- function(countrycode){
+  stime<- Sys.time()
   path <- paste0(countrycode, "/")
   dir.create(countrycode)
   resultspath <- paste0(path,"Results/")
@@ -51,9 +51,22 @@ lmci_load <- function(countrycode){
                   "FROM ", data_table, " ",
                   "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND idcontract != 'Internship'",
                   ";")
-  data <- query_athena(query)
+  filename<-paste0(path,"OJA",countrycode, ".rds")
+  if(!file.exists(filename)){
+    data <- query_athena(query)
+    saveRDS(data,filename)
+  }
+  key_var = "companyname"
+  vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " 
+  samplesize = "1000000"
+  querytext <- paste0("SELECT " , key_var, ", general_id, " , vars , " FROM ", data_table ," WHERE idcountry='" , countrycode , "' ORDER BY RAND()  LIMIT " , samplesize)
   
-  saveRDS(data, file= paste0(path,"OJA",countrycode, ".rds"))
+  filename<-file.path(countrycode,paste0("gen_sum_stat_",countrycode,".rds"))
+  if(!file.exists(filename)){
+    data <- query_athena(querytext)
+    saveRDS(data,filename)
+  }
+  return(paste(Sys.time(),"-",countrycode,"-",format(difftime(Sys.time(),stime))))
 }  
 
 parallel::mclapply(countrycodes,lmci_load)
@@ -61,7 +74,7 @@ parallel::mclapply(countrycodes,lmci_load)
 
   #########################
 lmci_calc<-function(countrycode){
-  tryCatch({
+  # tryCatch({
     path <- paste0(countrycode, "/")
     resultspath <- paste0(path,"Results/")
     
@@ -154,8 +167,9 @@ lmci_calc<-function(countrycode){
     f_clean_names<-function(cl,dframe){
       dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
       dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
+      return(NULL)
     }
-    lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
+    fout<-lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
     
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
@@ -325,7 +339,7 @@ lmci_calc<-function(countrycode){
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
     
     ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
-    hhi <- calculate_hhi(dframe,resultspath,countrycode)
+    hhi <- calculate_hhi(dframe)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
     hhiupper <- calculate_hhi(dframe=dframeupper)
     
@@ -439,7 +453,7 @@ lmci_calc<-function(countrycode){
       #hhi_tmean <- hhi %>% group_by(fua_id, idesco_level_4) %>% summarise(totalmean = mean(hhi))
       
       
-      hhi_tmean <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, tmean = mean(hhi)), by = list(fua_id) ]
+      hhi_tmean <- hhi[, .(idesco_level_4, ncount, hhi, tmean = mean(hhi)), by = list(fua_id) ]
       
       hhigeo_tmean <- unique(hhi_tmean[, c("fua_id", "tmean")])
       
@@ -470,7 +484,7 @@ lmci_calc<-function(countrycode){
       ggsave(paste0(resultspath,"HHI_avgfrom_q32018_toq12019_", countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
     }
-  }, error=function(e){message(e)})
+  # }, error=function(e){message(e)})
   
 }
 
