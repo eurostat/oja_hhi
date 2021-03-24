@@ -25,7 +25,7 @@ library(wihoja) # wihoja package is not available on CRAN and the repository is 
 rm(list=ls())
 
 # set number of cores to be used for parallel processing
-options(mc.cores=6)
+options(mc.cores=3)
 
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
