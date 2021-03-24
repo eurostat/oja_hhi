@@ -512,8 +512,8 @@ lmci_calc<-function(countrycode){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-# parallel::mclapply(countrycodes,lmci_calc)
-lapply(countrycodes,lmci_calc)
+parallel::mclapply(countrycodes,lmci_calc)
+# lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
 
 #aggregate the results from countries and plot
