@@ -49,7 +49,7 @@ createfua <- function(countrycode){
   
   
   ###selecting countries
-  countrylist <- getSheetNames(filename)[4:31]
+  # countrylist <- getSheetNames(filename)[4:31]
   #alternatively: countrylist <- c("BE","BG","CZ","DK","DE","EE","IE","EL","ES","FR","HR","IT","CY","LV","LT","LU","HU","MT","NL","AT","PL","PT","RO","SI","SK","FI","SE")
   
   
@@ -62,7 +62,7 @@ createfua <- function(countrycode){
     # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
     setnames(DT,gsub("\\s","_",colnames(DT)))
     
-    DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
+    # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
     
     #finding which LAUs belong to the same NUTS and FUAs
     DT[,NUTSFUA:= paste0(NUTS_3_CODE, FUA_ID)]
@@ -136,7 +136,7 @@ createfua <- function(countrycode){
   DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013] 
   DT[recoded==2,NUTS_3_CODE:=0] 
   DT[recoded==2,assign:=0] 
-  
+  DT[,LAU_CODE:=as.character(LAU_CODE)]
   
   # final vector to be used for the calculation of the LMCI
   
@@ -278,14 +278,14 @@ create_hhigeo <- function(hhi = hhi,sfile){
     general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
-  #consolidate companyname
-  if (consolidate!="" & consolidate!=FALSE) {
-    # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-    for(i in 1:dim(consolidate)[1]) {
-    general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
-    general_query$keyvar[general_query$keyvar == consolidate[i,4] ] <- consolidate[i,2]
-    }
-  }
+  #consolidate companyname  ????????????? not repitition of clean names
+  # if (consolidate!="" & consolidate!=FALSE) {
+  #   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
+  #   for(i in 1:dim(consolidate)[1]) {
+  #   general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
+  #   general_query$keyvar[general_query$keyvar == consolidate[i,4] ] <- consolidate[i,2]
+  #   }
+  # }
   
   # eliminate empty cells in keyvar
   general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
