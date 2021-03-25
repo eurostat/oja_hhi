@@ -61,6 +61,7 @@ createfua <- function(countrycode){
     DT <- setDT(read_excel(filename , sheet = countrycode))
     # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
     setnames(DT,gsub("\\s","_",colnames(DT)))
+    setnames(DT,gsub("\\(.*\\)","",colnames(DT)))
     
     # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
     
@@ -84,7 +85,8 @@ createfua <- function(countrycode){
     DT[dup_count == 1,assign:=1] 
     DT[FUAID_count < count, assign:=0]
     # ?????? why DF$assign[DF$FUAID_count < DF$count] <- 0
-    cols<-c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "POPULATION", "TOTAL_AREA_(m2)", "assign")
+
+    cols<-c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "POPULATION", "TOTAL_AREA_", "assign")
     DT<-DT[,..cols]
     #defining the output of the function
     # return(DF)
@@ -140,7 +142,7 @@ createfua <- function(countrycode){
   
   # final vector to be used for the calculation of the LMCI
   
-  fua <- DT[, c("country" , "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "recoded" , "assign", "POPULATION", "TOTAL_AREA_(m2)"),with=F]
+  fua <- DT[, c("country" , "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "recoded" , "assign", "POPULATION", "TOTAL_AREA_"),with=F]
   setnames(fua,c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area"))
   
   
@@ -185,7 +187,7 @@ calculate_hhi <- function (dframe = dframe) {
     subset$hhi <- sum(subset$ms2)
     subset[1, !c("companyname") ]
    }
-  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe))
+  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe),mc.cores=5)
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
