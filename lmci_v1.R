@@ -24,7 +24,8 @@ library(wihoja) # wihoja package is not available on CRAN and the repository is 
 # clear up before start
 rm(list=ls())
 
-# set number of cores to be used for parallel processing
+# set number of cores to be used for parallel processing and timestamp for logging
+ts<-format(Sys.time(),"%Y%m%d%H%M%S")
 options(mc.cores=3)
 
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
@@ -75,9 +76,9 @@ parallel::mclapply(countrycodes,lmci_load)
 
 
 #########################
-lmci_calc<-function(countrycode){
+lmci_calc<-function(countrycode,ts=Sys.Date()){
   # tryCatch({
-    system(paste("echo",paste(countrycode,format(Sys.time()),"11-starting calculation",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"11-starting calculation",sep="#"),paste0(">> timings",ts,".txt")))
     cat(format(Sys.time()),"-",countrycode,"\n")
     path <- paste0(countrycode, "/")
     resultspath <- paste0(path,"Results/")
@@ -158,7 +159,7 @@ lmci_calc<-function(countrycode){
     ####COMPANYNAME CONSOLIDATION#################################################################################################
     #################################################################################################  
     # reading the keywords for data cleaning from imported file
-    system(paste("echo",paste(countrycode,format(Sys.time()),"12-starting clean companynames",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"12-starting clean companynames",sep="#"),paste0(">> timings",ts,".txt")))
     
     
     clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
@@ -180,7 +181,7 @@ lmci_calc<-function(countrycode){
 
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
-    system(paste("echo",paste(countrycode,format(Sys.time()),"13-starting agency filter",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"13-starting agency filter",sep="#"),paste0(">> timings",ts,".txt")))
     
     # import list of keywords to be used as filters
     
@@ -263,7 +264,7 @@ lmci_calc<-function(countrycode){
     #dframe <- read_fst((paste0(path,"OJA",countrycode, "step2.fst")), as.data.table = TRUE)
     
     #### DOWNLOAD GEO INFO FOR FUAs ======================================
-    system(paste("echo",paste(countrycode,format(Sys.time()),"14-starting geo download",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"14-starting geo download",sep="#"),paste0(">> timings",ts,".txt")))
     
     geoinfo <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0, country = countrycode,spatialtype = "RG", resolution = "01")
     sfile <-giscoR::gisco_get_urban_audit(year = 2020,epsg = 3035,country = countrycode, level = "FUA", spatialtype = "RG")
@@ -274,22 +275,24 @@ lmci_calc<-function(countrycode){
     sfilefuanum <- length(unique(sfile$fua_id))
     
     #### MERGE FUA DATA WITH OJA DATA ====================================
-    system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
     
     #keep only obs with nuts non-missing
     # dframe <- read_fst((paste0(path,"OJA",countrycode, "step3.fst")), as.data.table = TRUE)
     
     #source code for matching LAU codes, NUTS codes and FUAid downloaded from Eurostat website
-    fua <- createfua()
+    fua <- createfua(countrycode)
     
-    fua <- subset(fua, fua$country == countrycode)
+    # fua <- subset(fua, fua$country == countrycode)
     
     totfuanum <- length(unique(fua$fua_id))-1
   
     
     #Handle country exceptions
-    if (countrycode == "HR"){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
+
+    if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
     if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
+
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
     if (countrycode == "LT"){
@@ -337,7 +340,7 @@ lmci_calc<-function(countrycode){
     
     ####IMPUTATION OF MISSING COMPANYNAMES (i.e. Staffing agencies removed by the filter)####
     #replace all missing company names with unique strings
-    system(paste("echo",paste(countrycode,format(Sys.time()),"16-starting imputation of missing company names",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"16-starting imputation of missing company names",sep="#"),paste0(">> timings",ts,".txt")))
     
     no <- seq_len(length(dframe$companyname))
     no <- paste0("missing",no)
@@ -351,7 +354,7 @@ lmci_calc<-function(countrycode){
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
     
     ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
-    system(paste("echo",paste(countrycode,format(Sys.time()),"17-starting hhi calculation",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"17-starting hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
     
     hhi <- calculate_hhi(dframe)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
@@ -364,7 +367,7 @@ lmci_calc<-function(countrycode){
     companyname_stats <- as.data.frame(cbind(countrycode, num_obs_agency_list, num_obs_agency_model, num_imputed_companynames, num_distinct_agency_list, num_distinct_agency_model, automflag_output[[2]]))
     saveRDS(companyname_stats, paste0(resultspath,"companyname_stats_",countrycode, ".rds"))
     ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
-    system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
     
     hhigeo <- create_hhigeo(hhi,sfile)
     hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
@@ -373,7 +376,7 @@ lmci_calc<-function(countrycode){
     
     saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
     saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
-    system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
     
     if (nrow(hhigeo) > 0){
       # table(hhigeo$qtr)
@@ -468,7 +471,7 @@ lmci_calc<-function(countrycode){
       ############### Average HHI across all quarters =====================
       
       #hhi_tmean <- hhi %>% group_by(fua_id, idesco_level_4) %>% summarise(totalmean = mean(hhi))
-      system(paste("echo",paste(countrycode,format(Sys.time()),"20-starting avg hhi calculation",sep="#"),">> timings.txt"))
+      system(paste("echo",paste(countrycode,format(Sys.time()),"20-starting avg hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
       
       
       hhi_tmean <- hhi[, .(idesco_level_4, ncount, hhi, tmean = mean(hhi)), by = list(fua_id) ]
@@ -502,7 +505,7 @@ lmci_calc<-function(countrycode){
       ggsave(paste0(resultspath,"HHI_avgfrom_q32018_toq12019_", countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
     }
-    system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),">> timings.txt"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
     
   # }, error=function(e){message(e)})
   
@@ -512,8 +515,8 @@ lmci_calc<-function(countrycode){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-# parallel::mclapply(countrycodes,lmci_calc)
-lapply(countrycodes,lmci_calc)
+parallel::mclapply(countrycodes,lmci_calc,ts=ts)
+# lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
 
 #aggregate the results from countries and plot
