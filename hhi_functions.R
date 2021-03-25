@@ -3,7 +3,7 @@
 # 1. sep
 # 2. empty_as_na
 # 3. createfua
-# 3b. assignFUA
+#  
 # 5. calculate_hhi
 # 6. create_hhigeo
 # 7. gen_sum_stats
@@ -40,7 +40,7 @@ empty_as_na <- function(y){
 ## Function for creating the correspondence table between LAU, NUTS and FUA
 
 #3. createfua
-createfua <- function(){
+createfua <- function(countrycode){
   ### download file with eurostat classification if is not downloaded yet
   
   filename <- "EU-28-LAU-2019-NUTS-2016.xlsx"
@@ -49,53 +49,56 @@ createfua <- function(){
   
   
   ###selecting countries
-  countrylist <- getSheetNames(filename)[4:31]
+  # countrylist <- getSheetNames(filename)[4:31]
   #alternatively: countrylist <- c("BE","BG","CZ","DK","DE","EE","IE","EL","ES","FR","HR","IT","CY","LV","LT","LU","HU","MT","NL","AT","PL","PT","RO","SI","SK","FI","SE")
   
   
   #3b. assignFUA
   #create a function generating the "assign" variable
   
-  assignFUA <- function(country) {
+  # assignFUA <- function(countrycode) {
     #importing excel sheet and eliminating spaces from variable names
-    DF <- read_excel(filename , sheet = country)
-    colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
+    DT <- setDT(read_excel(filename , sheet = countrycode))
+    # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
+    setnames(DT,gsub("\\s","_",colnames(DT)))
+    
+    # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
     
     #finding which LAUs belong to the same NUTS and FUAs
-    DF$NUTSFUA <- paste0(DF$NUTS_3_CODE , DF$FUA_ID)
-    DF$dup <- ifelse(duplicated(DF$NUTSFUA , fromLast=FALSE) , 0 , 1)
+    DT[,NUTSFUA:= paste0(NUTS_3_CODE, FUA_ID)]
+    DT[,dup:= as.numeric(!duplicated(NUTSFUA , fromLast=FALSE))]
+    
     
     #Adding count of observations and of duplicates by NUTS
-    ntable <- as.data.frame(table(DF$NUTS_3_CODE))
-    colnames(ntable) <- c("NUTS_3_CODE" , "count")
-    duptable <- as.data.frame(table(DF$NUTS_3_CODE[DF$dup == 1]))
-    colnames(duptable) <- c("NUTS_3_CODE" , "dup_count")
-    idtable <- as.data.frame(table(DF$NUTS_3_CODE[is.na(DF$FUA_ID) == FALSE]))
-    colnames(idtable) <- c("NUTS_3_CODE" , "FUAID_count")
-    DF <- merge(DF , ntable, all.x=TRUE)
-    DF <- merge(DF , duptable, all.x=TRUE)
-    DF <- merge(DF , idtable, all.x=TRUE)
-    DF$FUAID_count[is.na(DF$FUAID_count)==TRUE] <- -999
+    ntable <- DT[,.(count=.N),by=NUTS_3_CODE]
+    duptable <- DT[dup==1,.(dup_count=.N),by=NUTS_3_CODE]
+    idtable <- DT[!is.na(FUA_ID),.(FUAID_count=.N),by=NUTS_3_CODE]  
+    DT<-ntable[DT,on="NUTS_3_CODE"]
+    DT<-duptable[DT,on="NUTS_3_CODE"]
+    DT<-idtable[DT,on="NUTS_3_CODE"]
+    DT[is.na(FUAID_count),FUAID_count:=-999] 
+    
     
     #generate an assign variable equal to 1 if all LAUs in a given NUTS can be automatically assigned to the same FUA
-    DF$assign <- 0
-    DF$assign[DF$dup_count == 1] <- 1 
-    DF$assign[DF$FUAID_count < DF$count] <- 0
-    DF <- select(DF, NUTS_3_CODE , LAU_CODE , FUA_ID, LAU_NAME_NA , LAU_NAME_LA , POPULATION, TOTAL_AREA_, assign)
+    DT[,assign:= 0]
+    DT[dup_count == 1,assign:=1] 
+    DT[FUAID_count < count, assign:=0]
+    # ?????? why DF$assign[DF$FUAID_count < DF$count] <- 0
+    cols<-c("DF", "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "POPULATION", "TOTAL_AREA_(m2)", "assign")
     
     #defining the output of the function
-    return(DF)
-  }
+    # return(DF)
+  # }
   
   ###applying the previous function to the countries selected at the beginning of this code
-  DFlist <- lapply(countrylist,assignFUA)
+  # DFlist <- lapply(countrylist,assignFUA)
   
-  x <- cbind.data.frame(0,0,0,0,0,0,0,0)[-1,]
-  colnames(x) <- c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID" , "LAU_NAME_NA" , "LAU_NAME_LA" , "POPULATION", "TOTAL_AREA_", "assign")
-  for(i in 1:length(countrylist)) {
-    x <- rbind(x,DFlist[[i]])
-  }
-  
+  # x <- cbind.data.frame(0,0,0,0,0,0,0,0)[-1,]
+  # colnames(x) <- c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID" , "LAU_NAME_NA" , "LAU_NAME_LA" , "POPULATION", "TOTAL_AREA_", "assign")
+  # for(i in 1:length(countrylist)) {
+  #   x <- rbind(x,DFlist[[i]])
+  # }
+  # 
   
   
   ### download the correspondence between NUTS2013 and NUTS2016. the OJA data uses NUTS2013, but the correspondence with FUA is available only for NUTS2016 and the associated LAU units. so it necessary to generate the "assign" variable with NUTS2016, and then change it to NUTS2013
@@ -108,41 +111,38 @@ createfua <- function(){
   # 2 for NUTS2016 units that have no direct (1:1) correspondence with any NUTS2013 units
   # 1 for NUTS2016 units which, compared to the NUTS2013 classification, remained identical but changed name 
   # 0 for NUTS2016 units for which there has been no change, compared to NUTS2013 (the value 0 is assigned later in the code, after the merge with the main table)
-  DF <- read_excel(filename2 , sheet = "Correspondence NUTS-3")
-  colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
-  DF$recoded <- 2
-  DF$recoded[DF$Change=="recoded"] <- 1
-  DF <- select(DF , Code_2013 , Code_2016 , recoded)
-  colnames(DF) <- c("NUTS_3_2013" , "NUTS_3_CODE" , "recoded")
+  DT2 <- setDT(read_excel(filename2 , sheet = "Correspondence NUTS-3"))
+  setnames(DT2, gsub("\\s","_",colnames(DT2)))
+  DT2[,recoded:=2]
+  DT2[Change=="recoded",recoded:=1]
+  DT2 <- DT2[,c("Code_2013", "Code_2016" , "recoded"),with=F]
+  setnames(DT2, c("NUTS_3_2013" , "NUTS_3_CODE" , "recoded"))
   
   # input manually the NUTS2013-NUTS2016 correspondence for 3 NUTS2016 regions
-  DF$NUTS_3_CODE[DF$NUTS_3_2013=="DE915"|DF$NUTS_3_2013=="DE919"] <- "DE91C"
-  DF$recoded[DF$NUTS_3_2013=="DE915"|DF$NUTS_3_2013=="DE919"] <- 1
-  DF$recoded[DF$NUTS_3_2013=="NL322"] <- 1
-  DF$recoded[DF$NUTS_3_2013=="NL326"] <- 1
+  DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",NUTS_3_CODE:="DE91C"]  
+  DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",recoded:=1]
+  DT2[NUTS_3_2013=="NL322",recoded:=1] 
+  DT2[NUTS_3_2013=="NL326",recoded:=1] 
   
   
   
   ### merge the NUTS2016-NUTS2013 correspondence table with the main NUTS-LAU-FUA areas and assign country variable
-  x <- merge(x , DF , all.x=TRUE)
-  x$recoded[is.na(x$recoded)==TRUE] <- 0
-  x$country <- substr(x$NUTS_3_CODE,1,2)
+  DT<-DT2[DT,on="NUTS_3_CODE"]
+  DT[is.na(recoded),recoded:=0] 
+  DT[,country:=countrycode]
   
   ### change the value of NUTS_3_CODE to make it compatible with the 2013 classification. in short, when recoded=1, then the NUTS2013 code is used instead of the NUTS2016 code
   
-  x$NUTS_3_CODE[x$recoded==1] <- x$NUTS_3_2013[x$recoded==1]
-  x$NUTS_3_CODE[x$recoded==2] <- 0
-  x$assign[x$recoded==2] <- 0
-  
+  DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013] 
+  DT[recoded==2,NUTS_3_CODE:=0] 
+  DT[recoded==2,assign:=0] 
+  DT[,LAU_CODE:=as.character(LAU_CODE)]
   
   # final vector to be used for the calculation of the LMCI
   
-  fua <- select(x, country , NUTS_3_CODE , LAU_CODE , FUA_ID, LAU_NAME_NA , LAU_NAME_LA , recoded , assign, POPULATION, TOTAL_AREA_)
-  colnames(fua) <- c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area")
+  fua <- DT[, c("country" , "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "recoded" , "assign", "POPULATION", "TOTAL_AREA_(m2)"),with=F]
+  setnames(fua,c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area"))
   
-  rm(DF)
-  rm(DFlist)
-  rm(x, countrylist, filename, filename2, i, assignFUA)
   
   return(fua)
 }
@@ -278,14 +278,14 @@ create_hhigeo <- function(hhi = hhi,sfile){
     general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
-  #consolidate companyname
-  if (consolidate!="" & consolidate!=FALSE) {
-    # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-    for(i in 1:dim(consolidate)[1]) {
-    general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
-    general_query$keyvar[general_query$keyvar == consolidate[i,4] ] <- consolidate[i,2]
-    }
-  }
+  #consolidate companyname  ????????????? not repitition of clean names
+  # if (consolidate!="" & consolidate!=FALSE) {
+  #   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
+  #   for(i in 1:dim(consolidate)[1]) {
+  #   general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
+  #   general_query$keyvar[general_query$keyvar == consolidate[i,4] ] <- consolidate[i,2]
+  #   }
+  # }
   
   # eliminate empty cells in keyvar
   general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
