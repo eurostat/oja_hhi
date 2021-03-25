@@ -187,7 +187,7 @@ calculate_hhi <- function (dframe = dframe) {
     subset$hhi <- sum(subset$ms2)
     subset[1, !c("companyname") ]
    }
-  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe),mc.cores=5)
+  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=5))
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))

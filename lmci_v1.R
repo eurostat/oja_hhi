@@ -406,10 +406,12 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
       
       
       hhigeo_pop <- subset(hhigeo, wmean > 2500)
-      hhigeo_pop <- aggregate(cbind(population = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
-      hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
-      hhigeo_pop <- merge(hhigeo_pop, hhigeo_wmean)
-      hhigeo_pop <- cbind(countrycode, hhigeo_pop, pop_share = hhigeo_pop$population/sum(as.numeric(fua$population)))
+      if (nrow(hhigeo_pop)>0){
+        hhigeo_pop <- aggregate(cbind(population = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
+        hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
+        hhigeo_pop <- merge(hhigeo_pop, hhigeo_wmean)
+        hhigeo_pop <- cbind(countrycode, hhigeo_pop, pop_share = hhigeo_pop$population/sum(as.numeric(fua$population)))
+      }
       
       # Graphs ===========
       
@@ -499,12 +501,12 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
       ggplot(hhigeo_tmean) +
         geom_sf( aes(fill = tmean)) + theme_void() +
         theme(panel.grid.major = element_line(colour = "transparent")) +
-        labs(title = "Labour market concentration index 07.2018 - 03.2019\naverage over occupations and quarters") +
+        labs(title = paste("Labour market concentration index",min(quarters),"-",max(quarters),"\naverage over occupations and quarters")) +
         scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
         geom_sf_text(aes(label = fua_name), size = 2.5, colour = "black")+
         geom_sf(data=geoinfo,alpha = 0)
       
-      ggsave(paste0(resultspath,"HHI_avgfrom_q32018_toq12019_", countrycode, ".png"), width = 20, height = 13.3, units = "cm")
+      ggsave(paste0(resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_",countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
     system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
     
