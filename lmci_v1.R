@@ -280,16 +280,16 @@ lmci_calc<-function(countrycode){
     # dframe <- read_fst((paste0(path,"OJA",countrycode, "step3.fst")), as.data.table = TRUE)
     
     #source code for matching LAU codes, NUTS codes and FUAid downloaded from Eurostat website
-    fua <- createfua()
+    fua <- createfua(countrycode)
     
-    fua <- subset(fua, fua$country == countrycode)
+    # fua <- subset(fua, fua$country == countrycode)
     
     totfuanum <- length(unique(fua$fua_id))-1
     
     fua_pop <- aggregate(cbind(population = as.numeric(fua$population), tot_area = round((fua$tot_area)/1000000)), by=list(fua_id=fua$fua_id), FUN=sum )
     
     #Handle country exceptions
-    if (countrycode == "HR"){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
+    if (countrycode %in% c("PT", "SE", "FR", "EL", "IE", "PL", "EE", "HR", "MT", "FI", "SK", "SI", "CY")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
     if (countrycode == "PL"){dframe$fua_id = substr(dframe$fua_id,1,nchar(dframe$fua_id)-1)}
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
