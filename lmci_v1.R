@@ -234,6 +234,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     filterlist <- c(filterlist,as.character(automflag_output[[5]]))
     
     staff_agencies_from_model <- as.character(automflag_output[[5]])
+    saveRDS(staff_agencies_from_model, file = paste0(resultspath,"staff_agencies_from_model_", countrycode, ".rds"))
     
     filterlist_m <- as.data.frame(filterlist)
     filterlist_m$agency <- 1
@@ -274,6 +275,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     sfile$fua_id <- as.character(sfile$fua_id)
     sfilefuanum <- length(unique(sfile$fua_id))
     
+    if (countrycode == "IE"){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
+    
     #### MERGE FUA DATA WITH OJA DATA ====================================
     system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
     
@@ -292,7 +295,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
 
     if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
     if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
-
+    if (countrycode == "IE"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
     if (countrycode == "LT"){
@@ -378,7 +381,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
     system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
     
-    if (nrow(hhigeo) > 0){
       # table(hhigeo$qtr)
       quarters<-unique(hhigeo$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
       hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
@@ -504,7 +506,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
       
       ggsave(paste0(resultspath,"HHI_avgfrom_q32018_toq12019_", countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
-    }
     system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
     
   # }, error=function(e){message(e)})
