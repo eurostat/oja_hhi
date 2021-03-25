@@ -381,7 +381,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
     system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
     
-    if (nrow(hhigeo) > 0){
       # table(hhigeo$qtr)
       quarters<-unique(hhigeo$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
       hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
@@ -507,7 +506,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
       
       ggsave(paste0(resultspath,"HHI_avgfrom_q32018_toq12019_", countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
-    }
     system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
     
   # }, error=function(e){message(e)})
