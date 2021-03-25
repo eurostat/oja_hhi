@@ -84,8 +84,8 @@ createfua <- function(countrycode){
     DT[dup_count == 1,assign:=1] 
     DT[FUAID_count < count, assign:=0]
     # ?????? why DF$assign[DF$FUAID_count < DF$count] <- 0
-    cols<-c("DF", "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "POPULATION", "TOTAL_AREA_(m2)", "assign")
-    
+    cols<-c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "POPULATION", "TOTAL_AREA_(m2)", "assign")
+    DT<-DT[,..cols]
     #defining the output of the function
     # return(DF)
   # }
