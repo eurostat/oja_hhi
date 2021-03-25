@@ -234,6 +234,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     filterlist <- c(filterlist,as.character(automflag_output[[5]]))
     
     staff_agencies_from_model <- as.character(automflag_output[[5]])
+    saveRDS(staff_agencies_from_model, file = paste0(resultspath,"staff_agencies_from_model_", countrycode, ".rds"))
     
     filterlist_m <- as.data.frame(filterlist)
     filterlist_m$agency <- 1
@@ -274,6 +275,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     sfile$fua_id <- as.character(sfile$fua_id)
     sfilefuanum <- length(unique(sfile$fua_id))
     
+    if (countrycode == "IE"){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
+    
     #### MERGE FUA DATA WITH OJA DATA ====================================
     system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
     
@@ -292,7 +295,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
 
     if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
     if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
-
+    if (countrycode == "IE"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
     if (countrycode == "LT"){
