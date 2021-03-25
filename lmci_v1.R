@@ -286,12 +286,13 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     # fua <- subset(fua, fua$country == countrycode)
     
     totfuanum <- length(unique(fua$fua_id))-1
-    
-    fua_pop <- aggregate(cbind(population = as.numeric(fua$population), tot_area = round((fua$tot_area)/1000000)), by=list(fua_id=fua$fua_id), FUN=sum )
+  
     
     #Handle country exceptions
+
     if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
-    if (countrycode == "PL"){dframe$fua_id = substr(dframe$fua_id,1,nchar(dframe$fua_id)-1)}
+    if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
+
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
     if (countrycode == "LT"){
@@ -312,14 +313,14 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     }
     #include quality check?How the matching by city name works.
     
-    
+    fua_pop <- aggregate(cbind(population = as.numeric(fua$population), tot_area = round((fua$tot_area)/1000000)), by=list(fua_id=fua$fua_id), FUN=sum )
     
     # Left join first by both idprovince and idcity
     dframe <- left_join(dframe,fua,by=c("idprovince","idcity"))
     
     # Left join by idprovince where possible (assign var=1)
-    fua2 <- subset(fua, fua$var1 == 1 & !duplicated(fua$idprovince))
-    dframe <- left_join(dframe, fua2, by=c("idprovince"))
+    fua3 <- subset(fua, fua$var1 == 1 & !duplicated(fua$idprovince))
+    dframe <- left_join(dframe, fua3, by=c("idprovince"))
     
     dframe$fua_id <- coalesce(dframe$fua_id.x, dframe$fua_id.y)
     names(dframe)[names(dframe) == 'idcity.x'] <- 'idcity'
@@ -347,6 +348,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     dframe$companyname[is.na(dframe$companyname)] <- " "
     dframe$companyname[dframe$companyname==" "] <- no[dframe$companyname==" "]
     rm(no)
+    
     
     #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
