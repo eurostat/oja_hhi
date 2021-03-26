@@ -149,13 +149,18 @@ createfua <- function(countrycode){
   fua <- DT[!is.na(FUA_ID), c("country" , "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "recoded" , "assign", "POPULATION", "TOTAL_AREA_"),with=F]
   setnames(fua,c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area"))
   if (all(is.na(fua$population))){
-    imp_pop<-get_eurostat_data("urb_cpop1",filters=c("DE1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
+    imp_pop<-get_eurostat_data("urb_lpop1",filters=c("DE1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
     # get the last year for a given fua code 
     dates<-imp_pop[,.(myear=max(time)),by=cities]
     # keep only the last year value
     imp_pop<-imp_pop[dates,on=.(time=myear,cities=cities)][,c("cities","values")]
-    imp_pop<-unique(imp_pop[,.(joinid=substr(cities,1,5),population=values)])
-    fua<-fua[,`:=`(population=NULL,joinid=substr(fua_id,1,5))]
+    if(countrycode=="CY") {
+      imp_pop<-unique(imp_pop[,.(joinid=substr(cities,1,5),population=values)])
+      fua<-fua[,`:=`(population=NULL,joinid=substr(fua_id,1,5))]
+    } else {
+      imp_pop<-unique(imp_pop[,.(joinid=cities,population=values)])
+      fua<-fua[,`:=`(population=NULL,joinid=fua_id)]
+    }
     fua<-imp_pop[fua,on=.(joinid=joinid)][,joinid:=NULL]
   }
   fua[,tot_area:=as.numeric(tot_area)]
