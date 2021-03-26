@@ -156,9 +156,9 @@ createfua <- function(countrycode){
     imp_pop<-imp_pop[dates,on=.(time=myear,cities=cities)][,c("cities","values")]
     imp_pop<-unique(imp_pop[,.(joinid=substr(cities,1,5),population=values)])
     fua<-fua[,`:=`(population=NULL,joinid=substr(fua_id,1,5))]
-    imp_pop[fua,on=.(joinid=joinid)]
+    fua<-imp_pop[fua,on=.(joinid=joinid)][,joinid:=NULL]
   }
-  
+  fua[,tot_area:=as.numeric(tot_area)]
   return(fua)
 }
 
