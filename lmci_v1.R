@@ -275,7 +275,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     sfile$fua_id <- as.character(sfile$fua_id)
     sfilefuanum <- length(unique(sfile$fua_id))
     
-    if (countrycode == "IE"){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
+    if (countrycode %in% c("IE","CY")){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
     
     #### MERGE FUA DATA WITH OJA DATA ====================================
     system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
@@ -294,8 +294,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     #Handle country exceptions
 
     if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
-    if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
-    if (countrycode == "IE"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
+    if (countrycode  %in% c("PL","IE","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
     if (countrycode == "LT"){
@@ -523,7 +522,7 @@ parallel::mclapply(countrycodes,lmci_calc,ts=ts)
 # lapply(1:27,lmcirun)
 
 #aggregate the results from countries and plot
-filenames <- list.files(getwd(), recursive=T, pattern="hhigeo",full.names=T)
+filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames,FUN= readRDS), fill = T)
 geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
 hhigeoTOTq32018 <- subset(hhigeoTOT, qtr == "2018-q3")
