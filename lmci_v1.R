@@ -276,6 +276,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     sfilefuanum <- length(unique(sfile$fua_id))
     
     if (countrycode %in% c("IE","CY")){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
+    if (countrycode == "CY"){sfile$fua_id[sfile$fua_id == "CY501"] <- "CY003"}
     
     #### MERGE FUA DATA WITH OJA DATA ====================================
     system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
