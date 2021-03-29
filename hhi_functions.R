@@ -170,7 +170,7 @@ createfua <- function(countrycode){
 
 #5. calculate_hhi
 
-calculate_hhi <- function (dframe = dframe) {
+calculate_hhi <- function (dframe,cores=2) {
 
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
@@ -205,7 +205,7 @@ calculate_hhi <- function (dframe = dframe) {
     subset$hhi <- sum(subset$ms2)
     subset[1, !c("companyname") ]
    }
-  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=5))
+  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=cores))
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
@@ -299,13 +299,23 @@ create_hhigeo <- function(hhi = hhi,sfile){
   }
 
   #consolidate companyname  ????????????? not repitition of clean names
-  # if (consolidate!="" & consolidate!=FALSE) {
-  #   # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-  #   for(i in 1:dim(consolidate)[1]) {
-  #   general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
-  #   general_query$keyvar[general_query$keyvar == consolidate[i,4] ] <- consolidate[i,2]
-  #   }
+  if (consolidate!="" & consolidate!=FALSE) {
+    # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
+    for(i in 1:dim(consolidate)[1]) {
+    general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
+    general_query$keyvar[general_query$keyvar == consolidate[i,4] ] <- consolidate[i,2]
+    }
+  }
+  # f_clean_names<-function(cl,dframe){
+  #   dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname:=cl[[1]][2])]
+  #   dframe[companyname==cl[[1]][4],.(companyname:cl[[1]][2])]
+  #   return(NULL)
   # }
+  # if (consolidate!="" & consolidate!=FALSE) {
+  #   fout<-lapply(as.list(as.data.frame(t(consolidate))),f_clean_names,dframe=general_query)
+  # }
+  
+  
   
   # eliminate empty cells in keyvar
   general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
