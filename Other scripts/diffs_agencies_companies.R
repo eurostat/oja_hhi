@@ -11,6 +11,7 @@ getwd()
 source("hhi_functions.R")
 source("Other scripts/inspect_smaller_companies.R")
 
+
 filterlist <- as.character(c(filteredout$companyname, add_filteredout))
 str(filterlist)
 
