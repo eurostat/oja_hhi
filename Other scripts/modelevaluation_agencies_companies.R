@@ -17,7 +17,7 @@ str(filterlist)
 
 #keep <- as.data.frame(clean_names$replace_with)
 #colnames(keep) <- "companyname" 
-keep <- as.character(c(clean_names$replace_with, add_keep))
+retain <- as.character(c(clean_names$replace_with, add_keep))
 str(keep)
 #keeplist <- keep
 
@@ -25,7 +25,7 @@ str(keep)
 ### getting the stats needed for the automatic imputation process
 
 # getting summary stats for OJA vars with gen_sum_stats
-sumstats_by_company <-gen_sum_stats(idcountry = country, filterlist = filteredout$companyname, keeplist = keep)
+sumstats_by_company <-gen_sum_stats(idcountry = country, filterlist = filteredout$companyname, keeplist = clean_names$replace_with)
 sumstats_by_company <- arrange(sumstats_by_company, desc(tot_n))
 str(sumstats_by_company)
 
@@ -115,7 +115,7 @@ testflag3 <- automflag(yvar="ln_sector", xvar1="ln_province", xvar2="ln_undup_n"
 automflag_output_combo <- automflag_combine(automflag1= testflag1, automflag2= testflag2, mydata=dataset_model )
 automflag_output_combo <- automflag_combine(automflag1= automflag_output_combo, automflag2= testflag3, mydata=dataset_model, )
 automflag_output_combo[[2]]
-automflag_output_combo[[5]]
+#automflag_output_combo[[5]]
 
 # Wanna compare with a four-rules imputation functions? Run the commands below
 #testflag4 <- automflag(yvar="ln_grab", xvar1="ln_esco4", xvar2="sqln_esco4", xvar3="culn_esco4", xvar4="quln_esco4", flag_above=FALSE, flag_below=TRUE)
