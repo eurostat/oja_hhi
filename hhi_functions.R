@@ -298,6 +298,10 @@ create_hhigeo <- function(hhi = hhi,sfile){
     general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
+  # eliminate empty cells in keyvar
+  general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
+  general_query <- general_query[general_query$notgood != 1 , ]
+  
   #consolidate companyname  ????????????? not repitition of clean names
   if (consolidate!="" & consolidate!=FALSE) {
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
@@ -314,12 +318,6 @@ create_hhigeo <- function(hhi = hhi,sfile){
   # if (consolidate!="" & consolidate!=FALSE) {
   #   fout<-lapply(as.list(as.data.frame(t(consolidate))),f_clean_names,dframe=general_query)
   # }
-  
-  
-  
-  # eliminate empty cells in keyvar
-  general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
-  general_query <- general_query[general_query$notgood != 1 , ]
   
   
   ### generating summary statistics at the keyvar level. these summary statistics are the main output of the function
