@@ -24,8 +24,9 @@ library(wihoja) # wihoja package is not available on CRAN and the repository is 
 # clear up before start
 rm(list=ls())
 
-# set number of cores to be used for parallel processing
-options(mc.cores=6)
+# set number of cores to be used for parallel processing and timestamp for logging
+ts<-format(Sys.time(),"%Y%m%d%H%M%S")
+options(mc.cores=3)
 
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
@@ -75,8 +76,9 @@ parallel::mclapply(countrycodes,lmci_load)
 
 
 #########################
-lmci_calc<-function(countrycode){
+lmci_calc<-function(countrycode,ts=Sys.Date()){
   # tryCatch({
+    system(paste("echo",paste(countrycode,format(Sys.time()),"11-starting calculation",sep="#"),paste0(">> timings",ts,".txt")))
     cat(format(Sys.time()),"-",countrycode,"\n")
     path <- paste0(countrycode, "/")
     resultspath <- paste0(path,"Results/")
@@ -153,9 +155,11 @@ lmci_calc<-function(countrycode){
     dframe$companyname <- str_trim(dframe$companyname)
     dframe$companyname <- gsub(" ","_",dframe$companyname)
     
+    
     ####COMPANYNAME CONSOLIDATION#################################################################################################
     #################################################################################################  
     # reading the keywords for data cleaning from imported file
+    system(paste("echo",paste(countrycode,format(Sys.time()),"12-starting clean companynames",sep="#"),paste0(">> timings",ts,".txt")))
     
     
     clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
@@ -177,6 +181,7 @@ lmci_calc<-function(countrycode){
 
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
+    system(paste("echo",paste(countrycode,format(Sys.time()),"13-starting agency filter",sep="#"),paste0(">> timings",ts,".txt")))
     
     # import list of keywords to be used as filters
     
@@ -229,6 +234,7 @@ lmci_calc<-function(countrycode){
     filterlist <- c(filterlist,as.character(automflag_output[[5]]))
     
     staff_agencies_from_model <- as.character(automflag_output[[5]])
+    saveRDS(staff_agencies_from_model, file = paste0(resultspath,"staff_agencies_from_model_", countrycode, ".rds"))
     
     filterlist_m <- as.data.frame(filterlist)
     filterlist_m$agency <- 1
@@ -259,6 +265,7 @@ lmci_calc<-function(countrycode){
     #dframe <- read_fst((paste0(path,"OJA",countrycode, "step2.fst")), as.data.table = TRUE)
     
     #### DOWNLOAD GEO INFO FOR FUAs ======================================
+    system(paste("echo",paste(countrycode,format(Sys.time()),"14-starting geo download",sep="#"),paste0(">> timings",ts,".txt")))
     
     geoinfo <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0, country = countrycode,spatialtype = "RG", resolution = "01")
     sfile <-giscoR::gisco_get_urban_audit(year = 2020,epsg = 3035,country = countrycode, level = "FUA", spatialtype = "RG")
@@ -268,23 +275,27 @@ lmci_calc<-function(countrycode){
     sfile$fua_id <- as.character(sfile$fua_id)
     sfilefuanum <- length(unique(sfile$fua_id))
     
+    if (countrycode %in% c("IE","CY")){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
+    if (countrycode == "CY"){sfile$fua_id[sfile$fua_id == "CY501"] <- "CY003"}
+    
     #### MERGE FUA DATA WITH OJA DATA ====================================
+    system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
     
     #keep only obs with nuts non-missing
     # dframe <- read_fst((paste0(path,"OJA",countrycode, "step3.fst")), as.data.table = TRUE)
     
     #source code for matching LAU codes, NUTS codes and FUAid downloaded from Eurostat website
-    fua <- createfua()
+    fua <- createfua(countrycode)
     
-    fua <- subset(fua, fua$country == countrycode)
+    # fua <- subset(fua, fua$country == countrycode)
     
     totfuanum <- length(unique(fua$fua_id))-1
-    
-    fua_pop <- aggregate(cbind(population = as.numeric(fua$population), tot_area = round((fua$tot_area)/1000000)), by=list(fua_id=fua$fua_id), FUN=sum )
+  
     
     #Handle country exceptions
-    if (countrycode == "HR"){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
-    if (countrycode == "PL"){dframe$fua_id = substr(dframe$fua_id,1,nchar(dframe$fua_id)-1)}
+
+    if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
+    if (countrycode  %in% c("PL","IE","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
     if (countrycode == "LT"){
@@ -305,14 +316,14 @@ lmci_calc<-function(countrycode){
     }
     #include quality check?How the matching by city name works.
     
-    
+    fua_pop <- aggregate(cbind(population = as.numeric(fua$population), tot_area = round((fua$tot_area)/1000000)), by=list(fua_id=fua$fua_id), FUN=sum )
     
     # Left join first by both idprovince and idcity
     dframe <- left_join(dframe,fua,by=c("idprovince","idcity"))
     
     # Left join by idprovince where possible (assign var=1)
-    fua2 <- subset(fua, fua$var1 == 1 & !duplicated(fua$idprovince))
-    dframe <- left_join(dframe, fua2, by=c("idprovince"))
+    fua3 <- subset(fua, fua$var1 == 1 & !duplicated(fua$idprovince))
+    dframe <- left_join(dframe, fua3, by=c("idprovince"))
     
     dframe$fua_id <- coalesce(dframe$fua_id.x, dframe$fua_id.y)
     names(dframe)[names(dframe) == 'idcity.x'] <- 'idcity'
@@ -332,6 +343,8 @@ lmci_calc<-function(countrycode){
     
     ####IMPUTATION OF MISSING COMPANYNAMES (i.e. Staffing agencies removed by the filter)####
     #replace all missing company names with unique strings
+    system(paste("echo",paste(countrycode,format(Sys.time()),"16-starting imputation of missing company names",sep="#"),paste0(">> timings",ts,".txt")))
+    
     no <- seq_len(length(dframe$companyname))
     no <- paste0("missing",no)
     dframe$companyname <- sapply(dframe$companyname, as.character)
@@ -339,10 +352,13 @@ lmci_calc<-function(countrycode){
     dframe$companyname[dframe$companyname==" "] <- no[dframe$companyname==" "]
     rm(no)
     
+    
     #write.fst(dframe,paste0(path,"OJA",countrycode, "step4fua.fst"), 100)
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step4fua.fst"), as.data.table = TRUE)
     
     ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
+    system(paste("echo",paste(countrycode,format(Sys.time()),"17-starting hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
+    
     hhi <- calculate_hhi(dframe)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
     hhiupper <- calculate_hhi(dframe=dframeupper)
@@ -354,6 +370,7 @@ lmci_calc<-function(countrycode){
     companyname_stats <- as.data.frame(cbind(countrycode, num_obs_agency_list, num_obs_agency_model, num_imputed_companynames, num_distinct_agency_list, num_distinct_agency_model, automflag_output[[2]]))
     saveRDS(companyname_stats, paste0(resultspath,"companyname_stats_",countrycode, ".rds"))
     ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
+    system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
     
     hhigeo <- create_hhigeo(hhi,sfile)
     hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
@@ -362,8 +379,8 @@ lmci_calc<-function(countrycode){
     
     saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
     saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
+    system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
     
-    if (nrow(hhigeo) > 0){
       # table(hhigeo$qtr)
       quarters<-unique(hhigeo$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
       hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
@@ -389,10 +406,12 @@ lmci_calc<-function(countrycode){
       
       
       hhigeo_pop <- subset(hhigeo, wmean > 2500)
-      hhigeo_pop <- aggregate(cbind(population = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
-      hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
-      hhigeo_pop <- merge(hhigeo_pop, hhigeo_wmean)
-      hhigeo_pop <- cbind(countrycode, hhigeo_pop, pop_share = hhigeo_pop$population/sum(as.numeric(fua$population)))
+      if (nrow(hhigeo_pop)>0){
+        hhigeo_pop <- aggregate(cbind(population = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
+        hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
+        hhigeo_pop <- merge(hhigeo_pop, hhigeo_wmean)
+        hhigeo_pop <- cbind(countrycode, hhigeo_pop, pop_share = hhigeo_pop$population/sum(as.numeric(fua$population)))
+      }
       
       # Graphs ===========
       
@@ -456,6 +475,7 @@ lmci_calc<-function(countrycode){
       ############### Average HHI across all quarters =====================
       
       #hhi_tmean <- hhi %>% group_by(fua_id, idesco_level_4) %>% summarise(totalmean = mean(hhi))
+      system(paste("echo",paste(countrycode,format(Sys.time()),"20-starting avg hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
       
       
       hhi_tmean <- hhi[, .(idesco_level_4, ncount, hhi, tmean = mean(hhi)), by = list(fua_id) ]
@@ -481,14 +501,15 @@ lmci_calc<-function(countrycode){
       ggplot(hhigeo_tmean) +
         geom_sf( aes(fill = tmean)) + theme_void() +
         theme(panel.grid.major = element_line(colour = "transparent")) +
-        labs(title = "Labour market concentration index 07.2018 - 03.2019\naverage over occupations and quarters") +
+        labs(title = paste("Labour market concentration index",min(quarters),"-",max(quarters),"\naverage over occupations and quarters")) +
         scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
         geom_sf_text(aes(label = fua_name), size = 2.5, colour = "black")+
         geom_sf(data=geoinfo,alpha = 0)
       
-      ggsave(paste0(resultspath,"HHI_avgfrom_q32018_toq12019_", countrycode, ".png"), width = 20, height = 13.3, units = "cm")
+      ggsave(paste0(resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_",countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
-    }
+    system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
+    
   # }, error=function(e){message(e)})
   
 }
@@ -497,12 +518,12 @@ lmci_calc<-function(countrycode){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-lapply(countrycodes,lmci_calc)
-parallel::mclapply(countrycodes,lmci_calc)
+parallel::mclapply(countrycodes,lmci_calc,ts=ts)
+# lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
 
 #aggregate the results from countries and plot
-filenames <- list.files(getwd(), recursive=T, pattern="hhigeo",full.names=T)
+filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames,FUN= readRDS), fill = T)
 geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
 hhigeoTOTq32018 <- subset(hhigeoTOT, qtr == "2018-q3")
