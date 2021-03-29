@@ -27,7 +27,7 @@ rm(list=ls())
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
 options(mc.cores=3)
-
+hhi_cores<-4
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -59,6 +59,8 @@ lmci_load <- function(countrycode){
     data <- query_athena(query)
     saveRDS(data,filename)
   }
+  nobs<-nrow(readRDS(filename))
+  
   key_var = "companyname"
   vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " 
   samplesize = "1000000"
@@ -69,14 +71,15 @@ lmci_load <- function(countrycode){
     data <- query_athena(querytext)
     saveRDS(data,filename)
   }
-  return(paste(Sys.time(),"-",countrycode,"-",format(difftime(Sys.time(),stime))))
+  message(paste(Sys.time(),"-",countrycode,"-",format(difftime(Sys.time(),stime))))
+  return(data.table(countrycode,nobs))
 }  
 
-parallel::mclapply(countrycodes,lmci_load)
+nobs<-rbindlist(parallel::mclapply(countrycodes,lmci_load))
 
 
 #########################
-lmci_calc<-function(countrycode,ts=Sys.Date()){
+lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   # tryCatch({
     system(paste("echo",paste(countrycode,format(Sys.time()),"11-starting calculation",sep="#"),paste0(">> timings",ts,".txt")))
     cat(format(Sys.time()),"-",countrycode,"\n")
@@ -167,17 +170,17 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     
 
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-    # for(i in 1:dim(clean_names)[1]) {
-    #   #cleaning the company name
-    #   dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
-    #   dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
-    # }
-    f_clean_names<-function(cl,dframe){
-      dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
-      dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
-      return(NULL)
+    for(i in 1:dim(clean_names)[1]) {
+      #cleaning the company name
+      dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
+      dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
     }
-    fout<-lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
+    # f_clean_names<-function(cl,dframe){
+    #   dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
+    #   dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
+    #   return(NULL)
+    # }
+    # fout<-lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
 
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
@@ -358,9 +361,9 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
     ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
     system(paste("echo",paste(countrycode,format(Sys.time()),"17-starting hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
     
-    hhi <- calculate_hhi(dframe)
+    hhi <- calculate_hhi(dframe,hhi_cores)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
-    hhiupper <- calculate_hhi(dframe=dframeupper)
+    hhiupper <- calculate_hhi(dframeupper,hhi_cores)
     
     ###Quality Indicators
     quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))
@@ -517,7 +520,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date()){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-parallel::mclapply(countrycodes,lmci_calc,ts=ts)
+parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
 
