@@ -35,6 +35,11 @@ empty_as_na <- function(y){
   
   return(y)
 }
+empty_as_na2 <- function(y){
+  y[y==""]<-NA 
+  return(y)
+}
+
 
 
 ## Function for creating the correspondence table between LAU, NUTS and FUA
@@ -189,23 +194,23 @@ calculate_hhi <- function (dframe,cores=2) {
   dframe[,mshare:=ccount/ncount*100][,ms2:=mshare^2]
   
   # Sys.time()
-  # hhi <- data.frame()
-  # 
-  # for (i in 1:dim(grid)[1]) {
-  #   # count obs per cell and company
-  #   subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
-  #   subset$hhi <- sum(subset$ms2)
-  #   subset <- subset[1, !c("companyname") ] 
-  #   hhi <- rbind(hhi, subset)
-  # }
+  hhi <- data.frame()
+
+  for (i in 1:dim(grid)[1]) {
+    # count obs per cell and company
+    subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
+    subset$hhi <- sum(subset$ms2)
+    subset <- subset[1, !c("companyname") ]
+    hhi <- rbind(hhi, subset)
+  }
   # Sys.time()
   
-  f_calc_hhi<-function(gr,dframe){
-    subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
-    subset$hhi <- sum(subset$ms2)
-    subset[1, !c("companyname") ]
-   }
-  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=cores))
+  # f_calc_hhi<-function(gr,subset){
+  #   subset$hhi <- sum(subset$ms2)
+  #   subset[1, !c("companyname") ]
+  #  }
+  # subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
+  # hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=cores))
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
