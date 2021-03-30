@@ -27,7 +27,7 @@ rm(list=ls())
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
 options(mc.cores=3)
-hhi_cores<-4
+hhi_cores<-3
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -59,7 +59,7 @@ lmci_load <- function(countrycode){
     data <- query_athena(query)
     saveRDS(data,filename)
   }
-  nobs<-nrow(readRDS(filename))
+  # nobs<-nrow(readRDS(filename))
   
   key_var = "companyname"
   vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " 
@@ -72,7 +72,7 @@ lmci_load <- function(countrycode){
     saveRDS(data,filename)
   }
   message(paste(Sys.time(),"-",countrycode,"-",format(difftime(Sys.time(),stime))))
-  return(data.table(countrycode,nobs))
+  # return(data.table(countrycode,nobs))
 }  
 
 nobs<-rbindlist(parallel::mclapply(countrycodes,lmci_load))
@@ -96,26 +96,28 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     #"duplicate" observations differ in their content
     #therefore we keep, from each duplicate group, the observation with the lowest number of missing variables
     num_raw_obs <- nrow(dframe)
-    # dframe$na_count <- rowSums(is.na(dframe))
-    dframe[,na_count:=rowSums(is.na(.SD))]
+    dframe$na_count <- rowSums(is.na(dframe))
+    # dframe[,na_count:=rowSums(is.na(.SD))]
     
-    # dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
-    # setDT(dframe)
-    dframe <- setorder(dframe,by=general_id,na_count)
+    dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
+    setDT(dframe)
+    # dframe <- setorder(dframe,by=general_id,na_count)
     
-    # dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
-    dframe[,dup:=as.numeric(duplicated(general_id))]
+    dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
+    # dframe[,dup:=as.numeric(duplicated(general_id))]
     
     # convert dates
     
-    # dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
-    dframe[,grab_date:=as.Date(grab_date, origin = "1970-01-01")]
+    dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
+    # dframe[,grab_date:=as.Date(grab_date, origin = "1970-01-01")]
     
     # add quarter column 
     
-    dframe <- dframe %>% mutate(qtr = paste0(year(grab_date), "-", "q", quarter(grab_date)))
-    
+    # dframe <- dframe %>% mutate(qtr = paste0(year(grab_date), "-", "q", quarter(grab_date)))
+    dframe[,qtr := paste0(year(grab_date), "-", "q", quarter(grab_date))]
     #applying empty as na function
+    # cols<-c("city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector")
+    # dframe[,(cols):=lapply(.SD, empty_as_na2),.SDcols=cols]
     dframe <- dframe %>% mutate_at(c("companyname", "city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector"), empty_as_na)
     
     #write.fst(dframe,paste0(path,"OJA",countrycode, ".fst"), 100)
@@ -127,7 +129,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     dframe <- subset(dframe, select =  -c(grab_date))
     
     no_geo <- as.numeric(sum(!startsWith(dframe$idprovince, countrycode)))
-    no_contract <- as.numeric(sum(is.na(dframe$contract) | dframe$contract=="Internship"))
+    no_contract <- as.numeric(sum(is.na(dframe$contract) | dframe$contract=="Internship"))   #??????????????????????????? why again Internship not filtered by the query
     no_isco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
 
     
@@ -143,13 +145,18 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     
     dframe <- dframe[startsWith(dframe$idprovince, countrycode), ]
-    
+    # dframe <- dframe[grepl(paste0("^",countrycode),idprovince), ]
     num_obs_after_filters <- nrow(dframe) 
     
     #write.fst(dframe,paste0(path,"ITtest.fst"), 100)
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
     # clean and order company names for LMC index --------
     
+    ####COMPANYNAME CONSOLIDATION#################################################################################################
+    #################################################################################################  
+    # reading the keywords for data cleaning from imported file
+    system(paste("echo",paste(countrycode,format(Sys.time()),"12-starting clean companynames",sep="#"),paste0(">> timings",ts,".txt")))
+   
     ordered <- sapply(dframe$companyname, function(x) sep(x))
     dframe$companyname <- ordered
     
@@ -159,10 +166,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     dframe$companyname <- gsub(" ","_",dframe$companyname)
     
     
-    ####COMPANYNAME CONSOLIDATION#################################################################################################
-    #################################################################################################  
-    # reading the keywords for data cleaning from imported file
-    system(paste("echo",paste(countrycode,format(Sys.time()),"12-starting clean companynames",sep="#"),paste0(">> timings",ts,".txt")))
     
     
     clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
@@ -175,12 +178,14 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
       dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
       dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
     }
+    # dframe_names<-data.table(rn=dframe_orig[companyname!="",which=T],dframe_orig[companyname!="",c("companyname")])
     # f_clean_names<-function(cl,dframe){
-    #   dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
-    #   dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
-    #   return(NULL)
+    #   dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
     # }
-    # fout<-lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
+    # system.time(all<-unique(rbindlist(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names))))
+    # dframe[all$rn,companyname:=all$companyname]
+    # 
+    
 
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
