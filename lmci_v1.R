@@ -39,6 +39,9 @@ open_oja_db()
 ####declaring function for calculating Labour market concentration index. Creates subfolder for each country####
 countrycodes <- get("cc",.restatapi_env)$EU27_2020
 # countrycode<-countrycodes[1]
+# to delete the downloaded files uncomment the code below
+# filenames<-unlist(lapply(countrycodes,function(x) {paste0(x, "/","OJA",x, ".rds")})) 
+# unlink(filenames)
 
 lmci_load <- function(countrycode){
   stime<- Sys.time()
@@ -52,7 +55,7 @@ lmci_load <- function(countrycode){
   
   query <- paste0("SELECT general_id, grab_date, lang, idesco_level_4, esco_level_4, idcity, city, idprovince, province, idregion, region, idcountry, country, idcontract, contract, idsector, sector, sourcecountry, source, site, companyname  ",
                   "FROM ", data_table, " ",
-                  "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND idcontract != 'Internship'",
+                  "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND contract != 'Internship'",
                   ";")
   filename<-paste0(path,"OJA",countrycode, ".rds")
   if(!file.exists(filename)){
@@ -129,7 +132,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     dframe <- subset(dframe, select =  -c(grab_date))
     
     no_geo <- as.numeric(sum(!startsWith(dframe$idprovince, countrycode)))
-    no_contract <- as.numeric(sum(is.na(dframe$contract) | dframe$contract=="Internship"))   #??????????????????????????? why again Internship not filtered by the query
+    no_contract <- as.numeric(sum(is.na(dframe$contract)))   
     no_isco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
 
     
@@ -165,6 +168,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     dframe$companyname <- str_trim(dframe$companyname)
     dframe$companyname <- gsub(" ","_",dframe$companyname)
     
+   
+   # companynames_sep<-unlist(parallel::mclapply(tolower(dframe$companyname),sep2,mc.cores=3))
+   # dframe[,companyname:=trimws(gsub(" ","_",companynames_sep))]  
+   #  
     
     
     

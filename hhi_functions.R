@@ -18,11 +18,17 @@
 sep <- function(linha) {
   resp <- strsplit(linha," |/|-")
   resp <- unlist(resp)
-  resp <- gsub(",|;|\\.","",resp)
+  resp <- gsub(",|;|\\.|\u00A0","",resp)
   resp <- sort(resp[which(nchar(resp) > 2)])
   resp <- paste0(resp,collapse=" ")
   resp <- tolower(resp)
 }
+
+sep2 <- function(linha) {
+  resp <- gsub(",|;|\\.|\u00A0","",unlist(strsplit(linha," |/|-")))
+  paste0(sort(resp[which(nchar(resp) > 2)]),collapse=" ")
+}
+
 
 # "^[0-9]", "[0-9]$" write line of code to filter out the companynames composed by numbers (e.g. telephone numbers)
 
@@ -210,7 +216,7 @@ calculate_hhi <- function (dframe,cores=2) {
   #   subset[1, !c("companyname") ]
   #  }
   # subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
-  # hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=cores))
+  # hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,subset=dframe,mc.cores=cores))
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
