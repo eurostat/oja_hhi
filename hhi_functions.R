@@ -1,7 +1,7 @@
 #This file contains the functions used by the main code to calculate the Labour Market Concentration Index.
 # List of functions:
-# 1. sep
-# 2. empty_as_na
+# 1. ascii, sep, sep2
+# 2. empty_as_na, empty_as_na2
 # 3. createfua
 #  
 # 5. calculate_hhi
@@ -15,6 +15,13 @@
 ##Function for cleaning the 'companyname' column
 
 #1. sep
+
+ascii<-function(x){
+ x<-gsub("é|ę","e",x)
+ x<-gsub('á|ą',"a",x)
+ return(x)
+}
+
 sep <- function(linha) {
   resp <- strsplit(linha," |/|-")
   resp <- unlist(resp)
@@ -200,23 +207,23 @@ calculate_hhi <- function (dframe,cores=2) {
   dframe[,mshare:=ccount/ncount*100][,ms2:=mshare^2]
   
   # Sys.time()
-  hhi <- data.frame()
+  # hhi <- data.frame()
 
-  for (i in 1:dim(grid)[1]) {
-    # count obs per cell and company
-    subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
-    subset$hhi <- sum(subset$ms2)
-    subset <- subset[1, !c("companyname") ]
-    hhi <- rbind(hhi, subset)
-  }
+  # for (i in 1:dim(grid)[1]) {
+  #   # count obs per cell and company
+  #   subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
+  #   subset$hhi <- sum(subset$ms2)
+  #   subset <- subset[1, !c("companyname") ]
+  #   hhi <- rbind(hhi, subset)
+  # }
   # Sys.time()
   
-  # f_calc_hhi<-function(gr,subset){
-  #   subset$hhi <- sum(subset$ms2)
-  #   subset[1, !c("companyname") ]
-  #  }
-  # subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
-  # hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,subset=dframe,mc.cores=cores))
+  f_calc_hhi<-function(gr,subset){
+    subset$hhi <- sum(subset$ms2)
+    subset[1, !c("companyname") ]
+   }
+  subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
+  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,subset=dframe,mc.cores=cores))
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
@@ -298,7 +305,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   
   #generate a "duplicate" variable indicating if the observation in the OJA dataset is a duplicate
   general_query$dup <- ifelse(duplicated(general_query$general_id), 1, 0)
-  general_query$keyvar <- str_to_lower(general_query$keyvar)
+  general_query$keyvar <- ascii(str_to_lower(general_query$keyvar))
   
   #standardize companyname
   if (standardise==TRUE) {
@@ -306,7 +313,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
     general_query$keyvar <- ordered
     general_query$keyvar <- str_trim(general_query$keyvar)
     general_query$keyvar <- gsub(" ","_",general_query$keyvar)
-    general_query$keyvar <- gsub("é","e",general_query$keyvar)    
+    # general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
   #consolidate companyname  ????????????? not repitition of clean names

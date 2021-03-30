@@ -98,30 +98,30 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     #remove observations already marked as duplicate by CEDEFOP
     #"duplicate" observations differ in their content
     #therefore we keep, from each duplicate group, the observation with the lowest number of missing variables
-    num_raw_obs <- nrow(dframe)
-    dframe$na_count <- rowSums(is.na(dframe))
-    # dframe[,na_count:=rowSums(is.na(.SD))]
+    # num_raw_obs <- nrow(dframe)
+    # dframe$na_count <- rowSums(is.na(dframe))
+    dframe[,na_count:=rowSums(is.na(.SD))]
     
-    dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
-    setDT(dframe)
-    # dframe <- setorder(dframe,by=general_id,na_count)
+    # dframe <- dframe %>% group_by(general_id) %>% arrange(na_count, .by_group = TRUE)
+    # setDT(dframe)
+    dframe <- setorder(dframe,by=general_id,na_count)
     
-    dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
-    # dframe[,dup:=as.numeric(duplicated(general_id))]
+    # dframe$dup <- ifelse(duplicated(dframe$general_id), 1, 0)
+    dframe[,dup:=as.numeric(duplicated(general_id))]
     
     # convert dates
     
-    dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
-    # dframe[,grab_date:=as.Date(grab_date, origin = "1970-01-01")]
+    # dframe$grab_date <- as.Date(dframe$grab_date, origin = "1970-01-01")
+    dframe[,grab_date:=as.Date(grab_date, origin = "1970-01-01")]
     
     # add quarter column 
     
     # dframe <- dframe %>% mutate(qtr = paste0(year(grab_date), "-", "q", quarter(grab_date)))
     dframe[,qtr := paste0(year(grab_date), "-", "q", quarter(grab_date))]
     #applying empty as na function
-    # cols<-c("city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector")
-    # dframe[,(cols):=lapply(.SD, empty_as_na2),.SDcols=cols]
-    dframe <- dframe %>% mutate_at(c("companyname", "city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector"), empty_as_na)
+    # dframe <- dframe %>% mutate_at(c("companyname", "city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector"), empty_as_na)
+    cols<-c("city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector")
+    dframe[,(cols):=lapply(.SD, empty_as_na2),.SDcols=cols]
     
     #write.fst(dframe,paste0(path,"OJA",countrycode, ".fst"), 100)
     #dframe <- read.fst(paste0(path,"OJA",countrycode, ".fst"), as.data.table = TRUE)
@@ -160,37 +160,34 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     # reading the keywords for data cleaning from imported file
     system(paste("echo",paste(countrycode,format(Sys.time()),"12-starting clean companynames",sep="#"),paste0(">> timings",ts,".txt")))
    
-    ordered <- sapply(dframe$companyname, function(x) sep(x))
-    dframe$companyname <- ordered
-    
-    # basic string standardization operations
-    dframe$companyname <- str_to_lower(dframe$companyname)
-    dframe$companyname <- str_trim(dframe$companyname)
-    dframe$companyname <- gsub(" ","_",dframe$companyname)
+    # ordered <- sapply(dframe$companyname, function(x) sep(x))
+    # dframe$companyname <- ordered
+    # 
+    # # basic string standardization operations
+    # dframe$companyname <- str_to_lower(dframe$companyname)
+    # dframe$companyname <- str_trim(dframe$companyname)
+    # dframe$companyname <- gsub(" ","_",dframe$companyname)
     
    
-   # companynames_sep<-unlist(parallel::mclapply(tolower(dframe$companyname),sep2,mc.cores=3))
-   # dframe[,companyname:=trimws(gsub(" ","_",companynames_sep))]  
-   #  
-    
-    
-    
+    companynames_sep<-unlist(parallel::mclapply(tolower(dframe$companyname),sep2,mc.cores=hhi_cores))
+    dframe[,companyname:=trimws(gsub(" ","_",ascii(companynames_sep)))]
+
     clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
     clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
     
 
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-    for(i in 1:dim(clean_names)[1]) {
-      #cleaning the company name
-      dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
-      dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
-    }
-    # dframe_names<-data.table(rn=dframe_orig[companyname!="",which=T],dframe_orig[companyname!="",c("companyname")])
-    # f_clean_names<-function(cl,dframe){
-    #   dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
+    # for(i in 1:dim(clean_names)[1]) {
+    #   #cleaning the company name
+    #   dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
+    #   dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
     # }
-    # system.time(all<-unique(rbindlist(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names))))
-    # dframe[all$rn,companyname:=all$companyname]
+    # # dframe_names<-data.table(rn=dframe_orig[companyname!="",which=T],dframe_orig[companyname!="",c("companyname")])
+    f_clean_names<-function(cl,dframe){
+      dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
+    }
+    all<-unique(rbindlist(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
+    dframe[all$rn,companyname:=all$companyname]
     # 
     
 
