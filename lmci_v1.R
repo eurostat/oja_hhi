@@ -27,7 +27,7 @@ rm(list=ls())
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
 options(mc.cores=3)
-hhi_cores<-3
+hhi_cores<-5
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -372,10 +372,14 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
     system(paste("echo",paste(countrycode,format(Sys.time()),"17-starting hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
-    
-    hhi <- calculate_hhi(dframe,hhi_cores)
+    cols<-c("idesco_level_4","fua_id","qtr","companyname")
+    hhi_data<-dframe[,..cols]
+    hhi <- calculate_hhi(hhidata,hhi_cores)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
+    hhi_data<-dframeupper[,..cols]
     hhiupper <- calculate_hhi(dframeupper,hhi_cores)
+    rm(hhi_data)
+    gc()
     
     ###Quality Indicators
     quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))

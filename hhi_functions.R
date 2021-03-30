@@ -182,7 +182,7 @@ createfua <- function(countrycode){
 #5. calculate_hhi
 
 calculate_hhi <- function (dframe,cores=2) {
-
+  
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
   grid <- expand.grid(esco = unique(dframe$idesco_level_4), geo = unique(dframe$fua_id), qtr = unique(dframe$qtr), stringsAsFactors = FALSE)
