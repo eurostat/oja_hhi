@@ -52,7 +52,7 @@ lmci_load <- function(countrycode){
   
   query <- paste0("SELECT general_id, grab_date, lang, idesco_level_4, esco_level_4, idcity, city, idprovince, province, idregion, region, idcountry, country, idcontract, contract, idsector, sector, sourcecountry, source, site, companyname  ",
                   "FROM ", data_table, " ",
-                  "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND idcontract != 'Internship'",
+                  "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND contract != 'Internship'",
                   ";")
   filename<-paste0(path,"OJA",countrycode, ".rds")
   if(!file.exists(filename)){
@@ -127,7 +127,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     dframe <- subset(dframe, select =  -c(grab_date))
     
     no_geo <- as.numeric(sum(!startsWith(dframe$idprovince, countrycode)))
-    no_contract <- as.numeric(sum(is.na(dframe$contract) | dframe$contract=="Internship"))
+    no_contract <- as.numeric(sum(is.na(dframe$contract)))
     no_isco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
 
     
