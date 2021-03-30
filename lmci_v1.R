@@ -78,7 +78,7 @@ lmci_load <- function(countrycode){
   # return(data.table(countrycode,nobs))
 }  
 
-nobs<-rbindlist(parallel::mclapply(countrycodes,lmci_load))
+nobs<-rbindlist(parallel::mclapply(countrycodes,lmci_load,mc.cores=hhi_cores))
 
 
 #########################
@@ -98,7 +98,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     #remove observations already marked as duplicate by CEDEFOP
     #"duplicate" observations differ in their content
     #therefore we keep, from each duplicate group, the observation with the lowest number of missing variables
-    # num_raw_obs <- nrow(dframe)
+    num_raw_obs <- nrow(dframe)
     # dframe$na_count <- rowSums(is.na(dframe))
     dframe[,na_count:=rowSums(is.na(.SD))]
     
@@ -182,7 +182,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     #   dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
     #   dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
     # }
-    # # dframe_names<-data.table(rn=dframe_orig[companyname!="",which=T],dframe_orig[companyname!="",c("companyname")])
+    dframe_names<-data.table(rn=dframe[companyname!="",which=T],dframe[companyname!="",c("companyname")])
     f_clean_names<-function(cl,dframe){
       dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
     }
@@ -371,10 +371,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     system(paste("echo",paste(countrycode,format(Sys.time()),"17-starting hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
     cols<-c("idesco_level_4","fua_id","qtr","companyname")
     hhi_data<-dframe[,..cols]
-    hhi <- calculate_hhi(hhidata,hhi_cores)
+    hhi <- calculate_hhi(hhi_data,hhi_cores)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
     hhi_data<-dframeupper[,..cols]
-    hhiupper <- calculate_hhi(dframeupper,hhi_cores)
+    hhiupper <- calculate_hhi(hhi_data,hhi_cores)
     rm(hhi_data)
     gc()
     

@@ -219,10 +219,10 @@ calculate_hhi <- function (dframe,cores=2) {
   # Sys.time()
   
   f_calc_hhi<-function(gr,subset){
+    subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
     subset$hhi <- sum(subset$ms2)
     subset[1, !c("companyname") ]
    }
-  subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
   hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,subset=dframe,mc.cores=cores))
   
   # Sys.time()
