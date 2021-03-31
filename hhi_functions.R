@@ -1,7 +1,7 @@
 #This file contains the functions used by the main code to calculate the Labour Market Concentration Index.
 # List of functions:
-# 1. sep
-# 2. empty_as_na
+# 1. ascii, sep, sep2
+# 2. empty_as_na, empty_as_na2
 # 3. createfua
 #  
 # 5. calculate_hhi
@@ -15,14 +15,27 @@
 ##Function for cleaning the 'companyname' column
 
 #1. sep
+
+ascii<-function(x){
+ x<-gsub("é|ę","e",x)
+ x<-gsub('á|ą',"a",x)
+ return(x)
+}
+
 sep <- function(linha) {
   resp <- strsplit(linha," |/|-")
   resp <- unlist(resp)
-  resp <- gsub(",|;|\\.","",resp)
+  resp <- gsub(",|;|\\.|\u00A0","",resp)
   resp <- sort(resp[which(nchar(resp) > 2)])
   resp <- paste0(resp,collapse=" ")
   resp <- tolower(resp)
 }
+
+sep2 <- function(linha) {
+  resp <- gsub(",|;|\\.|\u00A0","",unlist(strsplit(linha," |/|-")))
+  paste0(sort(resp[which(nchar(resp) > 2)]),collapse=" ")
+}
+
 
 # "^[0-9]", "[0-9]$" write line of code to filter out the companynames composed by numbers (e.g. telephone numbers)
 
@@ -35,6 +48,11 @@ empty_as_na <- function(y){
   
   return(y)
 }
+empty_as_na2 <- function(y){
+  y[y==""]<-NA 
+  return(y)
+}
+
 
 
 ## Function for creating the correspondence table between LAU, NUTS and FUA
@@ -171,7 +189,7 @@ createfua <- function(countrycode){
 #5. calculate_hhi
 
 calculate_hhi <- function (dframe,cores=2) {
-
+  
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
   grid <- expand.grid(esco = unique(dframe$idesco_level_4), geo = unique(dframe$fua_id), qtr = unique(dframe$qtr), stringsAsFactors = FALSE)
@@ -190,22 +208,22 @@ calculate_hhi <- function (dframe,cores=2) {
   
   # Sys.time()
   # hhi <- data.frame()
-  # 
+
   # for (i in 1:dim(grid)[1]) {
   #   # count obs per cell and company
   #   subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
   #   subset$hhi <- sum(subset$ms2)
-  #   subset <- subset[1, !c("companyname") ] 
+  #   subset <- subset[1, !c("companyname") ]
   #   hhi <- rbind(hhi, subset)
   # }
   # Sys.time()
   
-  f_calc_hhi<-function(gr,dframe){
+  f_calc_hhi<-function(gr,subset){
     subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
     subset$hhi <- sum(subset$ms2)
     subset[1, !c("companyname") ]
    }
-  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=cores))
+  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,subset=dframe,mc.cores=cores))
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
@@ -287,7 +305,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   
   #generate a "duplicate" variable indicating if the observation in the OJA dataset is a duplicate
   general_query$dup <- ifelse(duplicated(general_query$general_id), 1, 0)
-  general_query$keyvar <- str_to_lower(general_query$keyvar)
+  general_query$keyvar <- ascii(str_to_lower(general_query$keyvar))
   
   #standardize companyname
   if (standardise==TRUE) {
@@ -295,7 +313,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
     general_query$keyvar <- ordered
     general_query$keyvar <- str_trim(general_query$keyvar)
     general_query$keyvar <- gsub(" ","_",general_query$keyvar)
-    general_query$keyvar <- gsub("é","e",general_query$keyvar)    
+    # general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
   # eliminate empty cells in keyvar

@@ -27,7 +27,7 @@ rm(list=ls())
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
 options(mc.cores=3)
-hhi_cores<-4
+hhi_cores<-5
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -39,6 +39,9 @@ open_oja_db()
 ####declaring function for calculating Labour market concentration index. Creates subfolder for each country####
 countrycodes <- get("cc",.restatapi_env)$EU27_2020
 # countrycode<-countrycodes[1]
+# to delete the downloaded files uncomment the code below
+# filenames<-unlist(lapply(countrycodes,function(x) {paste0(x, "/","OJA",x, ".rds")})) 
+# unlink(filenames)
 
 lmci_load <- function(countrycode){
   stime<- Sys.time()
@@ -59,7 +62,7 @@ lmci_load <- function(countrycode){
     data <- query_athena(query)
     saveRDS(data,filename)
   }
-  nobs<-nrow(readRDS(filename))
+  # nobs<-nrow(readRDS(filename))
   
   key_var = "companyname"
   vars = "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector, (expire_date-grab_date) AS duration " 
@@ -72,10 +75,10 @@ lmci_load <- function(countrycode){
     saveRDS(data,filename)
   }
   message(paste(Sys.time(),"-",countrycode,"-",format(difftime(Sys.time(),stime))))
-  return(data.table(countrycode,nobs))
+  # return(data.table(countrycode,nobs))
 }  
 
-nobs<-rbindlist(parallel::mclapply(countrycodes,lmci_load))
+nobs<-rbindlist(parallel::mclapply(countrycodes,lmci_load,mc.cores=hhi_cores))
 
 
 #########################
@@ -113,10 +116,12 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     # add quarter column 
     
-    dframe <- dframe %>% mutate(qtr = paste0(year(grab_date), "-", "q", quarter(grab_date)))
-    
+    # dframe <- dframe %>% mutate(qtr = paste0(year(grab_date), "-", "q", quarter(grab_date)))
+    dframe[,qtr := paste0(year(grab_date), "-", "q", quarter(grab_date))]
     #applying empty as na function
-    dframe <- dframe %>% mutate_at(c("companyname", "city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector"), empty_as_na)
+    # dframe <- dframe %>% mutate_at(c("companyname", "city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector"), empty_as_na)
+    cols<-c("city", "idcity", "province", "idprovince", "region", "idregion", "idcontract", "contract", "idsector", "sector")
+    dframe[,(cols):=lapply(.SD, empty_as_na2),.SDcols=cols]
     
     #write.fst(dframe,paste0(path,"OJA",countrycode, ".fst"), 100)
     #dframe <- read.fst(paste0(path,"OJA",countrycode, ".fst"), as.data.table = TRUE)
@@ -143,44 +148,48 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     
     dframe <- dframe[startsWith(dframe$idprovince, countrycode), ]
-    
+    # dframe <- dframe[grepl(paste0("^",countrycode),idprovince), ]
     num_obs_after_filters <- nrow(dframe) 
     
     #write.fst(dframe,paste0(path,"ITtest.fst"), 100)
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
     # clean and order company names for LMC index --------
     
-    ordered <- sapply(dframe$companyname, function(x) sep(x))
-    dframe$companyname <- ordered
-    
-    # basic string standardization operations
-    dframe$companyname <- str_to_lower(dframe$companyname)
-    dframe$companyname <- str_trim(dframe$companyname)
-    dframe$companyname <- gsub(" ","_",dframe$companyname)
-    
-    
     ####COMPANYNAME CONSOLIDATION#################################################################################################
     #################################################################################################  
     # reading the keywords for data cleaning from imported file
     system(paste("echo",paste(countrycode,format(Sys.time()),"12-starting clean companynames",sep="#"),paste0(">> timings",ts,".txt")))
+   
+    # ordered <- sapply(dframe$companyname, function(x) sep(x))
+    # dframe$companyname <- ordered
+    # 
+    # # basic string standardization operations
+    # dframe$companyname <- str_to_lower(dframe$companyname)
+    # dframe$companyname <- str_trim(dframe$companyname)
+    # dframe$companyname <- gsub(" ","_",dframe$companyname)
     
-    
+   
+    companynames_sep<-unlist(parallel::mclapply(tolower(dframe$companyname),sep2,mc.cores=hhi_cores))
+    dframe[,companyname:=trimws(gsub(" ","_",ascii(companynames_sep)))]
+
     clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
     clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
     
 
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
-    for(i in 1:dim(clean_names)[1]) {
-      #cleaning the company name
-      dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
-      dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
-    }
-    # f_clean_names<-function(cl,dframe){
-    #   dframe[grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5],.(companyname=cl[[1]][2])]
-    #   dframe[companyname==cl[[1]][4],.(companyname=cl[[1]][2])]
-    #   return(NULL)
+    # for(i in 1:dim(clean_names)[1]) {
+    #   #cleaning the company name
+    #   dframe$companyname[str_detect(dframe$companyname, clean_names[i,3]) == TRUE & dframe$companyname!=clean_names[i,5] ] <- clean_names[i,2]
+    #   dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
     # }
-    # fout<-lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe)
+    dframe_names<-data.table(rn=dframe[companyname!="",which=T],dframe[companyname!="",c("companyname")])
+    f_clean_names<-function(cl,dframe){
+      dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
+    }
+    all<-unique(rbindlist(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
+    dframe[all$rn,companyname:=all$companyname]
+    # 
+    
 
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
@@ -361,10 +370,14 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     ####CALCULATE THE HERFINDAHL HIRSCHMAN INDEX =============
     system(paste("echo",paste(countrycode,format(Sys.time()),"17-starting hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
-    
-    hhi <- calculate_hhi(dframe,hhi_cores)
+    cols<-c("idesco_level_4","fua_id","qtr","companyname")
+    hhi_data<-dframe[,..cols]
+    hhi <- calculate_hhi(hhi_data,hhi_cores)
     saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
-    hhiupper <- calculate_hhi(dframeupper,hhi_cores)
+    hhi_data<-dframeupper[,..cols]
+    hhiupper <- calculate_hhi(hhi_data,hhi_cores)
+    rm(hhi_data)
+    gc()
     
     ###Quality Indicators
     quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))
