@@ -132,7 +132,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     dframe <- subset(dframe, select =  -c(grab_date))
     
     no_geo <- as.numeric(sum(!startsWith(dframe$idprovince, countrycode)))
-    no_contract <- as.numeric(sum(is.na(dframe$contract)))   
+    no_contract <- as.numeric(sum(is.na(dframe$contract)))
     no_isco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
 
     
@@ -288,6 +288,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     sfilefuanum <- length(unique(sfile$fua_id))
     
     if (countrycode %in% c("IE","CY")){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
+    if (countrycode == "CY"){sfile$fua_id[sfile$fua_id == "CY501"] <- "CY003"}
     
     #### MERGE FUA DATA WITH OJA DATA ====================================
     system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
