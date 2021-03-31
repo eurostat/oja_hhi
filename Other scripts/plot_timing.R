@@ -4,6 +4,7 @@ library(viridis)
 library(RColorBrewer)
 
 dt<-fread("timings20210330104858.txt",sep="#",header=F)
+dt<-fread("timings20210331052816.txt",sep="#",header=F)
 setnames(dt,c("cc","ts","step"))
 dt<-dt[order(cc,ts)]
 dt[,c("tsn","mints","maxts"):=.(shift(ts,-1),min(ts),max(ts)),by=cc][,c("etime","ttime"):=.(difftime(tsn,ts),difftime(maxts,mints))][,ptime:=as.numeric(etime)/as.numeric(ttime)*100]
