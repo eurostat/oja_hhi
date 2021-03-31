@@ -274,13 +274,13 @@ create_hhigeo <- function(hhi = hhi,sfile){
   ## this is the list of default arguments given to the function:
   #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
   ## the variables in the OJA dataset for which sum stats are created
-  #idcountry <- "IT"
+  #idcountry <- "RO"
   ## the country in the OJA dataset for which sum stats are computed
   #samplesize <- "1000000"
   ## sum stats are calculated for a sample of observations. this argument (a number expressed as text) determines the sample size
   #filterlist <- filteredout$companyname
   ## this argument (a "chr" object) provides a list of words/codes which are matched to the key_var argument, flagging observations accordingly. for example, this argument can indicate which observations we want to filter out for some subsequent analysis. an empty string ("") as an argument means that no list is provided.
-  #keeplist <- keep$companyname
+  #keeplist <- clean_names$replace_with
   ## this argument (a "chr" object) provides a list of words/codes which are matched to the key_var argument, flagging observations accordingly. for example, this argument can indicate which observations we want to keep for some subsequent analysis.  an empty string ("") as an argument means that no list is provided.
   #key_var <- "companyname"
   ## this argument (the name of a variable in the OJA dataset) provides the key variable by which sum stats are computing. using the default, the function will calculate summary statistics by companyname
@@ -316,6 +316,10 @@ create_hhigeo <- function(hhi = hhi,sfile){
     # general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
+  # eliminate empty cells in keyvar
+  general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
+  general_query <- general_query[general_query$notgood != 1 , ]
+  
   #consolidate companyname  ????????????? not repitition of clean names
   if (consolidate!="" & consolidate!=FALSE) {
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
@@ -332,12 +336,6 @@ create_hhigeo <- function(hhi = hhi,sfile){
   # if (consolidate!="" & consolidate!=FALSE) {
   #   fout<-lapply(as.list(as.data.frame(t(consolidate))),f_clean_names,dframe=general_query)
   # }
-  
-  
-  
-  # eliminate empty cells in keyvar
-  general_query$notgood <- ifelse(general_query$keyvar=="",1,0)
-  general_query <- general_query[general_query$notgood != 1 , ]
   
   
   ### generating summary statistics at the keyvar level. these summary statistics are the main output of the function
@@ -402,7 +400,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   #mydata <- sumstats_by_company
   ## this is a dataset containing the variables needed to estimate the model. it must contain all the following variables as explained below: names, yvar, xvars, flag
   #flag <- "filteredout"
-  ## this is a crucial input to the function. flag is a string identifying the name of the variable that, within mydata, identifies observations belonging to different groups. Observations , meaning that they can be flagged (1), identified as not to be flagged (0), or w. Ideally, flag is a binary (0/1) variable, but the function will work as long as 1 is included in the values of flag. The regression model will be estimated only for observations for which flag==1.
+  ## this is a crucial input to the function. flag is a string identifying the name of the variable that, within mydata, identifies observations belonging to different groups. Observations can be flagged as agencies (value = 1) or identified as actual employers (0). Ideally, flag is a binary (0/1) variable, but the function will work as long as 1 is included in the values of flag. The regression model will be estimated only for observations for which flag==1.
   #names <- "companyname"
   ## this is a variable containing the observation identifier (name/code/id)
   #yvar <- "ln_esco3"
