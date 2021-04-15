@@ -61,8 +61,8 @@ empty_as_na2 <- function(y){
 createfua <- function(countrycode){
   ### download file with eurostat classification if is not downloaded yet
   
-  filename <- "EU-28-LAU-2019-NUTS-2016.xlsx"
-  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile=filename)}
+  filename <- "EU-28-LAU-2018-NUTS-2016.xlsx"
+  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2018-NUTS-2016.xlsx", destfile=filename)}
   # options (timeout = 100)
   
   
@@ -158,7 +158,7 @@ createfua <- function(countrycode){
   ### change the value of NUTS_3_CODE to make it compatible with the 2013 classification. in short, when recoded=1, then the NUTS2013 code is used instead of the NUTS2016 code
   
   DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013] 
-  DT[recoded==2,NUTS_3_CODE:=0] 
+  #DT[recoded==2,NUTS_3_CODE:=0] 
   DT[recoded==2,assign:=0] 
   DT[,LAU_CODE:=as.character(LAU_CODE)]
   
