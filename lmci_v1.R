@@ -301,13 +301,14 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     # fua <- subset(fua, fua$country == countrycode)
     
-    totfuanum <- length(unique(fua$fua_id))-1
+    totfuanum <- length(unique(fua$fua_id))
   
     
     #Handle country exceptions
 
     if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
-    if (countrycode  %in% c("PL","IE","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
+    if (countrycode  %in% c("PL","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
+    if (countrycode == "IE"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-2)}
     if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
     if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
     if (countrycode == "LT"){
