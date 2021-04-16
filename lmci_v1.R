@@ -298,6 +298,11 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     #source code for matching LAU codes, NUTS codes and FUAid downloaded from Eurostat website
     fua <- createfua(countrycode)
+    num_laus <- nrow(fua)
+    fuadup <- fua %>% count(idprovince, city) # identify duplicates same city name and idprovice (maybe different idcity)
+    fua2 <- merge (fua, fuadup)
+    fua2 <- subset (fua2, fua2$n == 1)  
+    num_undup_laus <- nrow(fua2)
     
     # fua <- subset(fua, fua$country == countrycode)
     
@@ -320,9 +325,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     #corrects idcity (LAU code) in input OJA data by looking at cityname (LAU national name)
     if (countrycode %in% c("PT", "SE", "FR", "EL", "IE", "PL", "EE", "HR", "MT", "FI", "SK", "SI", "CY"))
     {
-      fuadup <- fua %>% count(idprovince, city)
-      fua2 <- merge (fua, fuadup)
-      fua2 <- subset (fua2, fua2$n == 1)  
       dframe <- left_join(dframe,fua2, by=c ("city", "idprovince"))
       dframe$idcity <- coalesce(dframe$idcity.y, dframe$idcity.x)
       dframe <- select(dframe, -c("idcity.x", "idcity.y", "fua_id", "country.x", "country.y", "var1", "city_latin"))
@@ -351,7 +353,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     num_obs_final <- as.numeric(length(unique(dframe$general_id)))
     # write.fst(dframe,paste0(path,"OJA",countrycode, "step3.fst"), 100)
     dframe$companyname[dframe$companyname == ""] <- NA
-    num_imputed_companynames <- as.numeric(sum(is.na(dframe$companyname)))
+    #num_imputed_companynames <- as.numeric(sum(is.na(dframe$companyname)))
     dframeupper <- dframe[!is.na(dframe$companyname) , ]
     
     ####IMPUTATION OF MISSING COMPANYNAMES (i.e. Staffing agencies removed by the filter)####
@@ -384,8 +386,11 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))
     saveRDS(quality, paste0(resultspath,"quality_",countrycode, ".rds"))
     
-    companyname_stats <- as.data.frame(cbind(countrycode, num_obs_agency_list, num_obs_agency_model, num_imputed_companynames, num_distinct_agency_list, num_distinct_agency_model, automflag_output[[2]]))
+    companyname_stats <- as.data.frame(cbind(countrycode, num_obs_agency_list, num_obs_agency_model, num_distinct_agency_list, num_distinct_agency_model, automflag_output[[2]]))
     saveRDS(companyname_stats, paste0(resultspath,"companyname_stats_",countrycode, ".rds"))
+    
+    fua_stats <- as.data.frame(cbind(totfuanum, sfilefuanum, fuanum, num_laus, num_undup_laus))
+    saveRDS(fua_stats, paste0(resultspath,"fua_stats_",countrycode, ".rds"))
     ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
     system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
     
@@ -566,3 +571,6 @@ quality_TOT <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
 
 filenamesc <- list.files(getwd(), recursive=T, pattern="companynames_stats",full.names=T)
 companynames_stats_TOT <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+
+filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
+fua_stats_TOT <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
