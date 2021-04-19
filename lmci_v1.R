@@ -323,7 +323,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     }
     
     #corrects idcity (LAU code) in input OJA data by looking at cityname (LAU national name)
-    if (countrycode %in% c("PT", "SE", "FR", "EL", "IE", "PL", "EE", "HR", "MT", "FI", "SK", "SI", "CY"))
+    if (countrycode %in% c("PT", "SE", "FR", "EL", "IE", "PL", "EE", "HR", "MT", "FI", "SK", "SI", "CY", "CZ"))
     {
       dframe <- left_join(dframe,fua2, by=c ("city", "idprovince"))
       dframe$idcity <- coalesce(dframe$idcity.y, dframe$idcity.x)
