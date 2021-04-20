@@ -737,7 +737,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   sfilefuanum <- length(unique(sfile$fua_id))
   
   if (countrycode %in% c("IE","CY")){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
-  if (countrycode == "CY"){sfile$fua_id[sfile$fua_id == "CY501"] <- "CY003"}
+  #if (countrycode == "CY"){sfile$fua_id[sfile$fua_id == "CY501"] <- "CY003"}
   
   #### MERGE FUA DATA WITH OJA DATA ====================================
   system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
@@ -761,8 +761,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   #Handle country exceptions
   
   if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
-  if (countrycode  %in% c("PL","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
-  if (countrycode == "IE"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-2)}
+  if (countrycode  %in% c("IE","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-2)}
+  if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
   if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
   if (countrycode == "SI"){fua$fua_id <- str_replace(fua$fua_id, "2$", "1")}
   if (countrycode == "LT"){
