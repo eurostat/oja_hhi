@@ -61,8 +61,8 @@ empty_as_na2 <- function(y){
 createfua <- function(countrycode){
   ### download file with eurostat classification if is not downloaded yet
   
-  filename <- "EU-28-LAU-2019-NUTS-2016.xlsx"
-  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile=filename)}
+  filename <- "EU-28-LAU-2018-NUTS-2016.xlsx"
+  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2018-NUTS-2016.xlsx", destfile=filename)}
   # options (timeout = 100)
   
   
@@ -132,6 +132,7 @@ createfua <- function(countrycode){
   
   
   ### open the table showing the NUTS units for which a change occurred between the 2013 and 2016 classification; generate a new "recoded" variable with the following values:
+  # 3 for NUTS 2016 that had some boundary shift and changed name. We chose to use anyway the 2016 code to avoid missing matches
   # 2 for NUTS2016 units that have no direct (1:1) correspondence with any NUTS2013 units
   # 1 for NUTS2016 units which, compared to the NUTS2013 classification, remained identical but changed name 
   # 0 for NUTS2016 units for which there has been no change, compared to NUTS2013 (the value 0 is assigned later in the code, after the merge with the main table)
@@ -139,6 +140,7 @@ createfua <- function(countrycode){
   setnames(DT2, gsub("\\s","_",colnames(DT2)))
   DT2[,recoded:=2]
   DT2[Change=="recoded",recoded:=1]
+  DT2[Change=="boundary shift",recoded:=3]
   DT2 <- DT2[,c("Code_2013", "Code_2016" , "recoded"),with=F]
   setnames(DT2, c("NUTS_3_2013" , "NUTS_3_CODE" , "recoded"))
   
@@ -155,10 +157,12 @@ createfua <- function(countrycode){
   DT[is.na(recoded),recoded:=0] 
   DT[,country:=countrycode]
   
-  ### change the value of NUTS_3_CODE to make it compatible with the 2013 classification. in short, when recoded=1, then the NUTS2013 code is used instead of the NUTS2016 code
+  ### change the value of NUTS_3_CODE to make it compatible with the 2013 classification. in short, when recoded=1 or recoded= 3, then the NUTS2013 code is used instead of the NUTS2016 code
   
-  DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013] 
-  DT[recoded==2,NUTS_3_CODE:=0] 
+  DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013]
+  DT[recoded==3,NUTS_3_CODE:=NUTS_3_2013]
+  # DT[recoded==2,NUTS_3_CODE:=0] 
+  DT[recoded==2,assign:=0]
   DT[recoded==2,assign:=0] 
   DT[,LAU_CODE:=as.character(LAU_CODE)]
   
