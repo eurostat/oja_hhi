@@ -321,7 +321,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   general_query <- general_query[general_query$notgood != 1 , ]
   
   #consolidate companyname  ????????????? not repitition of clean names
-  if (consolidate!="" & consolidate!=FALSE) {
+  if (any(consolidate!="" & consolidate!=FALSE)) {
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
     for(i in 1:dim(consolidate)[1]) {
     general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
