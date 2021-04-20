@@ -69,7 +69,7 @@ createfua <- function(countrycode){
   ###selecting countries
   # countrylist <- getSheetNames(filename)[4:31]
   #alternatively: countrylist <- c("BE","BG","CZ","DK","DE","EE","IE","EL","ES","FR","HR","IT","CY","LV","LT","LU","HU","MT","NL","AT","PL","PT","RO","SI","SK","FI","SE")
-  
+
   
   #3b. assignFUA
   #create a function generating the "assign" variable
@@ -82,7 +82,7 @@ createfua <- function(countrycode){
     setnames(DT,gsub("\\(.*\\)","",colnames(DT)))
     
     # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
-    
+    # message("DT-",countrycode,"\n")
     #finding which LAUs belong to the same NUTS and FUAs
     DT[,NUTSFUA:= paste0(NUTS_3_CODE, FUA_ID)]
     DT[,dup:= as.numeric(!duplicated(NUTSFUA , fromLast=FALSE))]
@@ -143,7 +143,7 @@ createfua <- function(countrycode){
   DT2[Change=="boundary shift",recoded:=3]
   DT2 <- DT2[,c("Code_2013", "Code_2016" , "recoded"),with=F]
   setnames(DT2, c("NUTS_3_2013" , "NUTS_3_CODE" , "recoded"))
-  
+  # cat("DT2",countrycode,"\n")
   # input manually the NUTS2013-NUTS2016 correspondence for 3 NUTS2016 regions
   DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",NUTS_3_CODE:="DE91C"]  
   DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",recoded:=1]
