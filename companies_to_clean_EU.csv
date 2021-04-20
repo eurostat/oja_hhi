@@ -33,7 +33,7 @@ accor_hotels,accor,accor,,accord|accors,EU
 thermo_fisher_scientific,thermo_fisher,thermo_fisher|thermofisher|thermo-fisher,,,EU
 wells_fargo,fargo,fargo,,,EU
 bricocenter,bricocenter,bricocenter,,,EU
-euromec2,euromeceuromec,,,,EU
+euromec2,euromeceuromec,euromeceuromec|euromec2,,,EU
 intesa_san_paolo,intesa,intesa,,,EU
 msc_crociere,msc_crociere,msc_crociere|msccrociere|msc-crociere,msc,,EU
 brembo,brembo,brembo,,reti,EU
@@ -356,8 +356,8 @@ hrs_romania,hrs_romania,hrs_romania,,,RO
 nxp_semiconductors,nxp_semiconductors,nxp_semiconductors,,,EU
 ntt_data,ntt_data,ntt_data,ntt,,RO
 raiffeisen_bank,raiffeisen,raiffeisen_bank,,,EU
-pepsico,pepsico,pepsico,pepsi,,RO
-amazon,amazon,amazon,,bioamazon-frutas_e_polpas,_lda|tg_amazon_team_srl|amazonen_werke|amazon_flex_es
+pepsico,pepsico,pepsico,pepsi,,EU
+amazon,amazon,amazon,,bioamazon-frutas_e_polpas_lda|tg_amazon_team_srl|amazonen_werke|amazon_flex_es,RO
 orange_business_services,orange_business_services,orange_business_services,,,EU
 gameloft,gameloft,gameloft,,,RO
 molson_coors_brewing_company,molson_coors_brewing_company,molson_coors_brewing_company,,,EU
