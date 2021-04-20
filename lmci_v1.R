@@ -26,8 +26,8 @@ rm(list=ls())
 
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
-options(mc.cores=1)
-hhi_cores<-5
+options(mc.cores=2)
+hhi_cores<-2
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -183,10 +183,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   #   dframe$companyname[dframe$companyname == clean_names[i,4] ] <- clean_names[i,2]
   # }
   dframe_names<-data.table(rn=dframe[companyname!="",which=T],dframe[companyname!="",c("companyname")])
-  f_clean_names<-function(cl,dframe){
-    dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
+  f_clean_names<-function(cl,dframen){
+    dframen[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
   }
-  all<-unique(rbindlist(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
+  all<-rbindlist(unique(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframen=dframe_names)))
   dframe[all$rn,companyname:=all$companyname]
   # 
   
@@ -540,7 +540,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-lmci_calc("BG",ts=ts,hhi_cores)
+# lmci_calc("FR",ts=ts,hhi_cores=6)
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
