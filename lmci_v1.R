@@ -535,6 +535,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
+
+lmci_calc("BG",hhi_cores = 8)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
 
