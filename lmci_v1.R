@@ -186,7 +186,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     f_clean_names<-function(cl,dframe){
       dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
     }
-    all<-unique(rbindlist(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
+    all<-rbindlist(unique(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
     dframe[all$rn,companyname:=all$companyname]
     # 
     
@@ -540,7 +540,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-# lmci_calc("FR",ts=ts,hhi_cores=6)
+# lmci_calc("FR",ts=ts,hhi_cores=4)
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
