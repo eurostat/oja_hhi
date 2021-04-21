@@ -389,7 +389,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
     
     hhigeo <- merge(hhigeo, fua_pop)
-    hhigeo$geometry<-st_as_sf(hhigeo$geometry)
+    hhigeo<-st_as_sf(hhigeo)
     saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
     saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
     system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
