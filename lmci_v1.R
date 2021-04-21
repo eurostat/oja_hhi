@@ -26,8 +26,8 @@ rm(list=ls())
 
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
-options(mc.cores=1)
-hhi_cores<-5
+options(mc.cores=2)
+hhi_cores<-3
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -181,7 +181,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     f_clean_names<-function(cl,dframe){
       dframe[(grepl(cl[[1]][3],companyname) & companyname!=cl[[1]][5]) |companyname==cl[[1]][4] ,companyname:=cl[[1]][2]][]
     }
-    all<-unique(rbindlist(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
+    all<-rbindlist(unique(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
     dframe[all$rn,companyname:=all$companyname]
     # 
 
@@ -522,7 +522,11 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
       ggsave(paste0(resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_",countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
     system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> acbe69df35fe4fb63e535a97ab6e265c8ae23647
   # }, error=function(e){message(e)})
   
 }
@@ -531,7 +535,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-lmci_calc("BG",ts=ts,hhi_cores)
+# lmci_calc("IT",ts=ts,hhi_cores=4)
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
