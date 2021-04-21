@@ -84,6 +84,7 @@ createfua <- function(countrycode){
     }  
     setnames(DT,gsub("\\s","_",colnames(DT)))
     setnames(DT,gsub("\\(.*\\)","",colnames(DT)))
+    # if (countrycode %in% c("IT"))  setnames(DT,gsub("LAU_NAME_alternative","LAU_NAME_LATIN",colnames(DT)))
     
     # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
     # message("DT-",countrycode,"\n")
