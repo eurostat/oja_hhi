@@ -27,7 +27,7 @@ rm(list=ls())
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
 options(mc.cores=2)
-hhi_cores<-3
+hhi_cores<-2
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
