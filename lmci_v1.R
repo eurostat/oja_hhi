@@ -134,8 +134,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     no_geo <- as.numeric(sum(!startsWith(dframe$idprovince, countrycode)))
     no_contract <- as.numeric(sum(is.na(dframe$contract)))
     no_isco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
-
-    
     
     # write.fst(dframe,paste0(path,"OJA",countrycode, "step1.fst"), 100)
     #dframe <- read.fst(paste0(path,"OJA",countrycode, "step1.fst"), as.data.table = TRUE)
@@ -145,7 +143,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     
     dframe <- subset(dframe, !is.na(idesco_level_4))
     #num_obs_noisco <- as.numeric(sum(is.na(dframe$idesco_level_4)))
-    
     
     dframe <- dframe[startsWith(dframe$idprovince, countrycode), ]
     # dframe <- dframe[grepl(paste0("^",countrycode),idprovince), ]
@@ -168,14 +165,12 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     # dframe$companyname <- str_trim(dframe$companyname)
     # dframe$companyname <- gsub(" ","_",dframe$companyname)
     
-   
     companynames_sep<-unlist(parallel::mclapply(tolower(dframe$companyname),sep2,mc.cores=hhi_cores))
     dframe[,companyname:=trimws(gsub(" ","_",ascii(companynames_sep)))]
 
     clean_names <- read.csv("companies_to_clean_EU.csv" , sep = ",")
     clean_names <- clean_names[clean_names$country=="EU"|clean_names$country==countrycode , ]
     
-
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
     # for(i in 1:dim(clean_names)[1]) {
     #   #cleaning the company name
@@ -189,7 +184,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     all<-rbindlist(unique(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
     dframe[all$rn,companyname:=all$companyname]
     # 
-    
 
     #####AGENCY FILTER#################################################################################################
     #################################################################################################  
@@ -228,8 +222,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     sumstats_by_company$ln_province <- log(sumstats_by_company$idprovince)
     sumstats_by_company$ln_sector <- log(sumstats_by_company$idsector)
     sumstats_by_company$ln_undup_prov <- sumstats_by_company$ln_province * sumstats_by_company$ln_undup_n
-    
-    
     
     testflag1 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],xvar2="sqln_undup_n", xvar3="culn_undup_n", xvar4="quln_undup_n")
     testflag2 <- automflag(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>3,],yvar="ln_n", xvar1="ln_undup_n", xvar2="sqln_undup_n", flag_above=FALSE, flag_below=TRUE)
@@ -288,7 +280,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     sfilefuanum <- length(unique(sfile$fua_id))
     
     if (countrycode %in% c("IE","CY")){sfile$fua_id = substr(sfile$fua_id,1,nchar(sfile$fua_id)-2)}
-    #if (countrycode == "CY"){sfile$fua_id[sfile$fua_id == "CY501"] <- "CY003"}
+    #if (countrycode == "CY"){sfile$fua_id[sfile$fua_id == "CY501"] <- "CY003"} old line in case NUTS LAU correspondence table 2019-2016 is used instead of 2018-2016. See createfua() function for details.
     
     #### MERGE FUA DATA WITH OJA DATA ====================================
     system(paste("echo",paste(countrycode,format(Sys.time()),"15-starting merge fua and oja",sep="#"),paste0(">> timings",ts,".txt")))
@@ -307,10 +299,9 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
     # fua <- subset(fua, fua$country == countrycode)
     
     totfuanum <- length(unique(fua$fua_id))
-  
     
     #Handle country exceptions
-
+    
     if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
     if (countrycode  %in% c("IE","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-2)}
     if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)}
@@ -531,7 +522,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
       ggsave(paste0(resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_",countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
     system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
-    
+
   # }, error=function(e){message(e)})
   
 }
@@ -540,7 +531,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-# lmci_calc("IT",ts=ts,hhi_cores=4)
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
