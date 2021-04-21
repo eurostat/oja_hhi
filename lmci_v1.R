@@ -522,11 +522,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
       ggsave(paste0(resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_",countrycode, ".png"), width = 20, height = 13.3, units = "cm")
       
     system(paste("echo",paste(countrycode,format(Sys.time()),"21-finishing calculation",sep="#"),paste0(">> timings",ts,".txt")))
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> acbe69df35fe4fb63e535a97ab6e265c8ae23647
   # }, error=function(e){message(e)})
   
 }
@@ -535,7 +531,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 # parallel::mclapply("BE",  lmci_calc)
 # parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
-# lmci_calc("IT",ts=ts,hhi_cores=4)
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
