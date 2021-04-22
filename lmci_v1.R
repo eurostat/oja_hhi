@@ -580,4 +580,5 @@ saveRDS(fua_stats_tot, paste0("fua_stats_tot.rds"))
 filenamesm <- list.files(getwd(), recursive=T, pattern="staff_agencies_from_model",full.names=T)
 staff_agencies_from_model_tot <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
 saveRDS(staff_agencies_from_model_tot, paste0("staff_agencies_from_model_tot.rds"))
+staff_agencies_sample <- sample_n(staff_agencies_from_model_tot, 50)
 
