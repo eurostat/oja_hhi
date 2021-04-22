@@ -391,7 +391,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   #hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
   
   hhigeo <- merge(hhigeo, fua_pop)
-  
+  hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
   #hhigeo <- readRDS(data, file= paste0(path,"hhigeo",countrycode, ".rds"))
   #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
@@ -540,7 +540,7 @@ parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 
 #aggregate the results from countries and plot
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
-hhigeoTOT <- rbindlist(lapply(filenames,FUN= readRDS), fill = T)
+hhigeoTOT <- rbindlist(lapply(filenames,readRDS), fill = T)
 geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
 hhigeoTOTq32018 <- subset(hhigeoTOT, qtr == "2018-q3")
 hhigeoTOTq32018$label <- paste0(hhigeoTOTq32018$fua_name, "\n ", as.character(hhigeoTOTq32018$wmean))
