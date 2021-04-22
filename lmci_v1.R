@@ -368,7 +368,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhi_data<-dframe[,..cols]
   hhi <- calculate_hhi(hhi_data,hhi_cores)
   saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
-  hhi <- readRDS(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
   
   hhi_data<-dframeupper[,..cols]
   #hhiupper <- calculate_hhi(hhi_data,hhi_cores)
@@ -395,7 +394,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
         
   # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
-  #hhigeo <- readRDS(data, file= paste0(path,"hhigeo",countrycode, ".rds"))
   #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
   
