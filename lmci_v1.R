@@ -296,7 +296,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   #Handle country exceptions
   
-  if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
+  if (countrycode %in% c("IE", "HR", "PT")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
   if (countrycode  %in% c("IE","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-2)}
   #if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)} 2018-2016 used in the createfua() function.
   if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
@@ -368,8 +368,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhi_data<-dframe[,..cols]
   hhi <- calculate_hhi(hhi_data,hhi_cores)
   saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
+  hhi <- readRDS(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
+  
   hhi_data<-dframeupper[,..cols]
-  hhiupper <- calculate_hhi(hhi_data,hhi_cores)
+  #hhiupper <- calculate_hhi(hhi_data,hhi_cores)
   rm(hhi_data)
   gc()
   
@@ -386,14 +388,15 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
   
   hhigeo <- create_hhigeo(hhi,sfile)
-  hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
+  #hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
   
   hhigeo <- merge(hhigeo, fua_pop)
   class(hhigeo$geometry)<-c("sfc_GEOMETRY","sfc")
         
   # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
-  saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
+  #hhigeo <- readRDS(data, file= paste0(path,"hhigeo",countrycode, ".rds"))
+  #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
   
   # table(hhigeo$qtr)
@@ -558,12 +561,19 @@ setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,"hhigeo.csv")
 
+#aggregate quality indicators from all countries and save results
 
+#quality_tot: indicator that tracks the number of job ads analysed through the various steps of the process
 filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
-quality_TOT <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
+quality_tot <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
+saveRDS(quality_tot, paste0("quality_tot.rds"))
 
-filenamesc <- list.files(getwd(), recursive=T, pattern="companynames_stats",full.names=T)
-companynames_stats_TOT <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+#companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
+filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
+companynames_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+saveRDS(companynames_stats_tot, paste0("companynames_stats_tot.rds"))
 
+#fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
-fua_stats_TOT <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
+fua_stats_tot <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
+saveRDS(fua_stats_tot, paste0("fua_stats_tot.rds"))
