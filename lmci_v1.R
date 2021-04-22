@@ -559,12 +559,19 @@ setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,"hhigeo.csv")
 
+#aggregate quality indicators from all countries and save results
 
+#quality_tot: indicator that tracks the number of job ads analysed through the various steps of the process
 filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
-quality_TOT <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
+quality_tot <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
+saveRDS(quality_tot, paste0("quality_tot.rds"))
 
+#companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
-companynames_stats_TOT <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+companynames_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+saveRDS(companynames_stats_tot, paste0("companynames_stats_tot.rds"))
 
+#fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
-fua_stats_TOT <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
+fua_stats_tot <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
+saveRDS(fua_stats_tot, paste0("fua_stats_tot.rds"))
