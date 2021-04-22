@@ -391,7 +391,9 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   #hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
   
   hhigeo <- merge(hhigeo, fua_pop)
-  hhigeo<-st_as_sf(hhigeo)
+  class(hhigeo$geometry)<-c("sfc_GEOMETRY","sfc")
+        
+  # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
   #hhigeo <- readRDS(data, file= paste0(path,"hhigeo",countrycode, ".rds"))
   #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
