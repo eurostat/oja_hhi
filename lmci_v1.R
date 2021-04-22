@@ -296,7 +296,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   #Handle country exceptions
   
-  if (countrycode %in% c("IE", "HR")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
+  if (countrycode %in% c("IE", "HR", "PT")){ fua$city <- capitalize(fua$city <- tolower(fua$city)) }
   if (countrycode  %in% c("IE","CY")){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-2)}
   #if (countrycode == "PL"){fua$fua_id = substr(fua$fua_id,1,nchar(fua$fua_id)-1)} 2018-2016 used in the createfua() function.
   if (countrycode == "EE"){fua$city <- gsub(pattern = " linn|vald" , replacement = "", fua$city)}
@@ -368,8 +368,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhi_data<-dframe[,..cols]
   hhi <- calculate_hhi(hhi_data,hhi_cores)
   saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
+  hhi <- readRDS(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
+  
   hhi_data<-dframeupper[,..cols]
-  hhiupper <- calculate_hhi(hhi_data,hhi_cores)
+  #hhiupper <- calculate_hhi(hhi_data,hhi_cores)
   rm(hhi_data)
   gc()
   
@@ -386,12 +388,13 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
   
   hhigeo <- create_hhigeo(hhi,sfile)
-  hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
+  #hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
   
   hhigeo <- merge(hhigeo, fua_pop)
   
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
-  saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
+  #hhigeo <- readRDS(data, file= paste0(path,"hhigeo",countrycode, ".rds"))
+  #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
   
   # table(hhigeo$qtr)
