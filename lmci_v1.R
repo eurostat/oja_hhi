@@ -563,7 +563,7 @@ write.csv(hhigeoTOT,"hhigeo.csv")
 filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
 quality_TOT <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
 
-filenamesc <- list.files(getwd(), recursive=T, pattern="companynames_stats",full.names=T)
+filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
 companynames_stats_TOT <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
 
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
