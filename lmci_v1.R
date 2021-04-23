@@ -549,7 +549,7 @@ hhigeoTOTq32018$label <- paste0(hhigeoTOTq32018$fua_name, "\n ", as.character(hh
 hhigeoTOTq32018 <- st_as_sf(hhigeoTOTq32018)
 
 ggplot(hhigeoTOTq32018) +
-  geom_sf( aes(fill = wmean)) + theme_void() +
+  geom_sf( aes(fill = wmean),lwd=0) + theme_void() +
   theme(panel.grid.major = element_line(colour = "transparent")) +
   labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
