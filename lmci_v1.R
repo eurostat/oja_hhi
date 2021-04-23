@@ -557,7 +557,7 @@ names(hhigeo_qTOT)<-quarters
 #Creates EU map for each quarter using hhigeo_plot_tot function declared in the script hhi_functions.R
 lapply(quarters, hhigeo_plot_tot, geoinfoTOT= geoinfoTOT)
 
-lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
+#lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
 
 
 # #example of plotting for q32018 function
