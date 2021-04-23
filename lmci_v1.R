@@ -544,6 +544,10 @@ dir.create(EU_resultspath)
 
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames,readRDS), fill = T)
+quarters<-unique(hhigeoTOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
+hhigeoTOT <- st_as_sf(hhigeoTOT)
+hhigeoTOT_q<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
+names(hhigeoTOT_q)<-quarters
 geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
 
 #Create subsets for each quarter
@@ -552,6 +556,9 @@ names(hhigeo_qTOT)<-quarters
 
 #Creates EU map for each quarter using hhigeo_plot_tot function declared in the script hhi_functions.R
 lapply(quarters, hhigeo_plot_tot, geoinfoTOT= geoinfoTOT)
+
+lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
+
 
 # #example of plotting for q32018 function
 # hhigeoTOTq32018 <- subset(hhigeoTOT, qtr == "2018-q3")
