@@ -11,6 +11,7 @@
 # 9. automflag_combine
 # 10. hhigeo_subset
 # 11. hhigeo_plot
+# 12. plotting hhigeoTOT
 
 ##Function for cleaning the 'companyname' column
 
@@ -743,4 +744,19 @@ hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
     geom_sf(data=geoinfo,alpha = 0)
   
   ggsave(paste0(resultspath,"HHI_",qrtr,"_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+}
+
+# 12. plotting hhigeoTOT
+
+hhigeo_plot_tot<-function(qrtr,hhigeo_q,geoinfo,resultspath){
+ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
+  geom_sf( aes(fill = wmean),lwd=0) + theme_void() +
+  theme(panel.grid.major = element_line(colour = "transparent")) +
+  labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
+  scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+  #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+  geom_sf(data=geoinfoTOT,alpha = 0)+
+  coord_sf(xlim = c(2700000, 5850000),ylim = c(1390000, 5400000)) + theme_bw()
+  
+  ggsave(paste0(resultspath,"/HHI_",qrtr,".png"), width = 15, height = 10, units = "cm")
 }
