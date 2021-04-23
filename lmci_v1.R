@@ -183,8 +183,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   }
   all<-rbindlist(unique(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
   dframe[all$rn,companyname:=all$companyname]
+  table_all_names <- data.table(countrycode,table(all$companyname))
+  write.csv(table_all_names,paste0(resultspath, "table_all_names_", countrycode, ".csv"))
+ 
   # 
-  
   #####AGENCY FILTER#################################################################################################
   #################################################################################################  
   system(paste("echo",paste(countrycode,format(Sys.time()),"13-starting agency filter",sep="#"),paste0(">> timings",ts,".txt")))
