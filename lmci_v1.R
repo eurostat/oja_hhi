@@ -184,7 +184,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   all<-rbindlist(unique(lapply(as.list(as.data.frame(t(clean_names))),f_clean_names,dframe=dframe_names)))
   dframe[all$rn,companyname:=all$companyname]
   table_all_names <- data.table(countrycode,table(all$companyname))
-  write.csv(table_all_names,paste0(resultspath, "table_all_names_", countrycode, ".csv"))
+  saveRDS(table_all_names,paste0(resultspath, "table_all_names_", countrycode, ".rds"))
  
   # 
   #####AGENCY FILTER#################################################################################################
@@ -589,7 +589,6 @@ filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
 tot_quality <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)-
 saveRDS(tot_quality, paste0("tot_quality.rds"))
 
-
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
 company_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
@@ -606,3 +605,10 @@ staff_agencies_model_tot <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
 saveRDS(staff_agencies_model_tot, paste0("staff_agencies_model_tot.rds"))
 staff_agencies_sample <- sample_n(staff_agencies_model_tot, 50)
 write.csv(staff_agencies_sample, "staff_agencies_sample.csv")
+
+#stores all names of companies
+filenamesa <- list.files(getwd(), recursive=T, pattern="table_all_names_",full.names=T)
+table_names < rbindlist(lapply(filenamesa,FUN= readRDS), fill = T)
+saveRDS(staff_agencies_model_tot, paste0("table_names.rds"))
+write.csv(staff_agencies_model_tot, paste0("table_names.csv"))
+
