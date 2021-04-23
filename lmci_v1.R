@@ -538,27 +538,41 @@ parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(countrycodes,lmci_calc)
 # lapply(1:27,lmcirun)
 
-#aggregate the results from countries and plot
+#aggregate the results from countries
+EU_resultspath <- "EU_results"
+dir.create(EU_resultspath)
+
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames,readRDS), fill = T)
 geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
-hhigeoTOTq32018 <- subset(hhigeoTOT, qtr == "2018-q3")
-hhigeoTOTq32018$label <- paste0(hhigeoTOTq32018$fua_name, "\n ", as.character(hhigeoTOTq32018$wmean))
-hhigeoTOTq32018 <- st_as_sf(hhigeoTOTq32018)
 
-ggplot(hhigeoTOTq32018) +
-  geom_sf( aes(fill = wmean)) + theme_void() +
-  theme(panel.grid.major = element_line(colour = "transparent")) +
-  labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
-  scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
-  #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-  geom_sf(data=geoinfoTOT,alpha = 0)+
-  coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000)) + theme_bw()
+#Create subsets for each quarter
+hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
+names(hhigeo_qTOT)<-quarters
 
+#Creates EU map for each quarter using hhigeo_plot_tot function declared in the script hhi_functions.R
+lapply(quarters, hhigeo_plot_tot, geoinfoTOT= geoinfoTOT)
+
+# #example of plotting for q32018 function
+# hhigeoTOTq32018 <- subset(hhigeoTOT, qtr == "2018-q3")
+# hhigeoTOTq32018$label <- paste0(hhigeoTOTq32018$fua_name, "\n ", as.character(hhigeoTOTq32018$wmean))
+# hhigeoTOTq32018 <- st_as_sf(hhigeoTOTq32018)
+# 
+# ggplot(hhigeoTOTq32018) +
+#   geom_sf( aes(fill = wmean)) + theme_void() +
+#   theme(panel.grid.major = element_line(colour = "transparent")) +
+#   labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
+#   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+#   #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+#   geom_sf(data=geoinfoTOT,alpha = 0)+
+#   coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000)) + theme_bw()
+
+#Save the final LMCI Data table (removing geometry column to allow .csv export)
 setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,"hhigeo.csv")
 
+####QUALITY INDICATORS
 #aggregate quality indicators from all countries and save results
 
 #quality_tot: indicator that tracks the number of job ads analysed through the various steps of the process
@@ -566,10 +580,11 @@ filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
 tot_quality <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)-
 saveRDS(tot_quality, paste0("tot_quality.rds"))
 
+
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
 company_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
-sacompany_stats_totveRDS(company_stats_tot, paste0("company_stats_tot.rds"))
+saveRDS(company_stats_tot, paste0("company_stats_tot.rds"))
 
 #fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
