@@ -237,7 +237,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   #Add other list of companies to be filtered
   filterlist <- c(filterlist,as.character(automflag_output[[5]]))
   
-  staff_agencies_from_model <- as.character(automflag_output[[5]])
+  staff_agencies_from_model <- as.data.table(automflag_output[[5]])
   saveRDS(staff_agencies_from_model, file = paste0(resultspath,"staff_agencies_from_model_", countrycode, ".rds"))
   
   filterlist_m <- as.data.frame(filterlist)
@@ -368,7 +368,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhi_data<-dframe[,..cols]
   hhi <- calculate_hhi(hhi_data,hhi_cores)
   saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
-  hhi <- readRDS(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
   
   hhi_data<-dframeupper[,..cols]
   #hhiupper <- calculate_hhi(hhi_data,hhi_cores)
@@ -395,7 +394,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
         
   # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
-  #hhigeo <- readRDS(data, file= paste0(path,"hhigeo",countrycode, ".rds"))
   #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
   
@@ -565,15 +563,22 @@ write.csv(hhigeoTOT,"hhigeo.csv")
 
 #quality_tot: indicator that tracks the number of job ads analysed through the various steps of the process
 filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
-quality_tot <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
-saveRDS(quality_tot, paste0("quality_tot.rds"))
+tot_quality <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)-
+saveRDS(tot_quality, paste0("tot_quality.rds"))
 
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
-companynames_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
-saveRDS(companynames_stats_tot, paste0("companynames_stats_tot.rds"))
+company_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+sacompany_stats_totveRDS(company_stats_tot, paste0("company_stats_tot.rds"))
 
 #fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
-fua_stats_tot <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
-saveRDS(fua_stats_tot, paste0("fua_stats_tot.rds"))
+fuas_stats_tot <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
+saveRDS(fuas_stats_tot, paste0("fuas_stats_tot.rds"))
+
+#staff_agencies_from_model: indicator that collects all the names of the companies flagged as staffing agency by the classification model. A random sample is extracted from this list and checked manually.
+filenamesm <- list.files(getwd(), recursive=T, pattern="staff_agencies_from_model",full.names=T)
+staff_agencies_model_tot <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
+saveRDS(staff_agencies_model_tot, paste0("staff_agencies_model_tot.rds"))
+staff_agencies_sample <- sample_n(tot_staff_agencies_from_model, 50)
+
