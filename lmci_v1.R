@@ -569,7 +569,7 @@ saveRDS(tot_quality, paste0("tot_quality.rds"))
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
 company_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
-sacompany_stats_totveRDS(company_stats_tot, paste0("company_stats_tot.rds"))
+saveRDS(company_stats_tot, paste0("company_stats_tot.rds"))
 
 #fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
