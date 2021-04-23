@@ -568,17 +568,17 @@ saveRDS(tot_quality, paste0("tot_quality.rds"))
 
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
-tot_companynames_stats <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
-saveRDS(tot_companynames_stats, paste0("tot_companynames_stats.rds"))
+company_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+sacompany_stats_totveRDS(company_stats_tot, paste0("company_stats_tot.rds"))
 
 #fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
-tot_fua_stats <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
-saveRDS(tot_fua_stats, paste0("tot_fua_stats.rds"))
+fuas_stats_tot <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
+saveRDS(fuas_stats_tot, paste0("fuas_stats_tot.rds"))
 
 #staff_agencies_from_model: indicator that collects all the names of the companies flagged as staffing agency by the classification model. A random sample is extracted from this list and checked manually.
 filenamesm <- list.files(getwd(), recursive=T, pattern="staff_agencies_from_model",full.names=T)
-tot_staff_agencies_from_model <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
-saveRDS(tot_staff_agencies_from_model, paste0("tot_staff_agencies_from_model.rds"))
+staff_agencies_model_tot <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
+saveRDS(staff_agencies_model_tot, paste0("staff_agencies_model_tot.rds"))
 staff_agencies_sample <- sample_n(tot_staff_agencies_from_model, 50)
 
