@@ -237,7 +237,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   #Add other list of companies to be filtered
   filterlist <- c(filterlist,as.character(automflag_output[[5]]))
   
-  staff_agencies_from_model <- as.data.table(automflag_output[[5]])
+  staff_agencies_from_model <- data.table(countrycode, automflag_output[[5]])
   saveRDS(staff_agencies_from_model, file = paste0(resultspath,"staff_agencies_from_model_", countrycode, ".rds"))
   
   filterlist_m <- as.data.frame(filterlist)
@@ -602,5 +602,5 @@ saveRDS(fuas_stats_tot, paste0("fuas_stats_tot.rds"))
 filenamesm <- list.files(getwd(), recursive=T, pattern="staff_agencies_from_model",full.names=T)
 staff_agencies_model_tot <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
 saveRDS(staff_agencies_model_tot, paste0("staff_agencies_model_tot.rds"))
-staff_agencies_sample <- sample_n(tot_staff_agencies_from_model, 50)
-
+staff_agencies_sample <- sample_n(staff_agencies_model_tot, 50)
+write.csv(staff_agencies_sample, "staff_agencies_sample.csv")
