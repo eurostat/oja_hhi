@@ -608,7 +608,7 @@ write.csv(staff_agencies_sample, "staff_agencies_sample.csv")
 
 #stores all names of companies
 filenamesa <- list.files(getwd(), recursive=T, pattern="table_all_names_",full.names=T)
-table_names < rbindlist(lapply(filenamesa,FUN= readRDS), fill = T)
-saveRDS(staff_agencies_model_tot, paste0("table_names.rds"))
-write.csv(staff_agencies_model_tot, paste0("table_names.csv"))
+table_names <- rbindlist(lapply(filenamesa,FUN= readRDS), fill = T)
+saveRDS(table_names, paste0("table_names.rds"))
+write.csv(table_names, paste0("table_names.csv"))
 
