@@ -201,7 +201,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   # filter staffing agencies
   filteredout <- filter(dframe, str_detect(dframe$companyname, paste(blacklist, collapse = '|')) | sub(paste(blacklist_exact, collapse = '|'),"",dframe$companyname) == "" )
   
-  obs_agency_table <- as.data.frame(table(filteredout$companyname))
+  obs_agency_table <- data.frame(countrycode,table(filteredout$companyname))
+  saveRDS(obs_agency_table,paste0(resultspath, "obs_agency_table_", countrycode, ".rds"))
   obs_agency_table <- arrange(obs_agency_table, desc(Freq))
   num_obs_agency_list <- sum(as.numeric(obs_agency_table$Freq))
   num_distinct_agency_list <- nrow(obs_agency_table)
@@ -541,7 +542,7 @@ parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 # lapply(1:27,lmcirun)
 
 #aggregate the results from countries
-EU_resultspath <- "EU_results"
+EU_resultspath <- "EU_results/"
 dir.create(EU_resultspath)
 
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
@@ -579,7 +580,8 @@ lapply(quarters, hhigeo_plot_tot, geoinfoTOT= geoinfoTOT)
 #Save the final LMCI Data table (removing geometry column to allow .csv export)
 setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
-write.csv(hhigeoTOT,"hhigeo.csv")
+write.csv(hhigeoTOT,paste0(EU_resultspath,"hhigeo.csv"))
+saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo.rds"))
 
 ####QUALITY INDICATORS
 #aggregate quality indicators from all countries and save results
@@ -587,28 +589,33 @@ write.csv(hhigeoTOT,"hhigeo.csv")
 #quality_tot: indicator that tracks the number of job ads analysed through the various steps of the process
 filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
 tot_quality <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)-
-saveRDS(tot_quality, paste0("tot_quality.rds"))
+saveRDS(tot_quality, paste0(EU_resultspath,"tot_quality.rds"))
 
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
 company_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
-saveRDS(company_stats_tot, paste0("company_stats_tot.rds"))
+saveRDS(company_stats_tot, paste0(EU_resultspath,"company_stats_tot.rds"))
 
 #fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
 filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
 fuas_stats_tot <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
-saveRDS(fuas_stats_tot, paste0("fuas_stats_tot.rds"))
+saveRDS(fuas_stats_tot, paste0(EU_resultspath,"fuas_stats_tot.rds"))
 
 #staff_agencies_from_model: indicator that collects all the names of the companies flagged as staffing agency by the classification model. A random sample is extracted from this list and checked manually.
 filenamesm <- list.files(getwd(), recursive=T, pattern="staff_agencies_from_model",full.names=T)
 staff_agencies_model_tot <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
-saveRDS(staff_agencies_model_tot, paste0("staff_agencies_model_tot.rds"))
-staff_agencies_sample <- sample_n(staff_agencies_model_tot, 50)
-write.csv(staff_agencies_sample, "staff_agencies_sample.csv")
+saveRDS(staff_agencies_model_tot, paste0(EU_resultspath,"staff_agencies_model_tot.rds"))
+# staff_agencies_sample <- sample_n(staff_agencies_model_tot, 50)
+# write.csv(staff_agencies_sample,paste0(EU_resultspath, "staff_agencies_sample.csv"))
+
+#stores the names of all the companies flagged as staffing agencies using the keywords list
+filenamesu <- list.files(getwd(), recursive=T, pattern="obs_agency_table",full.names=T)
+table_names_list <- rbindlist(lapply(filenamesu,FUN= readRDS), fill = T)
+saveRDS(table_names_list, paste0(EU_resultspath, "table_names_list.rds"))
 
 #stores all names of companies
 filenamesa <- list.files(getwd(), recursive=T, pattern="table_all_names_",full.names=T)
 table_names <- rbindlist(lapply(filenamesa,FUN= readRDS), fill = T)
-saveRDS(table_names, paste0("table_names.rds"))
-write.csv(table_names, paste0("table_names.csv"))
+saveRDS(table_names, paste0(EU_resultspath, "table_names.rds"))
+write.csv(table_names, paste0(EU_resultspath, "table_names.csv"))
 
