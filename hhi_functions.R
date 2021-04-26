@@ -758,7 +758,7 @@ hhigeo_plot_tot <-function(quarters,geoinfoTOT){
     geom_sf(data=geoinfoTOT,alpha = 0)+
     coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000))
   
-  ggsave(paste0("HHI_",quarters,"_tot.png"), path= getwd(), width = 15, height = 10, units = "cm")
+  ggsave(paste0(EU_resultspath,"HHI_",quarters,"_tot.png"), path= getwd(), width = 15, height = 10, units = "cm")
 }
 
 # # 12. plotting hhigeoTOT
