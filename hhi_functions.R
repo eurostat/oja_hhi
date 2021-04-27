@@ -85,7 +85,7 @@ createfua <- function(countrycode){
     }  
     setnames(DT,gsub("\\s","_",colnames(DT)))
     setnames(DT,gsub("\\(.*\\)","",colnames(DT)))
-    
+    DT$FUA_ID <- str_trim(DT$FUA_ID, side = "right")
     # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
     # message("DT-",countrycode,"\n")
     #finding which LAUs belong to the same NUTS and FUAs
