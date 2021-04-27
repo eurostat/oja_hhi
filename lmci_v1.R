@@ -325,7 +325,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   }
   #include quality check?How the matching by city name works.
   
-  fua_pop <- aggregate(cbind(population = as.numeric(fua$population), tot_area = round((fua$tot_area)/1000000)), by=list(fua_id=fua$fua_id), FUN=sum )
+  fua_pop <- aggregate(unique(cbind(population = as.numeric(fua$population))), by=list(fua_id= unique(fua$fua_id)), FUN=sum)
   
   # Left join first by both idprovince and idcity
   dframe <- left_join(dframe,fua,by=c("idprovince","idcity"))
@@ -370,7 +370,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   cols<-c("idesco_level_4","fua_id","qtr","companyname")
   hhi_data<-dframe[,..cols]
   hhi <- calculate_hhi(hhi_data,hhi_cores)
-  saveRDS(hhi, file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rds"))
+  saveRDS(hhi, file = paste0(resultspath,"hhi_data_", countrycode, ".rds"))
   
   hhi_data<-dframeupper[,..cols]
   #hhiupper <- calculate_hhi(hhi_data,hhi_cores)
@@ -421,16 +421,17 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   # 
   # hhigeo_q4_2019 <- subset(hhigeo, qtr == "2019-q4")
   # hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
-  
-  
-  
-  hhigeo_pop <- subset(hhigeo, wmean > 2500)
-  if (nrow(hhigeo_pop)>0){
+
+    hhigeo_pop <- subset(hhigeo, wmean > 2500)
     hhigeo_pop <- aggregate(cbind(population = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
+    hhigeo_tot <- aggregate(cbind(totpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
+    hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
+    hhigeo_merged$share <- hhigeo_merged$population/hhigeo_merged$totpopulation
+    
     hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
-    hhigeo_pop <- merge(hhigeo_pop, hhigeo_wmean)
-    hhigeo_pop <- cbind(countrycode, hhigeo_pop, pop_share = hhigeo_pop$population/sum(as.numeric(fua$population)))
-  }
+    hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
+    
+
   
   # Graphs ===========
   
@@ -545,6 +546,11 @@ parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 EU_resultspath <- "EU_results/"
 dir.create(EU_resultspath)
 
+#aggregate hhi
+filenamesh <- list.files(getwd(), recursive=T, pattern="hhi_data_[A-Z][A-Z]",full.names=T)
+hhiTOT <- rbindlist(lapply(filenamesh,readRDS), fill = T)
+
+#aggregate hhigeo
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames,readRDS), fill = T)
 quarters<-unique(hhigeoTOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
