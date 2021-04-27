@@ -588,8 +588,8 @@ saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo.rds"))
 
 #quality_tot: indicator that tracks the number of job ads analysed through the various steps of the process
 filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
-tot_quality <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)-
-saveRDS(tot_quality, paste0(EU_resultspath,"tot_quality.rds"))
+tot_quality_stats <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
+saveRDS(tot_quality_stats, paste0(EU_resultspath,"tot_quality.rds"))
 
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
 filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
