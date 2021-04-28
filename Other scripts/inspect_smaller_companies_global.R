@@ -50,7 +50,7 @@ write.csv2(subsample, "Data/subsample_companynames.csv")
 # -> manual editing (or at least renaming) of the exported file is necessary at this point
 # -> re-import the file after manual input or renaming
 subsample_import <- paste0( "Data/subsample_companynames_import_" , country , ".csv")
-evaluation_sample <- read.csv(subsample_import , sep = ";")
+evaluation_sample <- read.csv(subsample_import , sep = csv_separator)
 
 #generate vectors of companynames identified as agencies or companies
 evaluation_filteredout <-  c(na.omit(evaluation_sample$companyname1[evaluation_sample$if_agency1==1|evaluation_sample$if_agency1==2]) , na.omit(evaluation_sample$companyname2[evaluation_sample$if_agency2==1|evaluation_sample$if_agency2==2]) , na.omit(evaluation_sample$companyname3[evaluation_sample$if_agency3==1|evaluation_sample$if_agency3==2]) , na.omit(evaluation_sample$companyname4[evaluation_sample$if_agency4==1|evaluation_sample$if_agency4==2]) , na.omit(evaluation_sample$companyname5[evaluation_sample$if_agency5==1|evaluation_sample$if_agency5==2]) )

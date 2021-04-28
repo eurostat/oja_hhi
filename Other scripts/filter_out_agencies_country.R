@@ -3,8 +3,8 @@
 
 ### please insert below the country for which you want to run this code (2-letter isocode)
 
-country <- "RO"
-
+country <- "PT"
+csv_separator <- ","
 
 ### this code helps with the development a list of recruiting agencies that can be removed from the OJA dataset when the analysis focuses on actual employers. it is divided in 4 main parts:
 #1 -> a query for a data sample is launched and some standardisation operations are executed on the data
@@ -76,7 +76,7 @@ write.csv2(companies_names_dataframe[companies_names_dataframe$Freq>99,], "Data/
 
 # importing the file with job agency filter keywords
 filecsv <- paste0("Data/staff_agencies_" , country , ".csv")
-staff_agencies <- read.csv(filecsv , sep = ";" , colClasses = "character")
+staff_agencies <- read.csv(filecsv , sep = csv_separator , colClasses = "character")
 
 # defining the lists of keywords to filter job agencies
 blacklist <- staff_agencies[staff_agencies$exact != "exact" , 2]
