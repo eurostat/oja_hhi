@@ -580,4 +580,3 @@ filenamesa <- list.files(getwd(), recursive=T, pattern="table_all_names_",full.n
 table_names <- rbindlist(lapply(filenamesa,FUN= readRDS), fill = T)
 saveRDS(table_names, paste0(EU_resultspath, "table_names.rds"))
 write.csv(table_names, paste0(EU_resultspath, "table_names.csv"))
-
