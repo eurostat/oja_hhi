@@ -1,7 +1,7 @@
 #This file contains the functions used by the main code to calculate the Labour Market Concentration Index.
 # List of functions:
-# 1. sep
-# 2. empty_as_na
+# 1. ascii, sep, sep2
+# 2. empty_as_na, empty_as_na2
 # 3. createfua
 #  
 # 5. calculate_hhi
@@ -11,18 +11,32 @@
 # 9. automflag_combine
 # 10. hhigeo_subset
 # 11. hhigeo_plot
+# 12. plotting hhigeoTOT
 
 ##Function for cleaning the 'companyname' column
 
 #1. sep
+
+ascii<-function(x){
+ x<-gsub("é|ę","e",x)
+ x<-gsub('á|ą',"a",x)
+ return(x)
+}
+
 sep <- function(linha) {
   resp <- strsplit(linha," |/|-")
   resp <- unlist(resp)
-  resp <- gsub(",|;|\\.","",resp)
+  resp <- gsub(",|;|\\.|\u00A0","",resp)
   resp <- sort(resp[which(nchar(resp) > 2)])
   resp <- paste0(resp,collapse=" ")
   resp <- tolower(resp)
 }
+
+sep2 <- function(linha) {
+  resp <- gsub(",|;|\\.|\u00A0","",unlist(strsplit(linha," |/|-")))
+  paste0(sort(resp[which(nchar(resp) > 2)]),collapse=" ")
+}
+
 
 # "^[0-9]", "[0-9]$" write line of code to filter out the companynames composed by numbers (e.g. telephone numbers)
 
@@ -35,6 +49,11 @@ empty_as_na <- function(y){
   
   return(y)
 }
+empty_as_na2 <- function(y){
+  y[y==""]<-NA 
+  return(y)
+}
+
 
 
 ## Function for creating the correspondence table between LAU, NUTS and FUA
@@ -43,15 +62,15 @@ empty_as_na <- function(y){
 createfua <- function(countrycode){
   ### download file with eurostat classification if is not downloaded yet
   
-  filename <- "EU-28-LAU-2019-NUTS-2016.xlsx"
-  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2019-NUTS-2016.xlsx ", destfile=filename)}
+  filename <- "EU-28-LAU-2018-NUTS-2016.xlsx"
+  if (!file.exists(filename)) {download.file("https://ec.europa.eu/eurostat/documents/345175/501971/EU-28-LAU-2018-NUTS-2016.xlsx", destfile=filename)}
   # options (timeout = 100)
   
   
   ###selecting countries
   # countrylist <- getSheetNames(filename)[4:31]
   #alternatively: countrylist <- c("BE","BG","CZ","DK","DE","EE","IE","EL","ES","FR","HR","IT","CY","LV","LT","LU","HU","MT","NL","AT","PL","PT","RO","SI","SK","FI","SE")
-  
+
   
   #3b. assignFUA
   #create a function generating the "assign" variable
@@ -60,11 +79,15 @@ createfua <- function(countrycode){
     #importing excel sheet and eliminating spaces from variable names
     DT <- setDT(read_excel(filename , sheet = countrycode))
     # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
+    if (countrycode %in% c("IT"))  {
+      setnames(DT,gsub(" 2013$","",colnames(DT)))
+      setnames(DT,gsub("alternative$","LATIN",colnames(DT)))
+    }  
     setnames(DT,gsub("\\s","_",colnames(DT)))
     setnames(DT,gsub("\\(.*\\)","",colnames(DT)))
-    
+    DT$FUA_ID <- str_trim(DT$FUA_ID, side = "right") # removes whitespaces at the end of the fua_id string.
     # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
-    
+    # message("DT-",countrycode,"\n")
     #finding which LAUs belong to the same NUTS and FUAs
     DT[,NUTSFUA:= paste0(NUTS_3_CODE, FUA_ID)]
     DT[,dup:= as.numeric(!duplicated(NUTSFUA , fromLast=FALSE))]
@@ -114,6 +137,7 @@ createfua <- function(countrycode){
   
   
   ### open the table showing the NUTS units for which a change occurred between the 2013 and 2016 classification; generate a new "recoded" variable with the following values:
+  # 3 for NUTS 2016 that had some boundary shift and changed name. We chose to use anyway the 2016 code to avoid missing matches
   # 2 for NUTS2016 units that have no direct (1:1) correspondence with any NUTS2013 units
   # 1 for NUTS2016 units which, compared to the NUTS2013 classification, remained identical but changed name 
   # 0 for NUTS2016 units for which there has been no change, compared to NUTS2013 (the value 0 is assigned later in the code, after the merge with the main table)
@@ -121,9 +145,10 @@ createfua <- function(countrycode){
   setnames(DT2, gsub("\\s","_",colnames(DT2)))
   DT2[,recoded:=2]
   DT2[Change=="recoded",recoded:=1]
+  DT2[Change=="boundary shift",recoded:=3]
   DT2 <- DT2[,c("Code_2013", "Code_2016" , "recoded"),with=F]
   setnames(DT2, c("NUTS_3_2013" , "NUTS_3_CODE" , "recoded"))
-  
+  # cat("DT2",countrycode,"\n")
   # input manually the NUTS2013-NUTS2016 correspondence for 3 NUTS2016 regions
   DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",NUTS_3_CODE:="DE91C"]  
   DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",recoded:=1]
@@ -137,18 +162,21 @@ createfua <- function(countrycode){
   DT[is.na(recoded),recoded:=0] 
   DT[,country:=countrycode]
   
-  ### change the value of NUTS_3_CODE to make it compatible with the 2013 classification. in short, when recoded=1, then the NUTS2013 code is used instead of the NUTS2016 code
+  ### change the value of NUTS_3_CODE to make it compatible with the 2013 classification. in short, when recoded=1 or recoded= 3, then the NUTS2013 code is used instead of the NUTS2016 code
   
   DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013] 
-  DT[recoded==2,NUTS_3_CODE:=0] 
+  DT[recoded==3,NUTS_3_CODE:=NUTS_3_2013] 
+  #DT[recoded==2,NUTS_3_CODE:=0] 
   DT[recoded==2,assign:=0] 
+  DT[recoded==3,assign:=0]
   DT[,LAU_CODE:=as.character(LAU_CODE)]
   
   # final vector to be used for the calculation of the LMCI
   
   fua <- DT[!is.na(FUA_ID), c("country" , "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "recoded" , "assign", "POPULATION", "TOTAL_AREA_"),with=F]
   setnames(fua,c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area"))
-  if (all(is.na(fua$population))){
+  
+  #getting latest population data from eurostat dataset urb_pop
     imp_pop<-get_eurostat_data("urb_lpop1",filters=c("DE1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
     # get the last year for a given fua code 
     dates<-imp_pop[,.(myear=max(time)),by=cities]
@@ -162,7 +190,7 @@ createfua <- function(countrycode){
       fua<-fua[,`:=`(population=NULL,joinid=fua_id)]
     }
     fua<-imp_pop[fua,on=.(joinid=joinid)][,joinid:=NULL]
-  }
+  
   fua[,tot_area:=as.numeric(tot_area)]
   return(fua)
 }
@@ -171,7 +199,7 @@ createfua <- function(countrycode){
 #5. calculate_hhi
 
 calculate_hhi <- function (dframe,cores=2) {
-
+  
   # compute market shares by quarter, FUA and esco level 4 occupation
   # create grids of occupation, geo unit and quarter
   grid <- expand.grid(esco = unique(dframe$idesco_level_4), geo = unique(dframe$fua_id), qtr = unique(dframe$qtr), stringsAsFactors = FALSE)
@@ -190,22 +218,22 @@ calculate_hhi <- function (dframe,cores=2) {
   
   # Sys.time()
   # hhi <- data.frame()
-  # 
+
   # for (i in 1:dim(grid)[1]) {
   #   # count obs per cell and company
   #   subset <- unique(dframe[idesco_level_4 == grid[i, 1] & fua_id == grid[i, 2] & qtr == grid[i, 3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
   #   subset$hhi <- sum(subset$ms2)
-  #   subset <- subset[1, !c("companyname") ] 
+  #   subset <- subset[1, !c("companyname") ]
   #   hhi <- rbind(hhi, subset)
   # }
   # Sys.time()
   
-  f_calc_hhi<-function(gr,dframe){
+  f_calc_hhi<-function(gr,subset){
     subset <- unique(dframe[idesco_level_4 == gr[1] & fua_id == gr[2] & qtr == gr[3], c("idesco_level_4", "fua_id", "qtr", "mshare", "ms2", "companyname", "ncount"), with = FALSE])
     subset$hhi <- sum(subset$ms2)
     subset[1, !c("companyname") ]
    }
-  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,dframe=dframe,mc.cores=cores))
+  hhi<-rbindlist(parallel::mclapply(as.list(as.data.frame(t(grid))),f_calc_hhi,subset=dframe,mc.cores=cores))
   
   # Sys.time()
   # load(file = paste0(resultspath,"HHI_data_FUA_", countrycode, ".rdata"))
@@ -287,7 +315,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   
   #generate a "duplicate" variable indicating if the observation in the OJA dataset is a duplicate
   general_query$dup <- ifelse(duplicated(general_query$general_id), 1, 0)
-  general_query$keyvar <- str_to_lower(general_query$keyvar)
+  general_query$keyvar <- ascii(str_to_lower(general_query$keyvar))
   
   #standardize companyname
   if (standardise==TRUE) {
@@ -301,6 +329,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
     #general_query$keyvar <- str_trim(general_query$keyvar)
     #general_query$keyvar <- gsub(" ","_",general_query$keyvar)
     #general_query$keyvar <- gsub("é","e",general_query$keyvar)    
+
   }
 
   # eliminate empty cells in keyvar
@@ -308,7 +337,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   general_query <- general_query[general_query$notgood != 1 , ]
   
   #consolidate companyname  ????????????? not repitition of clean names
-  if (consolidate!="" | consolidate!=FALSE) {
+  if (any(consolidate!="" & consolidate!=FALSE)) {
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
     for(i in 1:dim(consolidate)[1]) {
     general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
@@ -724,3 +753,34 @@ hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
   
   ggsave(paste0(resultspath,"HHI_",qrtr,"_", countrycode, ".png"), width = 15, height = 10, units = "cm")
 }
+
+
+# 12. plotting hhigeoTOT
+hhigeo_plot_tot <-function(quarters,geoinfoTOT){
+  
+  ggplot(eval(parse(text=paste0("hhigeo_qTOT$`",quarters,"`")))) +
+    geom_sf( aes(geometry=geometry,fill = wmean)) + theme_void() +
+    theme(panel.grid.major = element_line(colour = "transparent")) +
+    labs(title = paste("Labour market concentration index", quarters,"\naverage over all occupations")) +
+    scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+    geom_sf(data=geoinfoTOT,alpha = 0)+
+    coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000))
+  
+  ggsave(paste0(EU_resultspath,"HHI_",quarters,"_tot.png"), path= getwd(), width = 15, height = 10, units = "cm")
+}
+
+# # 12. plotting hhigeoTOT
+# 
+# hhigeo_plot_tot<-function(qrtr,hhigeo_q,geoinfo,resultspath){
+#   
+# ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
+#   geom_sf( aes(fill = wmean),lwd=0) + theme_void() +
+#   theme(panel.grid.major = element_line(colour = "transparent")) +
+#   labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
+#   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+#   #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+#   geom_sf(data=geoinfoTOT,alpha = 0)+
+#   coord_sf(xlim = c(2700000, 5850000),ylim = c(1390000, 5400000)) + theme_bw()
+#   
+#   ggsave(paste0(resultspath,"/HHI_",qrtr,".png"), width = 15, height = 10, units = "cm")
+# }
