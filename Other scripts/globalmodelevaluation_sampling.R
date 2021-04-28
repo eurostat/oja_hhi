@@ -4,7 +4,7 @@ originalrds <- read_rds("Data/table_names.rds")
 samplingframe <- originalrds
 samplingframe$id <- paste0(samplingframe$V1,samplingframe$countrycode)
 dim(samplingframe)
-#View(samplingframe)
+##View(samplingframe)
 
 sample1 <- as.data.frame(sample(samplingframe$id, size=200, prob=samplingframe$N))
 colnames(sample1) <- "id"
