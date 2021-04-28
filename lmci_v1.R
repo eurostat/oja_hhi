@@ -423,57 +423,22 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   # hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
 
     hhigeo_pop <- subset(hhigeo, wmean > 2500)
-    hhigeo_pop <- aggregate(cbind(population = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
-    hhigeo_tot <- aggregate(cbind(totpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
+    hhigeo_pop <- aggregate(cbind(urbpopulation = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
+    hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
     hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
-    hhigeo_merged$share <- hhigeo_merged$population/hhigeo_merged$totpopulation
+    hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
     
     hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
     hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
+    hhigeo_pop <- cbind(countrycode, hhigeo_pop)
+    saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
     
-
   
   # Graphs ===========
   
   lapply(quarters, hhigeo_plot,hhigeo_q=hhigeo_q,geoinfo=geoinfo,resultspath=resultspath,countrycode=countrycode)
-  
-  
-  # ggplot(hhigeo_q3_2018) +
-  #   geom_sf( aes(fill = wmean)) + theme_void() +
-  #   theme(panel.grid.major = element_line(colour = "transparent")) +
-  #   labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
-  #   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
-  #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-  #   geom_sf(data=geoinfo,alpha = 0)
-  # 
-  # ggsave(paste0(resultspath,"HHI_q32018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
-  # 
-  # 
-  # ggplot(hhigeo_q4_2018) +
-  #   geom_sf(aes(fill = wmean)) + theme_void() +
-  #   theme(panel.grid.major = element_line(colour = "transparent")) +
-  #   labs(title = "Labour market concentration index Q4-2018\naverage over all occupations") +
-  #   scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
-  #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-  #   geom_sf(data=geoinfo,alpha = 0)
-  # 
-  # ggsave(paste0(resultspath,"HHI_q42018_", countrycode, ".png"), width = 15, height = 10, units = "cm")
-  # 
-  # 
-  # ggplot(hhigeo_q1_2019) +
-  #   geom_sf(aes(fill = wmean)) + theme_void() +
-  #   theme(panel.grid.major = element_line(colour = "transparent")) +
-  #   labs(title = "Labour market concentration index Q1-2019\naverage over all occupations") +
-  #   scale_fill_continuous(name = "Labour market concentration index", low="blue", high="orange") +
-  #   geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-  #   geom_sf(data=geoinfo,alpha = 0)
-  # 
-  # ggsave(paste0(resultspath,"HHI_q12019_", countrycode, ".png"), width = 15, height = 10, units = "cm")
-  
-  
-  
+
   # HHI tables by region --------------------------
-  
   
   # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
   
@@ -549,6 +514,7 @@ dir.create(EU_resultspath)
 #aggregate hhi
 filenamesh <- list.files(getwd(), recursive=T, pattern="hhi_data_[A-Z][A-Z]",full.names=T)
 hhiTOT <- rbindlist(lapply(filenamesh,readRDS), fill = T)
+saveRDS(hhiTOT, paste0(EU_resultspath,"hhiTOT.rds"))
 
 #aggregate hhigeo
 filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
@@ -559,6 +525,11 @@ hhigeoTOT_q<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
 names(hhigeoTOT_q)<-quarters
 geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
 
+#aggregate hhigeo_pop
+filenamesp <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
+tothhigeo_pop <- rbindlist(lapply(filenamesp,readRDS), fill = T)
+saveRDS(tothhigeo_pop, paste0(EU_resultspath,"tothhigeo_pop.rds"))
+
 #Create subsets for each quarter
 hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
 names(hhigeo_qTOT)<-quarters
@@ -568,22 +539,7 @@ lapply(quarters, hhigeo_plot_tot, geoinfoTOT= geoinfoTOT)
 
 #lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
 
-
-# #example of plotting for q32018 function
-# hhigeoTOTq32018 <- subset(hhigeoTOT, qtr == "2018-q3")
-# hhigeoTOTq32018$label <- paste0(hhigeoTOTq32018$fua_name, "\n ", as.character(hhigeoTOTq32018$wmean))
-# hhigeoTOTq32018 <- st_as_sf(hhigeoTOTq32018)
-# 
-# ggplot(hhigeoTOTq32018) +
-#   geom_sf( aes(fill = wmean)) + theme_void() +
-#   theme(panel.grid.major = element_line(colour = "transparent")) +
-#   labs(title = "Labour market concentration index Q3-2018\naverage over all occupations") +
-#   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
-#   #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-#   geom_sf(data=geoinfoTOT,alpha = 0)+
-#   coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000)) + theme_bw()
-
-#Save the final LMCI Data table (removing geometry column to allow .csv export)
+#Save the final hhigeo Data table (removing geometry column to allow .csv export)
 setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,paste0(EU_resultspath,"hhigeo.csv"))
