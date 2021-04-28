@@ -256,7 +256,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   ## this is the list of default arguments given to the function:
   #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
   ## the variables in the OJA dataset for which sum stats are created
-  #idcountry <- "RO"
+  #idcountry <- "PT"
   ## the country in the OJA dataset for which sum stats are computed
   #samplesize <- "1000000"
   ## sum stats are calculated for a sample of observations. this argument (a number expressed as text) determines the sample size
@@ -291,11 +291,16 @@ create_hhigeo <- function(hhi = hhi,sfile){
   
   #standardize companyname
   if (standardise==TRUE) {
-    ordered <- sapply(general_query$keyvar, function(x) sep(x))
-    general_query$keyvar <- ordered
     general_query$keyvar <- str_trim(general_query$keyvar)
     general_query$keyvar <- gsub(" ","_",general_query$keyvar)
-    general_query$keyvar <- gsub("é","e",general_query$keyvar)    
+    general_query$keyvar <- gsub("é","e",general_query$keyvar)
+    ordered <- sapply(general_query$keyvar, function(x) sep(x))
+    general_query$keyvar <- ordered
+    #ordered <- sapply(general_query$keyvar, function(x) sep(x))
+    #general_query$keyvar <- ordered
+    #general_query$keyvar <- str_trim(general_query$keyvar)
+    #general_query$keyvar <- gsub(" ","_",general_query$keyvar)
+    #general_query$keyvar <- gsub("é","e",general_query$keyvar)    
   }
 
   # eliminate empty cells in keyvar
@@ -303,7 +308,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   general_query <- general_query[general_query$notgood != 1 , ]
   
   #consolidate companyname  ????????????? not repitition of clean names
-  if (consolidate!="" & consolidate!=FALSE) {
+  if (consolidate!="" | consolidate!=FALSE) {
     # run a loop to consolidate company names according to the previous rules and the input keywords found in the csv file
     for(i in 1:dim(consolidate)[1]) {
     general_query$keyvar[str_detect(general_query$keyvar, consolidate[i,3]) == TRUE & general_query$keyvar!=consolidate[i,5] ] <- consolidate[i,2]
@@ -554,6 +559,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   
   # generate a comboflag that combines the user-provided flag and the automatic flag. The values of the user-provided flag have priority, and the automatically generated values are used only for those observations for which the user had not provided input
   output1$comboflag <- 0
+  output1$comboflag[output1$comb==1] <- 1
   output1$comboflag[output1$autom_flag==1 & output1$comb!=0] <- 1
 
   # generate a variable indicating only those observations that have been flagged on top of those already flagged by the user

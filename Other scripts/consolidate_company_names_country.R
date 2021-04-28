@@ -42,7 +42,7 @@ write.csv(companies_to_clean , "Data/companies_to_clean_export.csv")
 # reading the keywords for data cleaning from the file companies_to_clean_import_COUNTRY.csv
 # NB if it fails to refresh the file, use a slightly different file name
 companies_to_clean_import <- paste0( "Data/companies_to_clean_import_" , country , ".csv")
-clean_names <- read.csv(companies_to_clean_import , sep = ";" , colClasses = "character")
+clean_names <- read.csv(companies_to_clean_import , sep = csv_separator , colClasses = "character")
 head(clean_names)
 
 
