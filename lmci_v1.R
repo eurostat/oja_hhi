@@ -325,7 +325,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   }
   #include quality check?How the matching by city name works.
   
-  fua_pop <- aggregate(unique(cbind(population = as.numeric(fua$population))), by=list(fua_id= unique(fua$fua_id)), FUN=sum)
+  fua_pop <- aggregate(unique(cbind(population = as.numeric(fua$population), econ_active_pop = as.numeric(fua$econ_active_pop))), by=list(fua_id= unique(fua$fua_id)), FUN=sum)
+  fua_pop$share_active_pop <- fua_pop$econ_active_pop/fua_pop$population
   
   # Left join first by both idprovince and idcity
   dframe <- left_join(dframe,fua,by=c("idprovince","idcity"))
@@ -544,6 +545,12 @@ setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,paste0(EU_resultspath,"hhigeo.csv"))
 saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo.rds"))
+plot(hhigeoTOT$wmean, hhigeoTOT$share_active_pop)
+
+#plotting hhi values and share of economically active population
+jpeg(paste0(EU_resultspath,"hhi_activepop_plot.png"))
+plot(hhigeo$wmean, hhigeo$share_active_pop)
+dev.off()
 
 ####QUALITY INDICATORS
 #aggregate quality indicators from all countries and save results
