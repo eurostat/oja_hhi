@@ -190,6 +190,15 @@ createfua <- function(countrycode){
       fua<-fua[,`:=`(population=NULL,joinid=fua_id)]
     }
     fua<-imp_pop[fua,on=.(joinid=joinid)][,joinid:=NULL]
+    
+    #getting latest ecomomically active population data from eurostat dataset urb_pop
+    imp_labmkt<-get_eurostat_data("urb_llma",filters = "EC1001V" , stringsAsFactors = F)
+    dates <-imp_labmkt[,.(myear=max(time)),by=cities]
+    imp_labmkt<-imp_labmkt[dates,on=.(time=myear,cities=cities)][,c("cities","values")]
+    imp_labmkt<-unique(imp_labmkt[,.(joinid=cities,econ_active_pop=values)])
+    fua<-fua[,`:=`(joinid=fua_id)]
+    
+    fua<-imp_labmkt[fua,on=.(joinid=joinid)][,joinid:=NULL]
   
   fua[,tot_area:=as.numeric(tot_area)]
   return(fua)
