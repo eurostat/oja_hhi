@@ -1,6 +1,6 @@
 
 
-originalrds <- read_rds("Data/table_names.rds")
+originalrds <- readRDS("EU_results/table_names.rds")
 samplingframe <- originalrds
 samplingframe$id <- paste0(samplingframe$V1,samplingframe$countrycode)
 dim(samplingframe)
@@ -14,7 +14,7 @@ samplingframe$sample1[is.na(samplingframe$sample1)==T] <- 0
 #View(samplingframe[samplingframe$sample1==1])
 table(samplingframe$sample1)
 sum(as.numeric(samplingframe$N[samplingframe$sample1==1]))
-
+samplingframe[samplingframe$sample1==1]
 
 
 
