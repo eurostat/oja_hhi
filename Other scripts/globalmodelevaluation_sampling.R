@@ -14,8 +14,10 @@ samplingframe$sample1[is.na(samplingframe$sample1)==T] <- 0
 #View(samplingframe[samplingframe$sample1==1])
 table(samplingframe$sample1)
 sum(as.numeric(samplingframe$N[samplingframe$sample1==1]))
-samplingframe[samplingframe$sample1==1]
 
+# create sample to use for evaluation
+sampleforevaluation <- samplingframe[samplingframe$sample1==1]
+write.csv(sampleforevaluation, "sampleforevaluation.csv")
 
 
 sample2 <- as.data.frame(sample(samplingframe$id, size=200,))
