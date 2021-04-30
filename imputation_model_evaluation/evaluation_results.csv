@@ -1,3 +1,5 @@
 "","model","true_positives","true_negatives","false_positives","false_negatives","accuracy","precision","recall"
-"1","full_model","64","80","9","47","0.72","0.8767","0.5766"
-"2","keywords","54","89","0","57","0.715","1","0.4865"
+"1","full_model_companynames","64","80","9","47","0.72","0.8767","0.5766"
+"2","keywords_companynames","54","89","0","57","0.715","1","0.4865"
+"3","full_model_ads","3459772","938567","21210","986216","0.8136","0.9939","0.7782"
+"4","keywords_ads","3258544","959777","0","1187444","0.7803","1","0.7329"
