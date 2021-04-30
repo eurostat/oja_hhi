@@ -88,7 +88,7 @@ recall_ad <- round((TP_ad) / (TP_ad + FN_ad), 4)
 
 # compile and save evaluation results
 evaluation_results <- as.data.frame(rbind(   cbind("full_model_companynames",TP,TN,FP,FN,accuracy,precision,recall),   cbind("keywords_companynames",TP_ontology,TN_ontology,FP_ontology,FN_ontology,accuracy_ontology,precision_ontology,recall_ontology),   cbind("full_model_ads",TP_ad,TN_ad,FP_ad,FN_ad,accuracy_ad,precision_ad,recall_ad),   cbind("keywords_ads",TP_ontology_ad,TN_ontology_ad,FP_ontology_ad,FN_ontology_ad,accuracy_ontology_ad,precision_ontology_ad,recall_ontology_ad)))
-colnames(evaluation_results) <- c("model", "true_positives", "true_negatives", "false_positives", "false_negatives", "accuracy", "precision", "recall")
+colnames(evaluation_results) <- c("model", "true_positives", "true_negatives", "false_positives", "false_negatives", "accuracy_rate", "precision_rate", "recall_rate")
 write.csv(evaluation_results, "imputation_model_evaluation/evaluation_results.csv")
 
 
