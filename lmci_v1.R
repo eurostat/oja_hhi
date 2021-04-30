@@ -325,7 +325,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   }
   #include quality check?How the matching by city name works.
   
-  fua_pop <- aggregate(unique(cbind(population = as.numeric(fua$population), econ_active_pop = as.numeric(fua$econ_active_pop))), by=list(fua_id= unique(fua$fua_id)), FUN=sum)
+  fua_pop <- unique(fua[,c("fua_id","population","econ_active_pop")])[,.(population=sum(population),econ_active_pop=sum(econ_active_pop)),by=fua_id]
   fua_pop$share_active_pop <- fua_pop$econ_active_pop/fua_pop$population
   
   # Left join first by both idprovince and idcity
@@ -484,6 +484,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
 }
 
+#single country run
+# lmci_calc("BE",ts,hhi_cores)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 
