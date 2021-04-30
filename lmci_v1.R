@@ -378,7 +378,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   rm(hhi_data)
   gc()
   
-  ###Quality Indicators
+  ####Quality Indicators
   quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))
   saveRDS(quality, paste0(resultspath,"quality_",countrycode, ".rds"))
   
@@ -387,6 +387,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   fua_stats <- as.data.frame(cbind(totfuanum, sfilefuanum, fuanum, num_laus_infuas, num_undup_laus_infuas))
   saveRDS(fua_stats, paste0(resultspath,"fua_stats_",countrycode, ".rds"))
+  
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
   system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
   
@@ -398,7 +399,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
         
   # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
-  #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
+  saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
   
   # table(hhigeo$qtr)
@@ -406,16 +407,17 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
   names(hhigeo_q)<-quarters
 
-    hhigeo_pop <- subset(hhigeo, wmean > 2500)
-    hhigeo_pop <- aggregate(cbind(urbpopulation = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
-    hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
-    hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
-    hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
+  #merge with population data
+  hhigeo_pop <- subset(hhigeo, wmean > 2500)
+  hhigeo_pop <- aggregate(cbind(urbpopulation = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
+  hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
+  hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
+  hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
     
-    hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
-    hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
-    hhigeo_pop <- cbind(countrycode, hhigeo_pop)
-    saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
+  hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
+  hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
+  hhigeo_pop <- cbind(countrycode, hhigeo_pop)
+  saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
     
   
   #### Create Maps for each quarter ===========
@@ -436,7 +438,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   saveRDS(table, paste0(resultspath,"HHI_fua_qtr",countrycode, ".rds"))
   
   
-  ####Average HHI across all quarters =====================
+  ####Average HHI across all quarters (hhigeo_tmean) =====================
   
   #hhi_tmean <- hhi %>% group_by(fua_id, idesco_level_4) %>% summarise(totalmean = mean(hhi))
   system(paste("echo",paste(countrycode,format(Sys.time()),"20-starting avg hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
@@ -462,6 +464,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   #test <- hhigeo_tmean[is.na(hhigeo_tmean$fuaname),]
   
+  #save hhigeo_tmean
+  saveRDS(hhigeo_tmean, paste0(resultspath,"hhigeo_tmean",countrycode, ".rds"))
+  
+  #plot and save graph
   ggplot(hhigeo_tmean) +
     geom_sf( aes(fill = tmean)) + theme_void() +
     theme(panel.grid.major = element_line(colour = "transparent")) +
@@ -512,6 +518,21 @@ saveRDS(tothhigeo_pop, paste0(EU_resultspath,"tothhigeo_pop.rds"))
 filenames4 <- list.files(getwd(), recursive=T, pattern="HHI_fua_qtr[A-Z][A-Z]",full.names=T)
 tot_hhi_fua_qtr <- rbindlist(lapply(filenames4,readRDS), fill = T)
 saveRDS(tot_hhi_fua_qtr, paste0(EU_resultspath,"tot_hhi_fua_qtr.rds"))
+
+#aggregate and plotting hhigeo_tmean
+filenames40 <- list.files(getwd(), recursive=T, pattern="hhigeo_tmean",full.names=T)
+tmean_hhigeo_tot <- rbindlist(lapply(filenames40,readRDS), fill = T)
+saveRDS(tmean_hhigeo_tot, paste0(EU_resultspath,"tmean_hhigeo_tot.rds"))
+
+ggplot(hhigeo_tmean) +
+  geom_sf( aes(geometry=geometry,fill = tmean)) + theme_void() +
+  theme(panel.grid.major = element_line(colour = "transparent")) +
+  labs(title = paste("Labour market concentration index",min(quarters),"-",max(quarters),"\naverage over occupations and quarters")) +
+  scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+  geom_sf(data=geoinfoTOT,alpha = 0)+
+  coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000))
+
+ggsave(paste0(EU_resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_.png"), width = 20, height = 13.3, units = "cm")
 
 #Create subsets for each quarter
 hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
