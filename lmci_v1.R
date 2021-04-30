@@ -374,11 +374,11 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   saveRDS(hhi, file = paste0(resultspath,"hhi_data_", countrycode, ".rds"))
   
   hhi_data<-dframeupper[,..cols]
-  #hhiupper <- calculate_hhi(hhi_data,hhi_cores)
+  hhiupper <- calculate_hhi(hhi_data,hhi_cores)
   rm(hhi_data)
   gc()
   
-  ###Quality Indicators
+  ####Quality Indicators
   quality <- as.data.frame(cbind(countrycode, num_raw_obs, num_obs_undup, num_duplicates, no_geo, no_isco, no_contract, num_obs_after_filters, num_obs_nofua, num_obs_final))
   saveRDS(quality, paste0(resultspath,"quality_",countrycode, ".rds"))
   
@@ -387,62 +387,46 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   fua_stats <- as.data.frame(cbind(totfuanum, sfilefuanum, fuanum, num_laus_infuas, num_undup_laus_infuas))
   saveRDS(fua_stats, paste0(resultspath,"fua_stats_",countrycode, ".rds"))
+  
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
   system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
   
   hhigeo <- create_hhigeo(hhi,sfile)
-  #hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
+  hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
   
   hhigeo <- merge(hhigeo, fua_pop)
   class(hhigeo$geometry)<-c("sfc_GEOMETRY","sfc")
         
   # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
-  #saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
+  saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
   system(paste("echo",paste(countrycode,format(Sys.time()),"19-starting plotting hhigeo",sep="#"),paste0(">> timings",ts,".txt")))
   
   # table(hhigeo$qtr)
   quarters<-unique(hhigeo$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
   hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
   names(hhigeo_q)<-quarters
-  # hhigeo_q3_2018 <- subset(hhigeo, qtr == "2018-q3")
-  # hhigeo_q3_2018$label <- paste0(hhigeo_q3_2018$fua_name, "\n ", as.character(hhigeo_q3_2018$wmean))
-  # 
-  # hhigeo_q4_2018 <- subset(hhigeo, qtr == "2018-q4")
-  # hhigeo_q4_2018$label <- paste0(hhigeo_q4_2018$fua_name, "\n ", as.character(hhigeo_q4_2018$wmean))
-  # 
-  # hhigeo_q1_2019 <- subset(hhigeo, qtr == "2019-q1")
-  # hhigeo_q1_2019$label <- paste0(hhigeo_q1_2019$fua_name, "\n ", as.character(hhigeo_q1_2019$wmean))
-  # 
-  # hhigeo_q2_2019 <- subset(hhigeo, qtr == "2019-q2")
-  # hhigeo_q2_2019$label <- paste0(hhigeo_q2_2019$fua_name, "\n ", as.character(hhigeo_q2_2019$wmean))
-  # 
-  # hhigeo_q3_2019 <- subset(hhigeo, qtr == "2019-q3")
-  # hhigeo_q3_2019$label <- paste0(hhigeo_q3_2019$fua_name, "\n ", as.character(hhigeo_q3_2019$wmean))
-  # 
-  # hhigeo_q4_2019 <- subset(hhigeo, qtr == "2019-q4")
-  # hhigeo_q4_2019$label <- paste0(hhigeo_q4_2019$fua_name, "\n ", as.character(hhigeo_q4_2019$wmean))
 
-    hhigeo_pop <- subset(hhigeo, wmean > 2500)
-    hhigeo_pop <- aggregate(cbind(urbpopulation = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
-    hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
-    hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
-    hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
+  #merge with population data
+  hhigeo_pop <- subset(hhigeo, wmean > 2500)
+  hhigeo_pop <- aggregate(cbind(urbpopulation = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
+  hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
+  hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
+  hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
     
-    hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
-    hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
-    hhigeo_pop <- cbind(countrycode, hhigeo_pop)
-    saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
+  hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
+  hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
+  hhigeo_pop <- cbind(countrycode, hhigeo_pop)
+  saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
     
   
-  # Graphs ===========
+  #### Create Maps for each quarter ===========
   
   lapply(quarters, hhigeo_plot,hhigeo_q=hhigeo_q,geoinfo=geoinfo,resultspath=resultspath,countrycode=countrycode)
 
-  # HHI tables by region --------------------------
+  #### Average HHI tables by FUAs and Quarter --------------------------
   
   # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
-  
   table<-dcast(st_set_geometry(hhigeo[,c("fua_id","fua_name","wmean","qtr")],NULL),fua_id+fua_name~qtr,value.var = "wmean")
   # table <- data.frame(cbind(hhigeo_q[[i]]$fua_id, hhigeo_q[[i]]$fua_name,rbindlist(sapply(quarters,function(x){eval(parse(text=paste0("hhigeo_q$`",x,"`$wmean")))}))
   
@@ -450,15 +434,11 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   # table <- table[!is.na(table[,2]),]
   
   colnames(table) <- c("FUA", "Name", paste("Avg. ",quarters))
-  
-  write.xlsx(table,
-             file = paste0(resultspath,"HHI_FUA_", countrycode, ".xlsx"), sheetName = "Sheet1",
-             col.names = TRUE, append = FALSE
-  )
+  write.xlsx(table, file = paste0(resultspath,"HHI_fua_qtr", countrycode, ".xlsx"), sheetName = "Sheet1", col.names = TRUE, append = FALSE)
+  saveRDS(table, paste0(resultspath,"HHI_fua_qtr",countrycode, ".rds"))
   
   
-  
-  ############### Average HHI across all quarters =====================
+  ####Average HHI across all quarters (hhigeo_tmean) =====================
   
   #hhi_tmean <- hhi %>% group_by(fua_id, idesco_level_4) %>% summarise(totalmean = mean(hhi))
   system(paste("echo",paste(countrycode,format(Sys.time()),"20-starting avg hhi calculation",sep="#"),paste0(">> timings",ts,".txt")))
@@ -484,6 +464,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   #test <- hhigeo_tmean[is.na(hhigeo_tmean$fuaname),]
   
+  #save hhigeo_tmean
+  saveRDS(hhigeo_tmean, paste0(resultspath,"hhigeo_tmean",countrycode, ".rds"))
+  
+  #plot and save graph
   ggplot(hhigeo_tmean) +
     geom_sf( aes(fill = tmean)) + theme_void() +
     theme(panel.grid.major = element_line(colour = "transparent")) +
@@ -500,26 +484,25 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
 }
 
-# test for a sample country
-# parallel::mclapply("BE",  lmci_calc)
-# parallel::mclapply(countrycode, lmci_calc)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
-# lapply(countrycodes,lmci_calc)
-# lapply(1:27,lmcirun)
+
+
+########################################### RESULTS AGGREGATION AND VISUALIZATION #######################
 
 #aggregate the results from countries
 EU_resultspath <- "EU_results/"
 dir.create(EU_resultspath)
 
 #aggregate hhi
-filenamesh <- list.files(getwd(), recursive=T, pattern="hhi_data_[A-Z][A-Z]",full.names=T)
-hhiTOT <- rbindlist(lapply(filenamesh,readRDS), fill = T)
+filenames1 <- list.files(getwd(), recursive=T, pattern="hhi_data_[A-Z][A-Z]",full.names=T)
+hhiTOT <- rbindlist(lapply(filenames1,readRDS), fill = T)
 saveRDS(hhiTOT, paste0(EU_resultspath,"hhiTOT.rds"))
+write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 
 #aggregate hhigeo
-filenames <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
-hhigeoTOT <- rbindlist(lapply(filenames,readRDS), fill = T)
+filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
+hhigeoTOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
 quarters<-unique(hhigeoTOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
 hhigeoTOT <- st_as_sf(hhigeoTOT)
 hhigeoTOT_q<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
@@ -527,9 +510,29 @@ names(hhigeoTOT_q)<-quarters
 geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
 
 #aggregate hhigeo_pop
-filenamesp <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
-tothhigeo_pop <- rbindlist(lapply(filenamesp,readRDS), fill = T)
+filenames3 <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
+tothhigeo_pop <- rbindlist(lapply(filenames3,readRDS), fill = T)
 saveRDS(tothhigeo_pop, paste0(EU_resultspath,"tothhigeo_pop.rds"))
+
+#aggregate hhi_fua_qtr
+filenames4 <- list.files(getwd(), recursive=T, pattern="HHI_fua_qtr[A-Z][A-Z]",full.names=T)
+tot_hhi_fua_qtr <- rbindlist(lapply(filenames4,readRDS), fill = T)
+saveRDS(tot_hhi_fua_qtr, paste0(EU_resultspath,"tot_hhi_fua_qtr.rds"))
+
+#aggregate and plotting hhigeo_tmean
+filenames40 <- list.files(getwd(), recursive=T, pattern="hhigeo_tmean",full.names=T)
+tmean_hhigeo_tot <- rbindlist(lapply(filenames40,readRDS), fill = T)
+saveRDS(tmean_hhigeo_tot, paste0(EU_resultspath,"tmean_hhigeo_tot.rds"))
+
+ggplot(hhigeo_tmean) +
+  geom_sf( aes(geometry=geometry,fill = tmean)) + theme_void() +
+  theme(panel.grid.major = element_line(colour = "transparent")) +
+  labs(title = paste("Labour market concentration index",min(quarters),"-",max(quarters),"\naverage over occupations and quarters")) +
+  scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+  geom_sf(data=geoinfoTOT,alpha = 0)+
+  coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000))
+
+ggsave(paste0(EU_resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_.png"), width = 20, height = 13.3, units = "cm")
 
 #Create subsets for each quarter
 hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
@@ -552,38 +555,39 @@ jpeg(paste0(EU_resultspath,"hhi_activepop_plot.png"))
 plot(hhigeo$wmean, hhigeo$share_active_pop)
 dev.off()
 
-####QUALITY INDICATORS
+############## QUALITY INDICATORS #################
+
 #aggregate quality indicators from all countries and save results
 
 #quality_tot: indicator that tracks the number of job ads analysed through the various steps of the process
-filenamesq <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
-tot_quality_stats <- rbindlist(lapply(filenamesq,FUN= readRDS), fill = T)
+filenames5 <- list.files(getwd(), recursive=T, pattern="quality_",full.names=T)
+tot_quality_stats <- rbindlist(lapply(filenames5,FUN= readRDS), fill = T)
 saveRDS(tot_quality_stats, paste0(EU_resultspath,"tot_quality.rds"))
 
 #companynames_stats_tot: indicator that tracks the company names identified as staff agencies using both keywords list and classification model
-filenamesc <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
-company_stats_tot <- rbindlist(lapply(filenamesc,FUN= readRDS), fill = T)
+filenames6 <- list.files(getwd(), recursive=T, pattern="companyname_stats",full.names=T)
+company_stats_tot <- rbindlist(lapply(filenames6,FUN= readRDS), fill = T)
 saveRDS(company_stats_tot, paste0(EU_resultspath,"company_stats_tot.rds"))
 
 #fua_stats_tot: indicator that tracks the number LAUs for each countries part of a FUA and the number of FUAs that have job positions from the ads database.
-filenamest <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
-fuas_stats_tot <- rbindlist(lapply(filenamest,FUN= readRDS), fill = T)
+filenames7 <- list.files(getwd(), recursive=T, pattern="fua_stats",full.names=T)
+fuas_stats_tot <- rbindlist(lapply(filenames7,FUN= readRDS), fill = T)
 saveRDS(fuas_stats_tot, paste0(EU_resultspath,"fuas_stats_tot.rds"))
 
 #staff_agencies_from_model: indicator that collects all the names of the companies flagged as staffing agency by the classification model. A random sample is extracted from this list and checked manually.
-filenamesm <- list.files(getwd(), recursive=T, pattern="staff_agencies_from_model",full.names=T)
-staff_agencies_model_tot <- rbindlist(lapply(filenamesm,FUN= readRDS), fill = T)
+filenames8 <- list.files(getwd(), recursive=T, pattern="staff_agencies_from_model",full.names=T)
+staff_agencies_model_tot <- rbindlist(lapply(filenames8,FUN= readRDS), fill = T)
 saveRDS(staff_agencies_model_tot, paste0(EU_resultspath,"staff_agencies_model_tot.rds"))
 # staff_agencies_sample <- sample_n(staff_agencies_model_tot, 50)
 # write.csv(staff_agencies_sample,paste0(EU_resultspath, "staff_agencies_sample.csv"))
 
 #stores the names of all the companies flagged as staffing agencies using the keywords list
-filenamesu <- list.files(getwd(), recursive=T, pattern="obs_agency_table",full.names=T)
-table_names_list <- rbindlist(lapply(filenamesu,FUN= readRDS), fill = T)
+filenames9 <- list.files(getwd(), recursive=T, pattern="obs_agency_table",full.names=T)
+table_names_list <- rbindlist(lapply(filenames9,FUN= readRDS), fill = T)
 saveRDS(table_names_list, paste0(EU_resultspath, "table_names_list.rds"))
 
 #stores all names of companies
-filenamesa <- list.files(getwd(), recursive=T, pattern="table_all_names_",full.names=T)
-table_names <- rbindlist(lapply(filenamesa,FUN= readRDS), fill = T)
+filenames10 <- list.files(getwd(), recursive=T, pattern="table_all_names_",full.names=T)
+table_names <- rbindlist(lapply(filenames10,FUN= readRDS), fill = T)
 saveRDS(table_names, paste0(EU_resultspath, "table_names.rds"))
 write.csv(table_names, paste0(EU_resultspath, "table_names.csv"))
