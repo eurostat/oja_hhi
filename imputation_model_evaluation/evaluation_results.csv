@@ -1,4 +1,4 @@
-"","model","true_positives","true_negatives","false_positives","false_negatives","accuracy","precision","recall"
+"","model","true_positives","true_negatives","false_positives","false_negatives","accuracy_rate","precision_rate","recall_rate"
 "1","full_model_companynames","64","80","9","47","0.72","0.8767","0.5766"
 "2","keywords_companynames","54","89","0","57","0.715","1","0.4865"
 "3","full_model_ads","3459772","938567","21210","986216","0.8136","0.9939","0.7782"
