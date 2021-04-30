@@ -329,11 +329,11 @@ create_hhigeo <- function(hhi = hhi,sfile){
   
   #standardize companyname
   if (standardise==TRUE) {
+    ordered <- sapply(general_query$keyvar, function(x) sep(x))
+    general_query$keyvar <- ordered
     general_query$keyvar <- str_trim(general_query$keyvar)
     general_query$keyvar <- gsub(" ","_",general_query$keyvar)
     general_query$keyvar <- gsub("é","e",general_query$keyvar)
-    ordered <- sapply(general_query$keyvar, function(x) sep(x))
-    general_query$keyvar <- ordered
     #ordered <- sapply(general_query$keyvar, function(x) sep(x))
     #general_query$keyvar <- ordered
     #general_query$keyvar <- str_trim(general_query$keyvar)
@@ -769,7 +769,7 @@ hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
 hhigeo_plot_tot <-function(quarters,geoinfoTOT){
   
   ggplot(eval(parse(text=paste0("hhigeo_qTOT$`",quarters,"`")))) +
-    geom_sf( aes(geometry=geometry,fill = wmean)) + theme_void() +
+    geom_sf( aes(geometry=geometry,fill = wmean,lwd=0)) + theme_void() +
     theme(panel.grid.major = element_line(colour = "transparent")) +
     labs(title = paste("Labour market concentration index", quarters,"\naverage over all occupations")) +
     scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
