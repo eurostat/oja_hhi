@@ -181,25 +181,30 @@ createfua <- function(countrycode){
     # get the last year for a given fua code 
     dates<-imp_pop[,.(myear=max(time)),by=cities]
     # keep only the last year value
-    imp_pop<-imp_pop[dates,on=.(time=myear,cities=cities)][,c("cities","values")]
+    imp_pop<-imp_pop[dates,on=.(time=myear,cities=cities)][indic_ur=="DE1001V" & grepl(paste0("^",countrycode,"\\d.*"),cities,perl=T),c("cities","values")]
     #getting latest ecomomically active population data from eurostat dataset urb_pop
     imp_labmkt<-get_eurostat_data("urb_llma",filters = c("EC1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
     # get the last year for a given fua code 
     dates <-imp_labmkt[,.(myear=max(time)),by=cities]
     # keep only the last year value
-    imp_labmkt<-imp_labmkt[dates,on=.(time=myear,cities=cities)][,c("cities","values")]
+    imp_labmkt<-imp_labmkt[dates,on=.(time=myear,cities=cities)][indic_ur=="EC1001V" & grepl(paste0("^",countrycode,"\\d.*"),cities,perl=T),c("cities","values")]
     
-    if(countrycode %in% c("CY","BE")) {
-      imp_pop<-unique(imp_pop[,.(joinid=substr(cities,1,5),population=values)])
-      imp_labmkt<-unique(imp_labmkt[,.(joinid=substr(cities,1,5),econ_active_pop=values)])
-      fua<-fua[,`:=`(population=NULL,joinid=substr(fua_id,1,5))]
+    if (nrow(imp_pop)>0){
+      if(countrycode %in% c("CY","BE")) {
+        imp_pop<-unique(imp_pop[,.(joinid=substr(cities,1,5),population=values)])
+        imp_labmkt<-unique(imp_labmkt[,.(joinid=substr(cities,1,5),econ_active_pop=values)])
+        fua<-fua[,`:=`(population=NULL,joinid=substr(fua_id,1,5))]
+      } else {
+        imp_pop<-unique(imp_pop[,.(joinid=cities,population=values)])
+        imp_labmkt<-unique(imp_labmkt[,.(joinid=cities,econ_active_pop=values)])
+        fua<-fua[,`:=`(population=NULL,joinid=fua_id)]
+      }
+      fua<-imp_pop[fua,on=.(joinid=joinid)]
+      fua<-imp_labmkt[fua,on=.(joinid=joinid)][,joinid:=NULL]  
     } else {
-      imp_pop<-unique(imp_pop[,.(joinid=cities,population=values)])
-      imp_labmkt<-unique(imp_labmkt[,.(joinid=cities,econ_active_pop=values)])
-      fua<-fua[,`:=`(population=NULL,joinid=fua_id)]
+      fua[,econ_active_pop:=0]
     }
-    fua<-imp_pop[fua,on=.(joinid=joinid)]
-    fua<-imp_labmkt[fua,on=.(joinid=joinid)][,joinid:=NULL]
+    
   
   fua[,tot_area:=as.numeric(tot_area)]
   return(fua)
