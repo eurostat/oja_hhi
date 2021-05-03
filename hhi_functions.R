@@ -203,11 +203,13 @@ createfua <- function(countrycode){
           }
           fua<-imp_pop[fua,on=.(joinid=joinid)]
           fua<-imp_labmkt[fua,on=.(joinid=joinid)][,joinid:=NULL]  
+        }else{
+          fua[,econ_active_pop:=0]
         }
+      }else{
+        fua[,econ_active_pop:=0]
       }
-    } else {
-      fua[,econ_active_pop:=0]
-    }
+    } 
     
   
   fua[,tot_area:=as.numeric(tot_area)]
