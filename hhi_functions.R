@@ -211,7 +211,7 @@ createfua <- function(countrycode){
       }
     } 
     
-  
+  if (class(fua$population)=="character"){fua[,population:=as.numeric(population)]}
   fua[,tot_area:=as.numeric(tot_area)]
   return(fua)
 }
