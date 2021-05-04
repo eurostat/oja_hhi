@@ -389,7 +389,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   saveRDS(fua_stats, paste0(resultspath,"fua_stats_",countrycode, ".rds"))
   
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
-  system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings.txt")))
+  system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings",ts,".txt")))
   
   hhigeo <- create_hhigeo(hhi,sfile)
   hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
@@ -517,7 +517,7 @@ tothhigeo_pop <- rbindlist(lapply(filenames3,readRDS), fill = T)
 saveRDS(tothhigeo_pop, paste0(EU_resultspath,"tothhigeo_pop.rds"))
 
 #aggregate hhi_fua_qtr
-filenames4 <- list.files(getwd(), recursive=T, pattern="HHI_fua_qtr[A-Z][A-Z]",full.names=T)
+filenames4 <- list.files(getwd(), recursive=T, pattern="HHI_fua_qtr[A-Z][A-Z].*rds",full.names=T)
 tot_hhi_fua_qtr <- rbindlist(lapply(filenames4,readRDS), fill = T)
 saveRDS(tot_hhi_fua_qtr, paste0(EU_resultspath,"tot_hhi_fua_qtr.rds"))
 
