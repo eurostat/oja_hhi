@@ -774,31 +774,16 @@ hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
 
 
 # 12. plotting hhigeoTOT
-hhigeo_plot_tot <-function(quarters,geoinfoTOT){
-  
-  ggplot(eval(parse(text=paste0("hhigeo_qTOT$`",quarters,"`")))) +
-    geom_sf( aes(geometry=geometry,fill = wmean,lwd=0)) + theme_void() +
-    theme(panel.grid.major = element_line(colour = "transparent")) +
-    labs(title = paste("Labour market concentration index", quarters,"\naverage over all occupations")) +
-    scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
-    geom_sf(data=geoinfoTOT,alpha = 0)+
-    coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000))
-  
-  ggsave(paste0(EU_resultspath,"HHI_",quarters,"_tot.png"), path= getwd(), width = 15, height = 10, units = "cm")
-}
+hhigeo_plot_tot<-function(qrtr,hhigeo_q,geoinfo,resultspath){
 
-# # 12. plotting hhigeoTOT
-# 
-# hhigeo_plot_tot<-function(qrtr,hhigeo_q,geoinfo,resultspath){
-#   
-# ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
-#   geom_sf( aes(fill = wmean),lwd=0) + theme_void() +
-#   theme(panel.grid.major = element_line(colour = "transparent")) +
-#   labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
-#   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
-#   #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
-#   geom_sf(data=geoinfoTOT,alpha = 0)+
-#   coord_sf(xlim = c(2700000, 5850000),ylim = c(1390000, 5400000)) + theme_bw()
-#   
-#   ggsave(paste0(resultspath,"/HHI_",qrtr,".png"), width = 15, height = 10, units = "cm")
-# }
+ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
+  geom_sf( aes(fill = wmean),lwd=0) + theme_void() +
+  theme(panel.grid.major = element_line(colour = "transparent")) +
+  labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
+  scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+  #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+  geom_sf(data=geoinfoTOT,alpha = 0)+
+  coord_sf(xlim = c(2700000, 5850000),ylim = c(1390000, 5400000)) + theme_bw()
+  #including cyprus coord_sf(xlim = c(2700000, 7050000),ylim = c(1390000, 5400000)) + theme_bw()
+  ggsave(paste0(EU_resultspath,"/HHI_",qrtr,".png"), width = 15, height = 10, units = "cm")
+}
