@@ -456,7 +456,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   hhigeo_tmean$tmean <- round(hhigeo_tmean$tmean)
   
-  #st_geometry(hhigeo_tmean) <- hhigeo_tmean$geometry
+  st_geometry(hhigeo_tmean) <- hhigeo_tmean$geometry
   
   #hhigeo_tmean <- st_zm(hhigeo_tmean, drop = TRUE, what = "ZM")
   class(hhigeo_tmean$geometry)<-c("sfc_GEOMETRY","sfc")
