@@ -554,7 +554,7 @@ plot(hhigeoTOT$wmean, hhigeoTOT$share_active_pop)
 
 #plotting hhi values and share of economically active population
 jpeg(paste0(EU_resultspath,"hhi_activepop_plot.png"))
-plot(hhigeo$wmean, hhigeo$share_active_pop)
+plot(hhigeoTOT$wmean, hhigeoTOT$share_active_pop)
 dev.off()
 
 ############## QUALITY INDICATORS #################
