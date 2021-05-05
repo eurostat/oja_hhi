@@ -457,7 +457,6 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhigeo_tmean$tmean <- round(hhigeo_tmean$tmean)
   
   st_geometry(hhigeo_tmean) <- hhigeo_tmean$geometry
-  
   #hhigeo_tmean <- st_zm(hhigeo_tmean, drop = TRUE, what = "ZM")
   class(hhigeo_tmean$geometry)<-c("sfc_GEOMETRY","sfc")
   hhigeo_tmean$label <- paste0(hhigeo_tmean$fua_name, "\n ", as.character(hhigeo_tmean$tmean))
@@ -505,11 +504,7 @@ write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 #aggregate hhigeo
 filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
-quarters<-unique(hhigeoTOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
-hhigeoTOT <- st_as_sf(hhigeoTOT)
-hhigeoTOT_q<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
-names(hhigeoTOT_q)<-quarters
-geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")
+saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo_TOT.rds"))
 
 #aggregate hhigeo_pop
 filenames3 <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
@@ -536,21 +531,23 @@ ggplot(tmean_hhigeo_tot) +
 
 ggsave(paste0(EU_resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_.png"), width = 20, height = 13.3, units = "cm")
 
-#Create subsets for each quarter
+###prepare plotting hhigeoTOT
+quarters<-unique(hhigeoTOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
+hhigeoTOT <- st_as_sf(hhigeoTOT)
+hhigeoTOT_q<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
+names(hhigeoTOT_q)<-quarters
+geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")#Create subsets for each quarter
 hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
 names(hhigeo_qTOT)<-quarters
 
 #Creates EU map for each quarter using hhigeo_plot_tot function declared in the script hhi_functions.R
-lapply(quarters, hhigeo_plot_tot, geoinfoTOT= geoinfoTOT)
-
-#lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
+lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
 
 #Save the final hhigeo Data table (removing geometry column to allow .csv export)
 setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
 write.csv(hhigeoTOT,paste0(EU_resultspath,"hhigeo.csv"))
 saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo.rds"))
-plot(hhigeoTOT$wmean, hhigeoTOT$share_active_pop)
 
 #plotting hhi values and share of economically active population
 jpeg(paste0(EU_resultspath,"hhi_activepop_plot.png"))
