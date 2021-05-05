@@ -456,10 +456,10 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   hhigeo_tmean$tmean <- round(hhigeo_tmean$tmean)
   
-  st_geometry(hhigeo_tmean) <- hhigeo_tmean$geometry
+  #st_geometry(hhigeo_tmean) <- hhigeo_tmean$geometry
   
-  hhigeo_tmean <- st_zm(hhigeo_tmean, drop = TRUE, what = "ZM")
-  
+  #hhigeo_tmean <- st_zm(hhigeo_tmean, drop = TRUE, what = "ZM")
+  class(hhigeo_tmean$geometry)<-c("sfc_GEOMETRY","sfc")
   hhigeo_tmean$label <- paste0(hhigeo_tmean$fua_name, "\n ", as.character(hhigeo_tmean$tmean))
   
   #test <- hhigeo_tmean[is.na(hhigeo_tmean$fuaname),]
@@ -469,7 +469,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   #plot and save graph
   ggplot(hhigeo_tmean) +
-    geom_sf( aes(fill = tmean)) + theme_void() +
+    geom_sf( aes(fill = tmean),lwd=0) + theme_void() +
     theme(panel.grid.major = element_line(colour = "transparent")) +
     labs(title = paste("Labour market concentration index",min(quarters),"-",max(quarters),"\naverage over occupations and quarters")) +
     scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
@@ -526,8 +526,8 @@ filenames40 <- list.files(getwd(), recursive=T, pattern="hhigeo_tmean",full.name
 tmean_hhigeo_tot <- rbindlist(lapply(filenames40,readRDS), fill = T)
 saveRDS(tmean_hhigeo_tot, paste0(EU_resultspath,"tmean_hhigeo_tot.rds"))
 
-ggplot(hhigeo_tmean) +
-  geom_sf( aes(geometry=geometry,fill = tmean)) + theme_void() +
+ggplot(tmean_hhigeo_tot) +
+  geom_sf( aes(geometry=geometry,fill = tmean),lwd=0) + theme_void() +
   theme(panel.grid.major = element_line(colour = "transparent")) +
   labs(title = paste("Labour market concentration index",min(quarters),"-",max(quarters),"\naverage over occupations and quarters")) +
   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
