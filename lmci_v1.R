@@ -1,25 +1,25 @@
 ####REQUIRED LIBRARIES####
 
 require("restatapi")
-library(tidyverse)
-library(Hmisc)
-library(dplyr)
-library(ggplot2)
-library(xlsx)
-library(readxl)
-library(openxlsx)
 library(data.table)
-library(lubridate)
-library(stringr)
-library(tidyr)
-library(openxlsx)
-library(hhi)
-library(sf)
-library(stringi)
-library(gdata)
+library(noctua)
 library(giscoR)
-library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
-#devtools::install_github("eurostat/wihoja", auth_token= "***REMOVED***")
+library(sf)
+library(DBI)
+library(ggplot2)
+library(tidyverse)
+library(openxlsx)
+#library(readxl)
+#library(Hmisc)
+#library(dplyr)
+#library(openxlsx)
+#library(lubridate)
+#library(stringr)
+#library(tidyr)
+#library(hhi)
+#library(stringi)
+#library(gdata)
+
 
 # clear up before start
 rm(list=ls())
@@ -185,7 +185,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   dframe[all$rn,companyname:=all$companyname]
   table_all_names <- data.table(countrycode,table(all$companyname))
   saveRDS(table_all_names,paste0(resultspath, "table_all_names_", countrycode, ".rds"))
- 
+
   # 
   #####AGENCY FILTER#################################################################################################
   #################################################################################################  
@@ -396,7 +396,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   hhigeo <- merge(hhigeo, fua_pop)
   class(hhigeo$geometry)<-c("sfc_GEOMETRY","sfc")
-        
+
   # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
@@ -413,12 +413,12 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
   hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
   hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
-    
+
   hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
   hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
   hhigeo_pop <- cbind(countrycode, hhigeo_pop)
   saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
-    
+
   
   #### Create Maps for each quarter ===========
   
@@ -484,7 +484,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 }
 
 #single country run
-# lmci_calc("AT",ts,hhi_cores)
+
+# lmci_calc("MT",ts,hhi_cores)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 
