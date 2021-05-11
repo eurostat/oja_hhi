@@ -1,9 +1,10 @@
 #This file contains the functions used by the main code to calculate the Labour Market Concentration Index.
 # List of functions:
+# 0. open_oja_db 
 # 1. ascii, sep, sep2
 # 2. empty_as_na, empty_as_na2
 # 3. createfua
-#  
+# 4. query_athena
 # 5. calculate_hhi
 # 6. create_hhigeo
 # 7. gen_sum_stats
@@ -11,6 +12,15 @@
 # 9. automflag_combine
 # 10. hhigeo_subset
 # 11. hhigeo_plot
+
+
+# 0. open_oja_db
+open_oja_db <- function(){
+  con <- DBI::dbConnect(noctua::athena(),
+                        s3_staging_dir=readLines("~/.aws/s3_staging_dir"),
+                        work_group=readLines("~/.aws/work_group"))
+  return(con)
+}
 
 ##Function for cleaning the 'companyname' column
 
@@ -189,6 +199,11 @@ createfua <- function(countrycode){
   return(fua)
 }
 
+# 4. query_athena
+query_athena <- function(query){
+  con <- open_oja_db()
+  RAthena::dbGetQuery(con, query)
+}
 
 #5. calculate_hhi
 
