@@ -9,3 +9,6 @@ NUTS2013*
 *.fst
 *.Rout
 timings*
+hhigeo*
+Rplots*
+EU_results

@@ -1,6 +1,9 @@
 ####REQUIRED LIBRARIES####
 
 require("restatapi")
+library(giscoR)
+library(noctua)
+library(sf)
 library(tidyverse)
 library(Hmisc)
 library(dplyr)
@@ -14,12 +17,9 @@ library(stringr)
 library(tidyr)
 library(openxlsx)
 library(hhi)
-library(sf)
 library(stringi)
 library(gdata)
-library(giscoR)
-library(wihoja) # wihoja package is not available on CRAN and the repository is private. Please use:
-#devtools::install_github("eurostat/wihoja", auth_token= "a1XXXXXXXXXXXXXXXXXXXXXXea4a2ab9621f")
+ 
 
 # clear up before start
 rm(list=ls())
