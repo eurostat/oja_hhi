@@ -202,7 +202,8 @@ createfua <- function(countrycode){
 # 4. query_athena
 query_athena <- function(query){
   con <- open_oja_db()
-  RAthena::dbGetQuery(con, query)
+  res<- noctua::dbGetQuery(con, query)
+  return(res)
 }
 
 #5. calculate_hhi
