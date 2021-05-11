@@ -12,6 +12,7 @@
 # 9. automflag_combine
 # 10. hhigeo_subset
 # 11. hhigeo_plot
+# 12. plotting hhigeoTOT
 
 
 # 0. open_oja_db
@@ -79,12 +80,13 @@ createfua <- function(countrycode){
   ###selecting countries
   # countrylist <- getSheetNames(filename)[4:31]
   #alternatively: countrylist <- c("BE","BG","CZ","DK","DE","EE","IE","EL","ES","FR","HR","IT","CY","LV","LT","LU","HU","MT","NL","AT","PL","PT","RO","SI","SK","FI","SE")
-  
+
   
   #3b. assignFUA
   #create a function generating the "assign" variable
   
   # assignFUA <- function(countrycode) {
+
   #importing excel sheet and eliminating spaces from variable names
   DT <- setDT(read.xlsx(filename , sheet = countrycode))
   # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
@@ -186,6 +188,7 @@ createfua <- function(countrycode){
   setnames(fua,c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area"))
   
   #getting latest population data from eurostat dataset urb_pop
+
   imp_pop<-get_eurostat_data("urb_lpop1",filters=c("DE1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
   if (!is.null(imp_pop)){
     # get the last year for a given fua code 
@@ -317,7 +320,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   ## this is the list of default arguments given to the function:
   #vars <- "grab_date, idesco_level_4, idesco_level_3, idcity, idprovince, idregion, idsector, idcategory_sector "
   ## the variables in the OJA dataset for which sum stats are created
-  #idcountry <- "RO"
+  #idcountry <- "PT"
   ## the country in the OJA dataset for which sum stats are computed
   #samplesize <- "1000000"
   ## sum stats are calculated for a sample of observations. this argument (a number expressed as text) determines the sample size
@@ -356,7 +359,13 @@ create_hhigeo <- function(hhi = hhi,sfile){
     general_query$keyvar <- ordered
     general_query$keyvar <- str_trim(general_query$keyvar)
     general_query$keyvar <- gsub(" ","_",general_query$keyvar)
-    # general_query$keyvar <- gsub("é","e",general_query$keyvar)    
+    general_query$keyvar <- gsub("é","e",general_query$keyvar)
+    #ordered <- sapply(general_query$keyvar, function(x) sep(x))
+    #general_query$keyvar <- ordered
+    #general_query$keyvar <- str_trim(general_query$keyvar)
+    #general_query$keyvar <- gsub(" ","_",general_query$keyvar)
+    #general_query$keyvar <- gsub("é","e",general_query$keyvar)    
+
   }
 
   # eliminate empty cells in keyvar
@@ -615,6 +624,7 @@ automflag <- function(mydata=sumstats_by_company[sumstats_by_company$ln_undup_n>
   
   # generate a comboflag that combines the user-provided flag and the automatic flag. The values of the user-provided flag have priority, and the automatically generated values are used only for those observations for which the user had not provided input
   output1$comboflag <- 0
+  output1$comboflag[output1$comb==1] <- 1
   output1$comboflag[output1$autom_flag==1 & output1$comb!=0] <- 1
 
   # generate a variable indicating only those observations that have been flagged on top of those already flagged by the user
@@ -778,4 +788,20 @@ hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
     geom_sf(data=geoinfo,alpha = 0)
   
   ggsave(paste0(resultspath,"HHI_",qrtr,"_", countrycode, ".png"), width = 15, height = 10, units = "cm")
+}
+
+
+# 12. plotting hhigeoTOT
+hhigeo_plot_tot<-function(qrtr,hhigeo_q,geoinfo,resultspath){
+
+ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
+  geom_sf( aes(fill = wmean),lwd=0) + theme_void() +
+  theme(panel.grid.major = element_line(colour = "transparent")) +
+  labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
+  scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
+  #geom_sf_text(aes(label = label), size = 2.5, colour = "black")+
+  geom_sf(data=geoinfoTOT,alpha = 0)+
+  coord_sf(xlim = c(2700000, 5850000),ylim = c(1390000, 5400000)) + theme_bw()
+  #including cyprus coord_sf(xlim = c(2700000, 7050000),ylim = c(1390000, 5400000)) + theme_bw()
+  ggsave(paste0(EU_resultspath,"/HHI_",qrtr,".png"), width = 15, height = 10, units = "cm")
 }
