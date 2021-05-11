@@ -512,6 +512,9 @@ filenames20 <- list.files(getwd(), recursive=T, pattern="hhigeoupper",full.names
 hhigeoup_TOT <- rbindlist(lapply(filenames20,readRDS), fill = T)
 saveRDS(hhigeoup_TOT, paste0(EU_resultspath,"hhigeoup_TOT.rds"))
 
+hhigeoup_TOT <- subset(hhigeoup_TOT, select = -geometry)
+write.csv(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.csv"))
+
 #aggregate hhigeo_pop
 filenames3 <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
 tothhigeo_pop <- rbindlist(lapply(filenames3,readRDS), fill = T)
