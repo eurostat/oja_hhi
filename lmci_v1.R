@@ -6,12 +6,12 @@ library(noctua)
 library(giscoR)
 library(sf)
 library(DBI)
-#library(ggplot2)
-#library(tidyverse)
+library(ggplot2)
+library(tidyverse)
+library(openxlsx)
+#library(readxl)
 #library(Hmisc)
 #library(dplyr)
-#library(xlsx)
-#library(readxl)
 #library(openxlsx)
 #library(lubridate)
 #library(stringr)
@@ -484,7 +484,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 }
 
 #single country run
-# lmci_calc("AT",ts,hhi_cores)
+# lmci_calc("MT",ts,hhi_cores)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 

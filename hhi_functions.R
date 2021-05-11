@@ -85,43 +85,47 @@ createfua <- function(countrycode){
   #create a function generating the "assign" variable
   
   # assignFUA <- function(countrycode) {
-    #importing excel sheet and eliminating spaces from variable names
-    DT <- setDT(read_excel(filename , sheet = countrycode))
-    # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
-    setnames(DT,gsub("\\s","_",colnames(DT)))
-    setnames(DT,gsub("\\(.*\\)","",colnames(DT)))
-    
-    # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
-    
-    #finding which LAUs belong to the same NUTS and FUAs
-    DT[,NUTSFUA:= paste0(NUTS_3_CODE, FUA_ID)]
-    DT[,dup:= as.numeric(!duplicated(NUTSFUA , fromLast=FALSE))]
-    
-    
-    #Adding count of observations and of duplicates by NUTS
-    ntable <- DT[,.(count=.N),by=NUTS_3_CODE]
-    duptable <- DT[dup==1,.(dup_count=.N),by=NUTS_3_CODE]
-    idtable <- DT[!is.na(FUA_ID),.(FUAID_count=.N),by=NUTS_3_CODE]  
-    DT<-ntable[DT,on="NUTS_3_CODE"]
-    DT<-duptable[DT,on="NUTS_3_CODE"]
-    DT<-idtable[DT,on="NUTS_3_CODE"]
-    DT[is.na(FUAID_count),FUAID_count:=-999] 
-    
-    
-    #generate an assign variable equal to 1 if all LAUs in a given NUTS can be automatically assigned to the same FUA
-    DT[,assign:= 0]
-    DT[dup_count == 1,assign:=1] 
-    DT[FUAID_count < count, assign:=0]
-    # ?????? why DF$assign[DF$FUAID_count < DF$count] <- 0
-
-    cols<-c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "POPULATION", "TOTAL_AREA_", "assign")
-    DT<-DT[,..cols]
-    
-    # replace n.a. with NA in the columns
-    DT<-DT[,lapply(.SD,function(x)gsub("^n.a.$", NA,x))]
-    
-    #defining the output of the function
-    # return(DF)
+  #importing excel sheet and eliminating spaces from variable names
+  DT <- setDT(read.xlsx(filename , sheet = countrycode))
+  # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
+  if (countrycode %in% c("IT"))  {
+    setnames(DT,gsub(" 2013$","",colnames(DT)))
+    setnames(DT,gsub("alternative$","LATIN",colnames(DT)))
+  }  
+  setnames(DT,gsub("\\s|\\.","_",colnames(DT)))
+  setnames(DT,gsub("\\(.*\\)","",colnames(DT)))
+  DT$FUA_ID <- str_trim(DT$FUA_ID, side = "right") # removes whitespaces at the end of the fua_id string.
+  # DT<-DT[,which(unlist(lapply(DT, function(x)!all(is.na(x))))),with=F]
+  # message("DT-",countrycode,"\n")
+  #finding which LAUs belong to the same NUTS and FUAs
+  DT[,NUTSFUA:= paste0(NUTS_3_CODE, FUA_ID)]
+  DT[,dup:= as.numeric(!duplicated(NUTSFUA , fromLast=FALSE))]
+  
+  
+  #Adding count of observations and of duplicates by NUTS
+  ntable <- DT[,.(count=.N),by=NUTS_3_CODE]
+  duptable <- DT[dup==1,.(dup_count=.N),by=NUTS_3_CODE]
+  idtable <- DT[!is.na(FUA_ID),.(FUAID_count=.N),by=NUTS_3_CODE]  
+  DT<-ntable[DT,on="NUTS_3_CODE"]
+  DT<-duptable[DT,on="NUTS_3_CODE"]
+  DT<-idtable[DT,on="NUTS_3_CODE"]
+  DT[is.na(FUAID_count),FUAID_count:=-999] 
+  
+  
+  #generate an assign variable equal to 1 if all LAUs in a given NUTS can be automatically assigned to the same FUA
+  DT[,assign:= 0]
+  DT[dup_count == 1,assign:=1] 
+  DT[FUAID_count < count, assign:=0]
+  # ?????? why DF$assign[DF$FUAID_count < DF$count] <- 0
+  
+  cols<-c("NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "POPULATION", "TOTAL_AREA_", "assign")
+  DT<-DT[,..cols]
+  
+  # replace n.a. with NA in the columns
+  DT<-DT[,lapply(.SD,function(x)gsub("^n.a.$", NA,x))]
+  
+  #defining the output of the function
+  # return(DF)
   # }
   
   ###applying the previous function to the countries selected at the beginning of this code
@@ -146,14 +150,14 @@ createfua <- function(countrycode){
   # 2 for NUTS2016 units that have no direct (1:1) correspondence with any NUTS2013 units
   # 1 for NUTS2016 units which, compared to the NUTS2013 classification, remained identical but changed name 
   # 0 for NUTS2016 units for which there has been no change, compared to NUTS2013 (the value 0 is assigned later in the code, after the merge with the main table)
-  DT2 <- setDT(read_excel(filename2 , sheet = "Correspondence NUTS-3"))
-  setnames(DT2, gsub("\\s","_",colnames(DT2)))
+  DT2 <- setDT(read.xlsx(filename2 , sheet = "Correspondence NUTS-3"))
+  setnames(DT2, gsub("\\s|\\.","_",colnames(DT2)))
   DT2[,recoded:=2]
   DT2[Change=="recoded",recoded:=1]
   DT2[Change=="boundary shift",recoded:=3]
   DT2 <- DT2[,c("Code_2013", "Code_2016" , "recoded"),with=F]
   setnames(DT2, c("NUTS_3_2013" , "NUTS_3_CODE" , "recoded"))
-  
+  # cat("DT2",countrycode,"\n")
   # input manually the NUTS2013-NUTS2016 correspondence for 3 NUTS2016 regions
   DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",NUTS_3_CODE:="DE91C"]  
   DT2[NUTS_3_2013=="DE915"|NUTS_3_2013=="DE919",recoded:=1]
@@ -169,34 +173,53 @@ createfua <- function(countrycode){
   
   ### change the value of NUTS_3_CODE to make it compatible with the 2013 classification. in short, when recoded=1 or recoded= 3, then the NUTS2013 code is used instead of the NUTS2016 code
   
-  DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013]
-  DT[recoded==3,NUTS_3_CODE:=NUTS_3_2013]
-  # DT[recoded==2,NUTS_3_CODE:=0] 
-  DT[recoded==2,assign:=0]
+  DT[recoded==1,NUTS_3_CODE:=NUTS_3_2013] 
+  DT[recoded==3,NUTS_3_CODE:=NUTS_3_2013] 
+  #DT[recoded==2,NUTS_3_CODE:=0] 
   DT[recoded==2,assign:=0] 
+  DT[recoded==3,assign:=0]
   DT[,LAU_CODE:=as.character(LAU_CODE)]
   
   # final vector to be used for the calculation of the LMCI
   
   fua <- DT[!is.na(FUA_ID), c("country" , "NUTS_3_CODE" , "LAU_CODE" , "FUA_ID", "LAU_NAME_NATIONAL" , "LAU_NAME_LATIN" , "recoded" , "assign", "POPULATION", "TOTAL_AREA_"),with=F]
   setnames(fua,c("country" , "idprovince" , "idcity" , "fua_id" , "city" , "city_latin" , "recoded", "var1", "population", "tot_area"))
-  if (all(is.na(fua$population))){
-    imp_pop<-get_eurostat_data("urb_lpop1",filters=c("DE1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
+  
+  #getting latest population data from eurostat dataset urb_pop
+  imp_pop<-get_eurostat_data("urb_lpop1",filters=c("DE1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
+  if (!is.null(imp_pop)){
     # get the last year for a given fua code 
     dates<-imp_pop[,.(myear=max(time)),by=cities]
     # keep only the last year value
-    imp_pop<-imp_pop[dates,on=.(time=myear,cities=cities)][,c("cities","values")]
-    if(countrycode=="CY") {
-      imp_pop<-unique(imp_pop[,.(joinid=substr(cities,1,5),population=values)])
-      fua<-fua[,`:=`(population=NULL,joinid=substr(fua_id,1,5))]
-    } else {
-      imp_pop<-unique(imp_pop[,.(joinid=cities,population=values)])
-      fua<-fua[,`:=`(population=NULL,joinid=fua_id)]
+    imp_pop<-imp_pop[dates,on=.(time=myear,cities=cities)][indic_ur=="DE1001V" & grepl(paste0("^",countrycode,"\\d.*"),cities,perl=T),c("cities","values")]
+    #getting latest ecomomically active population data from eurostat dataset urb_pop
+    imp_labmkt<-get_eurostat_data("urb_llma",filters = c("EC1001V",paste0("^",countrycode,"\\d.*")),perl=T,stringsAsFactors = F)
+    if (!is.null(imp_labmkt)){
+      # get the last year for a given fua code 
+      dates <-imp_labmkt[,.(myear=max(time)),by=cities]
+      # keep only the last year value
+      imp_labmkt<-imp_labmkt[dates,on=.(time=myear,cities=cities)][indic_ur=="EC1001V" & grepl(paste0("^",countrycode,"\\d.*"),cities,perl=T),c("cities","values")]
+      
+      if (nrow(imp_pop)>0){
+        if(countrycode %in% c("CY","BE")) {
+          imp_pop<-unique(imp_pop[,.(joinid=substr(cities,1,5),population=values)])
+          imp_labmkt<-unique(imp_labmkt[,.(joinid=substr(cities,1,5),econ_active_pop=values)])
+          fua<-fua[,`:=`(population=NULL,joinid=substr(fua_id,1,5))]
+        } else {
+          imp_pop<-unique(imp_pop[,.(joinid=cities,population=values)])
+          imp_labmkt<-unique(imp_labmkt[,.(joinid=cities,econ_active_pop=values)])
+          fua<-fua[,`:=`(population=NULL,joinid=fua_id)]
+        }
+        fua<-imp_pop[fua,on=.(joinid=joinid)]
+        fua<-imp_labmkt[fua,on=.(joinid=joinid)][,joinid:=NULL]  
+      }
     }
-    fua<-imp_pop[fua,on=.(joinid=joinid)][,joinid:=NULL]
-  }
-  fua[,tot_area:=as.numeric(tot_area)]
-  return(fua)
+  } 
+  
+  if (!("econ_active_pop" %in% colnames(fua)))  {fua[,econ_active_pop:=0][]}
+  if (class(fua$population)=="character"){fua[,population:=as.numeric(population)][]}
+  fua[,tot_area:=as.numeric(tot_area)][]
+  return(fua[])
 }
 
 # 4. query_athena
