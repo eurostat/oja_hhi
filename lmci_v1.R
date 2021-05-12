@@ -485,7 +485,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 
 #single country run
 
-# lmci_calc("MT",ts,hhi_cores)
+# lmci_calc("IT",ts,hhi_cores)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 
