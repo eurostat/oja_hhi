@@ -275,7 +275,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   system(paste("echo",paste(countrycode,format(Sys.time()),"14-starting geo download",sep="#"),paste0(">> timings",ts,".txt")))
   
   geoinfo <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0, country = countrycode,spatialtype = "RG", resolution = "01")
-  sfile <-giscoR::gisco_get_urban_audit(year = 2020,epsg = 3035,country = countrycode, level = "FUA", spatialtype = "RG")
+  sfile <-giscoR::gisco_get_urban_audit(year = 2020,epsg = 3035,country = countrycode, level = "FUA", spatialtype = "RG", update_cache = TRUE)
   sfile$geometry <- st_cast(sfile$geometry, "GEOMETRY")
   names(sfile)[names(sfile) == 'FID'] <- 'fua_id'
   sfile <- subset(sfile, select =  -c(URAU_CODE, URAU_CATG, CITY_CPTL, CITY_KERN, FUA_CODE, AREA_SQM))
@@ -507,13 +507,17 @@ filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.n
 hhigeoTOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
 saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo_TOT.rds"))
 
+#hhigeo_TOT1 <- hhigeo_TOT[, .(population = sum(population), econ_active_pop = sum(econ_active_pop), share_active_pop = mean(share_active_pop), avg = mean(wmean)), by = list(CNTR_CODE, qtr) ]
+hhigeo_TOT_CNTR <- hhigeo_TOT[, .(population = sum(population), avg_hhi = mean(wmean)), by = list(CNTR_CODE, qtr) ]
+saveRDS(hhigeo_TOT_CNTR, paste0(EU_resultspath,"hhigeo_TOT_CNTR.rds"))
+
 #aggregate hhigeoupper
 filenames20 <- list.files(getwd(), recursive=T, pattern="hhigeoupper",full.names=T)
 hhigeoup_TOT <- rbindlist(lapply(filenames20,readRDS), fill = T)
 saveRDS(hhigeoup_TOT, paste0(EU_resultspath,"hhigeoup_TOT.rds"))
 
 hhigeoup_TOT <- subset(hhigeoup_TOT, select = -geometry)
-write.csv(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.csv"))
+write.xlsx(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.xlsx"))
 
 #aggregate hhigeo_pop
 filenames3 <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
@@ -555,7 +559,7 @@ lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,results
 #Save the final hhigeo Data table (removing geometry column to allow .csv export)
 setDT(hhigeoTOT)
 hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
-write.csv(hhigeoTOT,paste0(EU_resultspath,"hhigeo.csv"))
+write.xlsx(hhigeoTOT,paste0(EU_resultspath,"hhigeo.xlsx"))
 saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo.rds"))
 
 #plotting hhi values and share of economically active population
