@@ -485,7 +485,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
 
 #single country run
 
-# lmci_calc("MT",ts,hhi_cores)
+# lmci_calc("IT",ts,hhi_cores)
 #run function to all 27MS in parallel
 parallel::mclapply(countrycodes,lmci_calc,ts=ts,hhi_cores)
 
@@ -534,22 +534,23 @@ filenames40 <- list.files(getwd(), recursive=T, pattern="hhigeo_tmean",full.name
 tmean_hhigeo_tot <- rbindlist(lapply(filenames40,readRDS), fill = T)
 saveRDS(tmean_hhigeo_tot, paste0(EU_resultspath,"tmean_hhigeo_tot.rds"))
 
+geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")#Create subsets for each quarter
+
 ggplot(tmean_hhigeo_tot) +
   geom_sf( aes(geometry=geometry,fill = tmean),lwd=0) + theme_void() +
   theme(panel.grid.major = element_line(colour = "transparent")) +
-  labs(title = paste("Labour market concentration index",min(quarters),"-",max(quarters),"\naverage over occupations and quarters")) +
+  labs(title = paste("Labour market concentration index\naverage over occupations and quarters")) +
   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
   geom_sf(data=geoinfoTOT,alpha = 0)+
   coord_sf(xlim = c(2300000, 7050000),ylim = c(1390000, 5400000))
 
-ggsave(paste0(EU_resultspath,"HHI_avgfrom_",min(quarters),"_",max(quarters),"_.png"), width = 20, height = 13.3, units = "cm")
+ggsave(paste0(EU_resultspath,"HHI_avgfrom__.png"), width = 20, height = 13.3, units = "cm")
 
 ###prepare plotting hhigeoTOT
 quarters<-unique(hhigeoTOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
 hhigeoTOT <- st_as_sf(hhigeoTOT)
 hhigeoTOT_q<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
 names(hhigeoTOT_q)<-quarters
-geoinfoTOT <- giscoR::gisco_get_nuts(year = 2016,epsg = 3035, nuts_level = 0,spatialtype = "RG", resolution = "01")#Create subsets for each quarter
 hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
 names(hhigeo_qTOT)<-quarters
 

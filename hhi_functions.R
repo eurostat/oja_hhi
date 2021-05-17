@@ -91,7 +91,7 @@ createfua <- function(countrycode){
   DT <- setDT(read.xlsx(filename , sheet = countrycode))
   # colnames(DF) <- substr(str_replace_all(colnames(DF) , " " , "_") , 1 , 11)
   if (countrycode %in% c("IT"))  {
-    setnames(DT,gsub(" 2013$","",colnames(DT)))
+    setnames(DT,gsub(".2013$","",colnames(DT)))
     setnames(DT,gsub("alternative$","LATIN",colnames(DT)))
   }  
   setnames(DT,gsub("\\s|\\.","_",colnames(DT)))
