@@ -308,6 +308,26 @@ create_hhigeo <- function(hhi = hhi,sfile){
 }
 
 
+#6b. create_hhigeoplus
+create_hhigeoplus <- function(hhi = hhi,sfile){
+  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), trimmed_mean = mean (hhi, trim=0.2), median = median(hhi), perc25 = quantile(hhi, .25), perc75 = quantile(hhi, .75), max = max(hhi), min = min(hhi)), by = list(fua_id, qtr) ]
+  
+  hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean", "weighted_mean", "trimmed_mean", "median", "perc25", "perc75", "max", "min")])
+  
+  hhigeo <- data.table(left_join(hhigeo, sfile, by = "fua_id"))
+  
+  names(hhigeo)[names(hhigeo) == 'URAU_NAME'] <- 'fua_name'
+  
+  hhigeo$fua_name <- as.character(hhigeo$fua_name)
+  
+  hhigeo$wmean <- round(hhigeo$wmean)
+  
+  hhigeo <- st_as_sf(hhigeo)
+  hhigeo$geometry <- st_cast(hhigeo$geometry, "GEOMETRY")
+  return (hhigeo)
+}
+
+
 #7. gen_sum_stats
 
   gen_sum_stats <- function(idcountry = countrycode, filterlist = filteredout$companyname, keeplist = keep$companyname, key_var = "companyname",sumstats = "n_distinct", standardise = TRUE, consolidate=clean_names, otherstats = c("avg_duration = mean(duration)" , "avg_grab = mean(grab_date)") ) {
