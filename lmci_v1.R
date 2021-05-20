@@ -507,6 +507,9 @@ hhiTOT <- rbindlist(lapply(filenames1,readRDS), fill = T)
 saveRDS(hhiTOT, paste0(EU_resultspath,"hhiTOT.rds"))
 write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 
+#hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
+#hhi <- unique(hhi[, c("idesco_level_4", "wmean", "weighted_mean", "max", "min")])
+
 #aggregate hhigeo
 filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
