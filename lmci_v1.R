@@ -391,8 +391,13 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
   system(paste("echo",paste(countrycode,format(Sys.time()),"18-starting merge hhi with geo",sep="#"),paste0(">> timings",ts,".txt")))
   
-  hhigeo <- create_hhigeo(hhi,sfile)
-  hhigeoupper <- create_hhigeo(hhi=hhiupper,sfile)
+  hhigeo <- create_hhigeoplus(hhi,sfile)
+  hhigeoupper <- create_hhigeoplus(hhi=hhiupper,sfile)
+  
+  names(hhigeoupper)[names(hhigeoupper) == 'wmean'] <- 'wmeanupper'
+  names(hhigeoupper)[names(hhigeoupper) == 'weighted_mean'] <- 'w_meanupper'
+  names(hhigeoupper)[names(hhigeoupper) == 'max'] <- 'max_upper'
+  names(hhigeoupper)[names(hhigeoupper) == 'min'] <- 'min_upper'
   
   hhigeo <- merge(hhigeo, fua_pop)
   class(hhigeo$geometry)<-c("sfc_GEOMETRY","sfc")
@@ -518,6 +523,10 @@ saveRDS(hhigeoup_TOT, paste0(EU_resultspath,"hhigeoup_TOT.rds"))
 
 hhigeoup_TOT <- subset(hhigeoup_TOT, select = -geometry)
 write.xlsx(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.xlsx"))
+
+#aggregate mergedhhigeo
+mergedhhigeoTOT <- left_join(as.data.frame(hhigeoTOT), as.data.frame(hhigeoup_TOT), by = c("fua_id", "qtr"))
+#mergedhhigeoTOT <- subset(mergedhhigeoTOT, select = -c(wmeanupper, weighted_mean))
 
 #aggregate hhigeo_pop
 filenames3 <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
