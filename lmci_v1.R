@@ -513,11 +513,11 @@ write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 #aggregate hhigeo
 filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
 hhigeoTOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
-saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo_TOT.rds"))
+saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeoTOT.rds"))
 
-#hhigeo_TOT1 <- hhigeo_TOT[, .(population = sum(population), econ_active_pop = sum(econ_active_pop), share_active_pop = mean(share_active_pop), avg = mean(wmean)), by = list(CNTR_CODE, qtr) ]
-hhigeo_TOT_CNTR <- hhigeo_TOT[, .(population = sum(population), avg_hhi = mean(wmean)), by = list(CNTR_CODE, qtr) ]
-saveRDS(hhigeo_TOT_CNTR, paste0(EU_resultspath,"hhigeo_TOT_CNTR.rds"))
+#hhigeoTOT1 <- hhigeoTOT[, .(population = sum(population), econ_active_pop = sum(econ_active_pop), share_active_pop = mean(share_active_pop), avg = mean(wmean)), by = list(CNTR_CODE, qtr) ]
+hhigeoTOT_CNTR <- hhigeoTOT[, .(population = sum(population), avg_hhi = mean(wmean)), by = list(CNTR_CODE, qtr) ]
+saveRDS(hhigeoTOT_CNTR, paste0(EU_resultspath,"hhigeoTOT_CNTR.rds"))
 
 #aggregate hhigeoupper
 filenames20 <- list.files(getwd(), recursive=T, pattern="hhigeoupper",full.names=T)
