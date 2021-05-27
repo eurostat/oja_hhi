@@ -26,8 +26,8 @@ rm(list=ls())
 
 # set number of cores to be used for parallel processing and timestamp for logging
 ts<-format(Sys.time(),"%Y%m%d%H%M%S")
-options(mc.cores=2)
-hhi_cores<-2
+options(mc.cores=3)
+hhi_cores<-3
 ####SOURCE THE EXTERNAL FILE CONTAINING FUNCTIONS####
 
 source("hhi_functions.R")
@@ -40,7 +40,7 @@ open_oja_db()
 countrycodes <- get("cc",.restatapi_env)$EU27_2020
 # countrycode<-countrycodes[1]
 # to delete the downloaded files uncomment the code below
-# filenames<-unlist(lapply(countrycodes,function(x) {paste0(x, "/","OJA",x, ".rds")})) 
+# filenames<-unlist(lapply(countrycodes,function(x) {paste0(x, "/","OJA",x, ".rds")}))
 # unlink(filenames)
 
 lmci_load <- function(countrycode){
@@ -55,7 +55,7 @@ lmci_load <- function(countrycode){
   
   query <- paste0("SELECT general_id, grab_date, lang, idesco_level_4, esco_level_4, idcity, city, idprovince, province, idregion, region, idcountry, country, idcontract, contract, idsector, sector, sourcecountry, source, site, companyname  ",
                   "FROM ", data_table, " ",
-                  "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND contract != 'Internship'",
+                  "WHERE idcountry = '", countrycode,"' AND idprovince != '' AND contract != 'Internship' AND grab_date > 17896 ",
                   ";")
   filename<-paste0(path,"OJA",countrycode, ".rds")
   if(!file.exists(filename)){
@@ -510,7 +510,11 @@ write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 hhiTOTocc <- hhiTOT[, .(fua_id, qtr, ncount= sum(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = c("idesco_level_4", "qtr")]
 hhiTOTocc <- hhiTOTocc[, .(ncount = mean(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
 hhiTOTocc <- unique(hhiTOTocc[, c("idesco_level_4", "ncount", "wmean", "weighted_mean", "max", "min")])
+OJADE <- readRDS("~/oja_hhi/DE/OJADE.rds")
+esco_table <- unique(OJADE[, c("idesco_level_4", "esco_level_4")])
+hhiTOTocc <- merge(hhiTOTocc, esco_table)
 write.xlsx(hhiTOTocc, paste0(EU_resultspath, "hhiTOTocc.xlsx"))
+
 
 #aggregate hhigeo
 filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
