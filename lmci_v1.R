@@ -385,7 +385,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   companyname_stats <- as.data.frame(cbind(countrycode, num_obs_agency_list, num_obs_agency_model, num_distinct_agency_list, num_distinct_agency_model, automflag_output[[2]]))
   saveRDS(companyname_stats, paste0(resultspath,"companyname_stats_",countrycode, ".rds"))
   
-  fua_stats <- as.data.frame(cbind(totfuanum, sfilefuanum, fuanum, num_laus_infuas, num_undup_laus_infuas))
+  fua_stats <- as.data.frame(cbind(countrycode, totfuanum, sfilefuanum, fuanum, num_laus_infuas, num_undup_laus_infuas))
   saveRDS(fua_stats, paste0(resultspath,"fua_stats_",countrycode, ".rds"))
   
   ###MERGE HHI RESULTS WITH GEO DATA (FUAs)============
@@ -507,8 +507,10 @@ hhiTOT <- rbindlist(lapply(filenames1,readRDS), fill = T)
 saveRDS(hhiTOT, paste0(EU_resultspath,"hhiTOT.rds"))
 write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 
-#hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
-#hhi <- unique(hhi[, c("idesco_level_4", "wmean", "weighted_mean", "max", "min")])
+hhiTOTocc <- hhiTOT[, .(fua_id, qtr, ncount= sum(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = c("idesco_level_4", "qtr")]
+hhiTOTocc <- hhiTOTocc[, .(ncount = mean(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
+hhiTOTocc <- unique(hhiTOTocc[, c("idesco_level_4", "ncount", "wmean", "weighted_mean", "max", "min")])
+write.xlsx(hhiTOTocc, paste0(EU_resultspath, "hhiTOTocc.xlsx"))
 
 #aggregate hhigeo
 filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
