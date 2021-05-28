@@ -185,7 +185,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   dframe[all$rn,companyname:=all$companyname]
   table_all_names <- data.table(countrycode,table(all$companyname))
   saveRDS(table_all_names,paste0(resultspath, "table_all_names_", countrycode, ".rds"))
-
+  
   # 
   #####AGENCY FILTER#################################################################################################
   #################################################################################################  
@@ -250,11 +250,13 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   dframe <- merge(dframe, filterlist_m, all.x = TRUE)
   
-  filterlist_model <- as.data.frame(automflag_output[[5]])
+  if (length(automflag_output[[5]])!= 0)
+  {filterlist_model <- as.data.frame(automflag_output[[5]])
   filterlist_model$agency <- 1
   colnames(filterlist_model) <- c("companyname","agency_model")
   filterlist_model <- subset(filterlist_model, !duplicated(filterlist_model$companyname))
   dframe <- merge(dframe, filterlist_model, all.x = TRUE)
+  }
   
   filteredout_model <- subset(dframe, dframe$agency_model == 1 )
   obs_agency_model <- as.data.frame(table(filteredout_model$companyname))
@@ -401,7 +403,7 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   hhigeo <- merge(hhigeo, fua_pop)
   class(hhigeo$geometry)<-c("sfc_GEOMETRY","sfc")
-
+  
   # hhigeo<-st_as_sf(hhigeo)
   saveRDS(hhigeo, paste0(resultspath,"hhigeo",countrycode, ".rds"))
   saveRDS(hhigeoupper, paste0(resultspath,"hhigeoupper",countrycode, ".rds"))
@@ -411,24 +413,24 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   quarters<-unique(hhigeo$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
   hhigeo_q<-lapply(quarters,hhigeo_subset,data=hhigeo)
   names(hhigeo_q)<-quarters
-
+  
   #merge with population data
   hhigeo_pop <- subset(hhigeo, wmean > 2500)
   hhigeo_pop <- aggregate(cbind(urbpopulation = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
   hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
   hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
   hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
-
+  
   hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
   hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
   hhigeo_pop <- cbind(countrycode, hhigeo_pop)
   saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
-
+  
   
   #### Create Maps for each quarter ===========
   
   lapply(quarters, hhigeo_plot,hhigeo_q=hhigeo_q,geoinfo=geoinfo,resultspath=resultspath,countrycode=countrycode)
-
+  
   #### Average HHI tables by FUAs and Quarter --------------------------
   
   # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
