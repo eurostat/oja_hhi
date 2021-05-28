@@ -513,6 +513,7 @@ hhiTOTocc <- unique(hhiTOTocc[, c("idesco_level_4", "ncount", "wmean", "weighted
 OJADE <- readRDS("~/oja_hhi/DE/OJADE.rds")
 esco_table <- unique(OJADE[, c("idesco_level_4", "esco_level_4")])
 hhiTOTocc <- merge(hhiTOTocc, esco_table)
+saveRDS(hhiTOTocc, paste0(EU_resultspath,"hhiTOTocc.rds"))
 write.xlsx(hhiTOTocc, paste0(EU_resultspath, "hhiTOTocc.xlsx"))
 
 
