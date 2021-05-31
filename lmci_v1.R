@@ -538,7 +538,8 @@ write.xlsx(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.xlsx"))
 
 #aggregate mergedhhigeo
 mergedhhigeoTOT <- left_join(as.data.frame(hhigeo_TOT), as.data.frame(hhigeoup_TOT), by = c("fua_id", "qtr"))
-#mergedhhigeoTOT <- subset(mergedhhigeoTOT, select = -c(wmeanupper, weighted_mean, CNTR_CODE.y, NUTS3_2016.y, NUTS3_2021.y,fua_name.y,NUTS3_2016.x, NUTS3_2021.x))
+#mergedhhigeoTOT <- subset(mergedhhigeoTOT, select = -c(CNTR_CODE.y, NUTS3_2016.y, NUTS3_2021.y,fua_name.y,NUTS3_2016.x, NUTS3_2021.x, geometry.x, geometry.y))
+write.xlsx(mergedhhigeoTOT,paste0(EU_resultspath,"mergedhhigeoTOT.xlsx"))
 
 #aggregate hhigeo_pop
 filenames3 <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
