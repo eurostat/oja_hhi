@@ -1,4 +1,4 @@
-# oja_hhi/ Calculating EU Labour Markets Concentration Index using Online Job Advertisement data
+# _oja_hhi_/ Calculating EU Labour Markets Concentration Index using Online Job Advertisement data
 
 R code for calculating a Labour Market Concentration Index using the [Herfindahl-Hirschmann Index  (HHI)](https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_Index) from Online Job Advertisements data (OJA).
 
