@@ -521,12 +521,12 @@ write.xlsx(hhiTOTocc, paste0(EU_resultspath, "hhiTOTocc.xlsx"))
 
 #aggregate hhigeo
 filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.names=T)
-hhigeoTOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
-saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeoTOT.rds"))
+hhigeo_TOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
+saveRDS(hhigeo_TOT, paste0(EU_resultspath,"hhigeo_TOT.rds"))
 
-#hhigeoTOT1 <- hhigeoTOT[, .(population = sum(population), econ_active_pop = sum(econ_active_pop), share_active_pop = mean(share_active_pop), avg = mean(wmean)), by = list(CNTR_CODE, qtr) ]
-hhigeoTOT_CNTR <- hhigeoTOT[, .(population = sum(population), avg_hhi = mean(wmean)), by = list(CNTR_CODE, qtr) ]
-saveRDS(hhigeoTOT_CNTR, paste0(EU_resultspath,"hhigeoTOT_CNTR.rds"))
+#hhigeo_TOT1 <- hhigeo_TOT[, .(population = sum(population), econ_active_pop = sum(econ_active_pop), share_active_pop = mean(share_active_pop), avg = mean(wmean)), by = list(CNTR_CODE, qtr) ]
+hhigeo_TOT_CNTR <- hhigeo_TOT[, .(population = sum(population), avg_hhi = mean(wmean)), by = list(CNTR_CODE, qtr) ]
+saveRDS(hhigeo_TOT_CNTR, paste0(EU_resultspath,"hhigeo_TOT_CNTR.rds"))
 
 #aggregate hhigeoupper
 filenames20 <- list.files(getwd(), recursive=T, pattern="hhigeoupper",full.names=T)
@@ -537,7 +537,7 @@ hhigeoup_TOT <- subset(hhigeoup_TOT, select = -geometry)
 write.xlsx(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.xlsx"))
 
 #aggregate mergedhhigeo
-mergedhhigeoTOT <- left_join(as.data.frame(hhigeoTOT), as.data.frame(hhigeoup_TOT), by = c("fua_id", "qtr"))
+mergedhhigeoTOT <- left_join(as.data.frame(hhigeo_TOT), as.data.frame(hhigeoup_TOT), by = c("fua_id", "qtr"))
 #mergedhhigeoTOT <- subset(mergedhhigeoTOT, select = -c(wmeanupper, weighted_mean, CNTR_CODE.y, NUTS3_2016.y, NUTS3_2021.y,fua_name.y,NUTS3_2016.x, NUTS3_2021.x))
 
 #aggregate hhigeo_pop
@@ -567,26 +567,26 @@ ggplot(tmean_hhigeo_tot) +
 
 ggsave(paste0(EU_resultspath,"HHI_avgfrom__.png"), width = 20, height = 13.3, units = "cm")
 
-###prepare plotting hhigeoTOT
-quarters<-unique(hhigeoTOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
-hhigeoTOT <- st_as_sf(hhigeoTOT)
-hhigeoTOT_q<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
-names(hhigeoTOT_q)<-quarters
-hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeoTOT)
+###prepare plotting hhigeo_TOT
+quarters<-unique(hhigeo_TOT$qtr) #c("2018-q3","2018-q4","2019-q1","2019-q2","2019-q3","2019-q4")
+hhigeo_TOT <- st_as_sf(hhigeo_TOT)
+hhigeo_TOT_q<-lapply(quarters,hhigeo_subset,data=hhigeo_TOT)
+names(hhigeo_TOT_q)<-quarters
+hhigeo_qTOT<-lapply(quarters,hhigeo_subset,data=hhigeo_TOT)
 names(hhigeo_qTOT)<-quarters
 
 #Creates EU map for each quarter using hhigeo_plot_tot function declared in the script hhi_functions.R
-lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeoTOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
+lapply(quarters, hhigeo_plot_tot,hhigeo_q=hhigeo_TOT_q,geoinfo=geoinfoTOT,resultspath=getwd())
 
 #Save the final hhigeo Data table (removing geometry column to allow .csv export)
-setDT(hhigeoTOT)
-hhigeoTOT <- subset(hhigeoTOT, select = -geometry)
-write.xlsx(hhigeoTOT,paste0(EU_resultspath,"hhigeo.xlsx"))
-saveRDS(hhigeoTOT, paste0(EU_resultspath,"hhigeo.rds"))
+setDT(hhigeo_TOT)
+hhigeo_TOT <- subset(hhigeo_TOT, select = -geometry)
+write.xlsx(hhigeo_TOT,paste0(EU_resultspath,"hhigeo.xlsx"))
+saveRDS(hhigeo_TOT, paste0(EU_resultspath,"hhigeo.rds"))
 
 #plotting hhi values and share of economically active population
 jpeg(paste0(EU_resultspath,"hhi_activepop_plot.png"))
-plot(hhigeoTOT$wmean, hhigeoTOT$share_active_pop)
+plot(hhigeo_TOT$wmean, hhigeo_TOT$share_active_pop)
 dev.off()
 
 ############## QUALITY INDICATORS #################
