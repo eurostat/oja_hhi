@@ -509,8 +509,7 @@ hhiTOT <- rbindlist(lapply(filenames1,readRDS), fill = T)
 saveRDS(hhiTOT, paste0(EU_resultspath,"hhiTOT.rds"))
 write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 
-hhiTOTocc <- hhiTOT[, .(fua_id, qtr, ncount= sum(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = c("idesco_level_4", "qtr")]
-hhiTOTocc <- hhiTOTocc[, .(ncount, hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
+hhiTOTocc <- hhiTOT[, .(fua_id, qtr, ncount= sum(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
 hhiTOTocc <- unique(hhiTOTocc[, c("idesco_level_4", "ncount", "wmean", "weighted_mean", "max", "min")])
 OJADE <- readRDS("~/oja_hhi/DE/OJADE.rds")
 esco_table <- unique(OJADE[, c("idesco_level_4", "esco_level_4")])
