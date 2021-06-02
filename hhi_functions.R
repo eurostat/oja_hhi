@@ -290,7 +290,7 @@ calculate_hhi <- function (dframe,cores=2) {
 
 #6. create_hhigeo
 create_hhigeo <- function(hhi = hhi,sfile){
-  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
+  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, ncountsum = sum(ncount), ncountmax = max(ncount), hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
   
   hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean")])
   
@@ -310,9 +310,9 @@ create_hhigeo <- function(hhi = hhi,sfile){
 
 #6b. create_hhigeoplus
 create_hhigeoplus <- function(hhi = hhi,sfile){
-  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = list(fua_id, qtr)]
+  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, ncountsum = sum(ncount), ncountmax = max(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = list(fua_id, qtr)]
   
-  hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean", "weighted_mean", "max", "min")])
+  hhigeo <- unique(hhi[, c("fua_id", "qtr","ncountsum", "ncountmax", "wmean", "weighted_mean", "max", "min")])
   
   hhigeo <- data.table(left_join(hhigeo, sfile, by = "fua_id"))
   
