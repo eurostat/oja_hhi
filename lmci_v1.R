@@ -536,9 +536,15 @@ hhigeoup_TOT <- subset(hhigeoup_TOT, select = -geometry)
 write.xlsx(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.xlsx"))
 
 #aggregate mergedhhigeo
-mergedhhigeoTOT <- left_join(as.data.frame(hhigeo_TOT), as.data.frame(hhigeoup_TOT), by = c("fua_id", "qtr"))
-#mergedhhigeoTOT <- subset(mergedhhigeoTOT, select = -c(CNTR_CODE.y, NUTS3_2016.y, NUTS3_2021.y,fua_name.y,NUTS3_2016.x, NUTS3_2021.x, geometry.x, geometry.y))
-write.xlsx(mergedhhigeoTOT,paste0(EU_resultspath,"mergedhhigeoTOT.xlsx"))
+mergedhhigeo_TOT <- left_join(as.data.frame(hhigeo_TOT), as.data.frame(hhigeoup_TOT), by = c("fua_id", "qtr"))
+mergedhhigeo_TOT$wmean[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
+mergedhhigeo_TOT$weighted_mean[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
+mergedhhigeo_TOT$wmeanupper[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
+mergedhhigeo_TOT$w_meanupper[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
+mergedhhigeo_TOT <- subset(mergedhhigeo_TOT, select = -c(CNTR_CODE.y, NUTS3_2016.y, NUTS3_2021.y,fua_name.y,NUTS3_2016.x, NUTS3_2021.x, ncountmax.x, ncountmax.y, ncountsum.x, ncountsum.y, geometry, max_upper, min_upper, max, min))
+mergedhhigeo_TOT <- mergedhhigeo_TOT[, c(6,1,5,2,3,4,10,11,7,8,9)]
+saveRDS(mergedhhigeo_TOT, paste0(EU_resultspath,"mergedhhigeo_TOT.rds"))
+write.xlsx(mergedhhigeo_TOT,paste0(EU_resultspath,"mergedhhigeo_TOT.xlsx"))
 
 #aggregate hhigeo_pop
 filenames3 <- list.files(getwd(), recursive=T, pattern="hhigeo_pop[A-Z][A-Z]",full.names=T)
