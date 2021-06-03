@@ -396,8 +396,8 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   hhigeo <- create_hhigeoplus(hhi,sfile)
   hhigeoupper <- create_hhigeoplus(hhi=hhiupper,sfile)
   
-  names(hhigeoupper)[names(hhigeoupper) == 'wmean'] <- 'wmeanupper'
-  names(hhigeoupper)[names(hhigeoupper) == 'weighted_mean'] <- 'w_meanupper'
+  names(hhigeoupper)[names(hhigeoupper) == 'mean'] <- 'meanupper'
+  names(hhigeoupper)[names(hhigeoupper) == 'weighted_mean'] <- 'weighted_meanupper'
   names(hhigeoupper)[names(hhigeoupper) == 'max'] <- 'max_upper'
   names(hhigeoupper)[names(hhigeoupper) == 'min'] <- 'min_upper'
   
@@ -415,14 +415,14 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   names(hhigeo_q)<-quarters
   
   #merge with population data
-  hhigeo_pop <- subset(hhigeo, wmean > 2500)
+  hhigeo_pop <- subset(hhigeo, mean > 2500)
   hhigeo_pop <- aggregate(cbind(urbpopulation = hhigeo_pop$population), by= list(qtr = hhigeo_pop$qtr), FUN = sum)
   hhigeo_tot <- aggregate(cbind(toturbpopulation = hhigeo$population), by= list(qtr = hhigeo$qtr), FUN = sum)
   hhigeo_merged <- merge(hhigeo_pop, hhigeo_tot, all.x = TRUE)
   hhigeo_merged$share <- hhigeo_merged$urbpopulation/hhigeo_merged$toturbpopulation
   
-  hhigeo_wmean <- aggregate(cbind(average_concentration = hhigeo$wmean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$wmean > 2500)
-  hhigeo_pop <- merge(hhigeo_merged, hhigeo_wmean)
+  hhigeo_mean <- aggregate(cbind(average_concentration = hhigeo$mean), by= list(qtr = hhigeo$qtr), FUN = mean, subset = hhigeo$mean > 2500)
+  hhigeo_pop <- merge(hhigeo_merged, hhigeo_mean)
   hhigeo_pop <- cbind(countrycode, hhigeo_pop)
   saveRDS(hhigeo_pop, paste0(resultspath,"hhigeo_pop",countrycode, ".rds"))
   
@@ -433,9 +433,9 @@ lmci_calc<-function(countrycode,ts=Sys.Date(),hhi_cores){
   
   #### Average HHI tables by FUAs and Quarter --------------------------
   
-  # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$wmean, hhigeo_q4_2018$wmean, hhigeo_q1_2019$wmean))
-  table<-dcast(st_set_geometry(hhigeo[,c("fua_id","fua_name","wmean","qtr")],NULL),fua_id+fua_name~qtr,value.var = "wmean")
-  # table <- data.frame(cbind(hhigeo_q[[i]]$fua_id, hhigeo_q[[i]]$fua_name,rbindlist(sapply(quarters,function(x){eval(parse(text=paste0("hhigeo_q$`",x,"`$wmean")))}))
+  # table <- data.frame(cbind(hhigeo_q3_2018$fua_id, hhigeo_q3_2018$fua_name, hhigeo_q3_2018$mean, hhigeo_q4_2018$mean, hhigeo_q1_2019$mean))
+  table<-dcast(st_set_geometry(hhigeo[,c("fua_id","fua_name","mean","qtr")],NULL),fua_id+fua_name~qtr,value.var = "mean")
+  # table <- data.frame(cbind(hhigeo_q[[i]]$fua_id, hhigeo_q[[i]]$fua_name,rbindlist(sapply(quarters,function(x){eval(parse(text=paste0("hhigeo_q$`",x,"`$mean")))}))
   
   table<-na.omit(table,cols="fua_name")
   # table <- table[!is.na(table[,2]),]
@@ -509,8 +509,8 @@ hhiTOT <- rbindlist(lapply(filenames1,readRDS), fill = T)
 saveRDS(hhiTOT, paste0(EU_resultspath,"hhiTOT.rds"))
 write.xlsx(hhiTOT, paste0(EU_resultspath, "hhiTOT.xlsx"))
 
-hhiTOTocc <- hhiTOT[, .(fua_id, qtr, ncount= sum(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
-hhiTOTocc <- unique(hhiTOTocc[, c("idesco_level_4", "ncount", "wmean", "weighted_mean", "max", "min")])
+hhiTOTocc <- hhiTOT[, .(fua_id, qtr, ncount= sum(ncount), hhi, mean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = idesco_level_4]
+hhiTOTocc <- unique(hhiTOTocc[, c("idesco_level_4", "ncount", "mean", "weighted_mean", "max", "min")])
 OJADE <- readRDS("~/oja_hhi/DE/OJADE.rds")
 esco_table <- unique(OJADE[, c("idesco_level_4", "esco_level_4")])
 hhiTOTocc <- merge(hhiTOTocc, esco_table)
@@ -523,8 +523,8 @@ filenames2 <- list.files(getwd(), recursive=T, pattern="hhigeo[A-Z][A-Z]",full.n
 hhigeo_TOT <- rbindlist(lapply(filenames2,readRDS), fill = T)
 saveRDS(hhigeo_TOT, paste0(EU_resultspath,"hhigeo_TOT.rds"))
 
-#hhigeo_TOT1 <- hhigeo_TOT[, .(population = sum(population), econ_active_pop = sum(econ_active_pop), share_active_pop = mean(share_active_pop), avg = mean(wmean)), by = list(CNTR_CODE, qtr) ]
-hhigeo_TOT_CNTR <- hhigeo_TOT[, .(population = sum(population), avg_hhi = mean(wmean)), by = list(CNTR_CODE, qtr) ]
+#hhigeo_TOT1 <- hhigeo_TOT[, .(population = sum(population), econ_active_pop = sum(econ_active_pop), share_active_pop = mean(share_active_pop), avg = mean(mean)), by = list(CNTR_CODE, qtr) ]
+hhigeo_TOT_CNTR <- hhigeo_TOT[, .(population = sum(population), avg_hhi = mean(mean)), by = list(CNTR_CODE, qtr) ]
 saveRDS(hhigeo_TOT_CNTR, paste0(EU_resultspath,"hhigeo_TOT_CNTR.rds"))
 
 #aggregate hhigeoupper
@@ -537,10 +537,10 @@ write.xlsx(hhigeoup_TOT,paste0(EU_resultspath,"hhigeoup.xlsx"))
 
 #aggregate mergedhhigeo
 mergedhhigeo_TOT <- left_join(as.data.frame(hhigeo_TOT), as.data.frame(hhigeoup_TOT), by = c("fua_id", "qtr"))
-mergedhhigeo_TOT$wmean[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
+mergedhhigeo_TOT$mean[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
 mergedhhigeo_TOT$weighted_mean[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
-mergedhhigeo_TOT$wmeanupper[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
-mergedhhigeo_TOT$w_meanupper[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
+mergedhhigeo_TOT$meanupper[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
+mergedhhigeo_TOT$weighted_meanupper[mergedhhigeo_TOT$ncountmax.x < 2] <- NA
 mergedhhigeo_TOT <- subset(mergedhhigeo_TOT, select = -c(CNTR_CODE.y, NUTS3_2016.y, NUTS3_2021.y,fua_name.y,NUTS3_2016.x, NUTS3_2021.x, ncountmax.x, ncountmax.y, ncountsum.x, ncountsum.y, geometry, max_upper, min_upper, max, min))
 mergedhhigeo_TOT <- mergedhhigeo_TOT[, c(6,1,5,2,3,4,10,11,7,8,9)]
 saveRDS(mergedhhigeo_TOT, paste0(EU_resultspath,"mergedhhigeo_TOT.rds"))
@@ -592,7 +592,7 @@ saveRDS(hhigeo_TOT, paste0(EU_resultspath,"hhigeo.rds"))
 
 #plotting hhi values and share of economically active population
 jpeg(paste0(EU_resultspath,"hhi_activepop_plot.png"))
-plot(hhigeo_TOT$wmean, hhigeo_TOT$share_active_pop)
+plot(hhigeo_TOT$mean, hhigeo_TOT$share_active_pop)
 dev.off()
 
 ############## QUALITY INDICATORS #################
