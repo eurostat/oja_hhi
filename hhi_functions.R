@@ -290,9 +290,9 @@ calculate_hhi <- function (dframe,cores=2) {
 
 #6. create_hhigeo
 create_hhigeo <- function(hhi = hhi,sfile){
-  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, ncountsum = sum(ncount), ncountmax = max(ncount), hhi, wmean = mean(hhi)), by = list(fua_id, qtr) ]
+  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, ncountsum = sum(ncount), ncountmax = max(ncount), hhi, mean = mean(hhi)), by = list(fua_id, qtr) ]
   
-  hhigeo <- unique(hhi[, c("fua_id", "qtr", "wmean")])
+  hhigeo <- unique(hhi[, c("fua_id", "qtr", "mean")])
   
   hhigeo <- data.table(left_join(hhigeo, sfile, by = "fua_id"))
   
@@ -300,7 +300,7 @@ create_hhigeo <- function(hhi = hhi,sfile){
   
   hhigeo$fua_name <- as.character(hhigeo$fua_name)
   
-  hhigeo$wmean <- round(hhigeo$wmean)
+  hhigeo$mean <- round(hhigeo$mean)
   
   hhigeo <- st_as_sf(hhigeo)
   hhigeo$geometry <- st_cast(hhigeo$geometry, "GEOMETRY")
@@ -310,9 +310,9 @@ create_hhigeo <- function(hhi = hhi,sfile){
 
 #6b. create_hhigeoplus
 create_hhigeoplus <- function(hhi = hhi,sfile){
-  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, ncountsum = sum(ncount), ncountmax = max(ncount), hhi, wmean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = list(fua_id, qtr)]
+  hhi <- hhi[, .(idesco_level_4, mshare, ms2, ncount, ncountsum = sum(ncount), ncountmax = max(ncount), hhi, mean = mean(hhi), weighted_mean = weighted.mean(hhi, ncount), max = max(hhi), min = min(hhi)), by = list(fua_id, qtr)]
   
-  hhigeo <- unique(hhi[, c("fua_id", "qtr","ncountsum", "ncountmax", "wmean", "weighted_mean", "max", "min")])
+  hhigeo <- unique(hhi[, c("fua_id", "qtr","ncountsum", "ncountmax", "mean", "weighted_mean", "max", "min")])
   
   hhigeo <- data.table(left_join(hhigeo, sfile, by = "fua_id"))
   
@@ -320,7 +320,7 @@ create_hhigeoplus <- function(hhi = hhi,sfile){
   
   hhigeo$fua_name <- as.character(hhigeo$fua_name)
   
-  hhigeo$wmean <- round(hhigeo$wmean)
+  hhigeo$mean <- round(hhigeo$mean)
   
   hhigeo <- st_as_sf(hhigeo)
   hhigeo$geometry <- st_cast(hhigeo$geometry, "GEOMETRY")
@@ -790,7 +790,7 @@ automflag_combine <- function(mydata=sumstats_by_company[sumstats_by_company$ln_
 # 10. subsetting hhigeo per quarter
 hhigeo_subset<-function(quarter,data){
   hhigeo_q <- subset(data, qtr == quarter)
-  hhigeo_q$label <- paste0(hhigeo_q$fua_name, "\n ", as.character(hhigeo_q$wmean))
+  hhigeo_q$label <- paste0(hhigeo_q$fua_name, "\n ", as.character(hhigeo_q$mean))
   return(hhigeo_q)
 }
 
@@ -800,7 +800,7 @@ hhigeo_subset<-function(quarter,data){
 hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
 
   ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
-    geom_sf( aes(fill = wmean)) + theme_void() +
+    geom_sf( aes(fill = mean)) + theme_void() +
     theme(panel.grid.major = element_line(colour = "transparent")) +
     labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
     scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
@@ -815,7 +815,7 @@ hhigeo_plot<-function(qrtr,hhigeo_q,geoinfo,resultspath,countrycode){
 hhigeo_plot_tot<-function(qrtr,hhigeo_q,geoinfo,resultspath){
 
 ggplot(eval(parse(text=paste0("hhigeo_q$`",qrtr,"`")))) +
-  geom_sf( aes(fill = wmean),lwd=0) + theme_void() +
+  geom_sf( aes(fill = mean),lwd=0) + theme_void() +
   theme(panel.grid.major = element_line(colour = "transparent")) +
   labs(title = paste("Labour market concentration index", qrtr,"\naverage over all occupations")) +
   scale_fill_continuous(name = "Labour market concentration index",low="blue", high="orange") +
