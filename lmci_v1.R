@@ -51,7 +51,7 @@ lmci_load <- function(countrycode){
   dir.create (resultspath)
   
   
-  data_table <- "estat_dsl2531b_oja.ft_document_en_v9"
+  data_table <- "WIHAccessCatalog.wih_oja_versioned.ft_document_en_v9"
   
   query <- paste0("SELECT general_id, grab_date, lang, idesco_level_4, esco_level_4, idcity, city, idprovince, province, idregion, region, idcountry, country, idcontract, contract, idsector, sector, sourcecountry, source, site, companyname  ",
                   "FROM ", data_table, " ",
@@ -59,7 +59,7 @@ lmci_load <- function(countrycode){
                   ";")
   filename<-paste0(path,"OJA",countrycode, ".rds")
   if(!file.exists(filename)){
-    data <- query_athena(query)
+    data <- get_data(query)
     saveRDS(data,filename)
   }
   # nobs<-nrow(readRDS(filename))
@@ -71,7 +71,7 @@ lmci_load <- function(countrycode){
   
   filename<-file.path(countrycode,paste0("gen_sum_stat_",countrycode,".rds"))
   if(!file.exists(filename)){
-    data <- query_athena(querytext)
+    data <- get_data(querytext)
     saveRDS(data,filename)
   }
   message(paste(Sys.time(),"-",countrycode,"-",format(difftime(Sys.time(),stime))))

@@ -16,12 +16,18 @@
 
 
 # 0. open_oja_db
-open_oja_db <- function(){
+######################
+# general function to run a query with Athena
+get_data <- function(query){
   con <- DBI::dbConnect(noctua::athena(),
                         s3_staging_dir=readLines("~/.aws/s3_staging_dir"),
-                        work_group=readLines("~/.aws/work_group"))
-  return(con)
+                        work_group=readLines("~/.aws/work_group")
+  )
+  my_data <- noctua::dbGetQuery(con, query)
+  dbDisconnect(con)
+  return(my_data)
 }
+
 
 ##Function for cleaning the 'companyname' column
 
