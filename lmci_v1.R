@@ -34,7 +34,7 @@ source("hhi_functions.R")
 
 ####CONNECT TO DATABASE####
 
-open_oja_db()
+get_data()
 
 ####declaring function for calculating Labour market concentration index. Creates subfolder for each country####
 countrycodes <- get("cc",.restatapi_env)$EU27_2020

@@ -1,6 +1,6 @@
 #This file contains the functions used by the main code to calculate the Labour Market Concentration Index.
 # List of functions:
-# 0. open_oja_db 
+# 0. get_data
 # 1. ascii, sep, sep2
 # 2. empty_as_na, empty_as_na2
 # 3. createfua
@@ -15,7 +15,7 @@
 # 12. plotting hhigeoTOT
 
 
-# 0. open_oja_db
+# 0. get_data
 ######################
 # general function to run a query with Athena
 get_data <- function(query){
