@@ -1,0 +1,155 @@
+var LangCur= new Object();
+
+// set default language taken from localisations.js
+String.locale = window.defaultLanguage;
+String.toLocaleString(window.availableLanguages);
+var sLang=String.locale;
+ 
+LangCur['share_embed_instruction']=''; 
+LangCur['share_embed_icon']=''; 
+LangCur['share_tweet']=''; 
+LangCur['share_fb']=''; 
+LangCur['rci2_btn_search']=''; 
+LangCur['rci2_btn_zoomin']=''; 
+LangCur['rci2_btn_zoomout']=''; 
+LangCur['rci2_btn_resetview']=''; 
+LangCur['rci2_btn_inlets']=''; 
+LangCur['rci2_nuts_regions']=''; 
+LangCur['rci2_nuts_regions1']=''; 
+LangCur['rci2_nuts_regions2']=''; 
+LangCur['rci2_nuts_regions3']=''; 
+LangCur['infoPopupClose']=''; 
+LangCur['rci2_indicator']=''; 
+LangCur['rci2_tab_distribution']=''; 
+LangCur['rci2_tab_scatterplot']=''; 
+LangCur['rci2_tab_bar']=''; 
+LangCur['rci2_tab_datatable']=''; 
+
+LangCur['rciInfoLoading']=''; 
+LangCur['rciPleaseHold1']=''; 
+LangCur['rciPleaseHold2map']=''; 
+LangCur['rciPleaseHold2data']=''; 
+LangCur['rciPleaseHold3on']=''; 
+LangCur['rciPleaseHold4']=''; 
+LangCur['rciSelectIndicator']=''; 
+//LangCur['(:) Not available']=''; 
+//LangCur['Data not available']=''; 
+
+var CountryColor={};
+var CountryName={};
+var CountryNameEN={};
+var CountryIDName={};
+var CountryName2ID={};
+
+CountryColor["Belgium"]="#f4d064";
+CountryColor["BE"]=CountryColor["Belgium"];
+CountryColor["Bulgaria"]="#dda266";
+CountryColor["BG"]=CountryColor["Bulgaria"]; 
+
+CountryColor["Czechia"]="#004E89";
+CountryColor["CZ"]=CountryColor["Czechia"];
+
+CountryColor["Denmark"]="#DD9246";
+CountryColor["DK"]=CountryColor["Denmark"];
+
+CountryColor["Germany (until 1990 former territory of the FRG)"]="#ea6652";
+CountryColor["Germany"]=CountryColor["Germany (until 1990 former territory of the FRG)"];
+CountryColor["DE"]=CountryColor["Germany (until 1990 former territory of the FRG)"];
+
+CountryColor["Estonia"]="#436FAE";
+CountryColor["EE"]=CountryColor["Estonia"];
+
+CountryColor["Ireland"]="#ea7c62";
+CountryColor["IE"]=CountryColor["Ireland"];
+
+CountryColor["Greece"]="#5DA7DB";
+CountryColor["EL"]=CountryColor["Greece"];
+
+CountryColor["Spain"]="#7BB7E1";
+CountryColor["ES"]=CountryColor["Spain"];
+
+CountryColor["France"]="#ddb389";
+CountryColor["FR"]=CountryColor["France"];
+
+CountryColor["Croatia"]="#7E819A";
+CountryColor["HR"]=CountryColor["Croatia"];
+
+CountryColor["Italy"]="#f4dfa1";
+CountryColor["IT"]=CountryColor["Italy"];
+
+CountryColor["Cyprus"]="#363e70";
+CountryColor["CY"]=CountryColor["Cyprus"];
+
+CountryColor["Latvia"]="#04A7DC";
+CountryColor["LV"]=CountryColor["Latvia"];
+
+CountryColor["Lithuania"]="#A0CBEA";
+CountryColor["LT"]=CountryColor["Lithuania"];
+
+CountryColor["Luxembourg"]="#2A3057";
+CountryColor["LU"]=CountryColor["Luxembourg"];
+
+CountryColor["Hungary"]="#CAE3F3";
+CountryColor["HU"]=CountryColor["Hungary"];
+
+CountryColor["Malta"]="#0091FF";
+CountryColor["MT"]=CountryColor["Malta"];
+
+CountryColor["Netherlands"]="#7DA1CA";
+CountryColor["NL"]=CountryColor["Netherlands"];
+
+CountryColor["Austria"]="#98C7E8";
+CountryColor["AT"]=CountryColor["Austria"];
+
+CountryColor["Poland"]="#F4D885";
+CountryColor["PL"]=CountryColor["Poland"];
+
+CountryColor["Portugal"]="#CB4C35";
+CountryColor["PT"]=CountryColor["Portugal"];
+
+CountryColor["Romania"]="#8EB7E5";
+CountryColor["RO"]=CountryColor["Romania"];
+
+CountryColor["Slovenia"]="#2E4F86";
+CountryColor["SI"]=CountryColor["Slovenia"];
+
+CountryColor["Finland"]="#9ECBFF";
+CountryColor["FI"]=CountryColor["Finland"];
+
+CountryColor["Slovakia"]="#0083E5";
+CountryColor["SK"]=CountryColor["Slovakia"];
+
+CountryColor["Sweden"]="#ff8a75";
+CountryColor["SE"]=CountryColor["Sweden"];
+
+CountryColor["United Kingdom"]="#4E7FB7";
+CountryColor["UK"]=CountryColor["United Kingdom"];
+
+CountryColor["Iceland"]="#b8d1e3";
+CountryColor["IS"]=CountryColor["Iceland"];
+
+CountryColor["Liechtenstein"]="#EA4A32";
+CountryColor["LI"]=CountryColor["Liechtenstein"];
+
+CountryColor["Norway"]="#04AEE5";
+CountryColor["NO"]=CountryColor["Norway"];
+
+CountryColor["Switzerland"]="#4F667F";
+CountryColor["CH"]=CountryColor["Switzerland"];
+
+CountryColor["Montenegro"]="#FF5F43";
+CountryColor["ME"]=CountryColor["Montenegro"];
+
+CountryColor["Former Yugoslav Republic of Macedonia, the"]="#9FA2B0";
+CountryColor["MK"]=CountryColor["Former Yugoslav Republic of Macedonia, the"];
+
+CountryColor["Turkey"]="#ADB0BF";
+CountryColor["TR"]=CountryColor["Turkey"];
+
+CountryColor["Albania"]="#ff8e7a";
+CountryColor["AL"]=CountryColor["Albania"];
+
+CountryColor["Serbia"]="#5561B0";
+CountryColor["RS"]=CountryColor["Serbia"];
+
+

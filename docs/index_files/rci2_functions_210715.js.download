@@ -1,0 +1,2510 @@
+var currentRegionHighlight='';
+var currentHoverRegion='';
+var trcc='';
+var loadpercDot='';
+var loadperc=0;
+
+// includes polyfill for IE10
+if (!String.prototype.includes) {
+  String.prototype.includes = function(search, start) {
+    'use strict';
+    if (typeof start !== 'number') {
+      start = 0;
+    }
+
+    if (start + search.length > this.length) {
+      return false;
+    } else {
+      return this.indexOf(search, start) !== -1;
+    }
+  };
+}
+if (!Array.prototype.includes) {
+  Object.defineProperty(Array.prototype, "includes", {
+    enumerable: false,
+    value: function(obj) {
+        var newArr = this.filter(function(el) {
+          return el == obj;
+        });
+        return newArr.length > 0;
+      }
+  });
+}
+//
+
+///localisation
+var LangLocal = function (string) {
+    var str = string.toLocaleString();
+    return string.toLocaleString();
+};
+
+function localizeHTMLTag(tagId, useLabel) {
+    tag = document.getElementById(tagId);
+    if (tag && tag.src) {
+        tag.title = _(tag.title);
+    } else {
+        if (!useLabel) {
+        tag.innerHTML = _(tag.innerHTML);
+    } else {
+        tag.innerHTML = _(useLabel);
+    }
+    }
+}
+
+function rci2loading_perc(t1) {
+	if(t1=='static data') {
+		loadperc=loadperc*1+0.4;
+	} else {
+		loadperc=loadperc*1+1;
+	}
+	loadperc=Math.round(loadperc);
+	loadpercDot=loadpercDot+'. ';
+	if(t1) {
+		htmlContent=(LangCur['rciPleaseHold1']+' '+LangCur['rciPleaseHold2data']+' '+LangCur['rciPleaseHold3on']+'<BR><u>'
+			+t1 +'</u>. '+LangCur['rciPleaseHold4']+' ');
+	} else {
+		var htmlContent=(LangCur['rciPleaseHold1']+' ');
+	}
+	// ('+loadperc+'%)
+	var loadpercDotN=loadpercDot.length;
+	htmlContent="<div class='rci2loading_p'>"+htmlContent+"</div><div class=\"progress\"><div class=\"progress-bar  progress-bar-striped loadingProgress \" role=\"progressbar\" style=\"width: "+loadperc+"%;\" aria-valuenow=\""+loadperc+"\" aria-valuemin=0 aria-valuemax=100>"+loadperc+'.'+loadpercDotN+"%</div></div>";
+	$('#rciInfoLoading').html(htmlContent);
+}
+function rci2_getParameterValue(parameter)
+{
+    parameter = parameter.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+    var regexS = "[\\?&]" + parameter + "=([^&#]*)";
+    var regex = new RegExp(regexS);
+    var results = regex.exec(window.location.href);
+    if(results == null)
+        return "";
+    else
+        return results[1];
+}
+
+
+ var rci2log = (function () {
+	return {
+		log: function() {
+			if (window.console && typeof rci2_layout !== 'undefined' ) {
+				if(rci2_layout.debug) {
+					var args = Array.prototype.slice.call(arguments);
+					console.log.apply(console, args);
+				}
+			}
+		},
+		warn: function() {
+			if (window.console && typeof rci2_layout !== 'undefined' ) {
+				if(rci2_layout.debug) {
+					var args = Array.prototype.slice.call(arguments);
+					console.warn.apply(console, args);
+				}
+			}
+		},
+		error: function() {
+			if (window.console && typeof rci2_layout !== 'undefined' ) {
+				if(rci2_layout.debug) {
+					var args = Array.prototype.slice.call(arguments);
+					console.error.apply(console, args);
+				}
+			}
+		},
+		time: function() {
+			if (window.console && typeof rci2_layout !== 'undefined' ) {
+				if(rci2_layout.debug) {
+					var args = Array.prototype.slice.call(arguments);
+					console.time.apply(console, args);
+				}
+			}
+		},
+		timeEnd: function() {
+			if (window.console && typeof rci2_layout !== 'undefined' ) {
+				if(rci2_layout.debug) {
+					var args = Array.prototype.slice.call(arguments);
+					console.timeEnd.apply(console, args);
+				}
+			}
+		}
+	}
+}());
+
+if (!String.prototype.includes) {
+    String.prototype.includes = function(search, start) {
+      if (typeof start !== 'number') {
+        start = 0;
+      }
+
+      if (start + search.length > this.length) {
+        return false;
+      } else {
+        return this.indexOf(search, start) !== -1;
+      }
+    };
+}
+
+function addCommas(nStr)
+{
+	var thSep=' ';
+	nStr += '';
+	x = nStr.split('.');
+	x1 = x[0];
+	x2 = x.length > 1 ? '.' + x[1] : '';
+	var rgx = /(\d+)(\d{3})/;
+	while (rgx.test(x1)) {
+		x1 = x1.replace(rgx, '$1' + thSep + '$2');
+	}
+	return x1 + x2;
+}
+
+Array.prototype.clean = function(deleteValue) {
+  for (var i = 0; i < this.length; i++) {
+    if (this[i] == deleteValue) {
+      this.splice(i, 1);
+      i--;
+    }
+  }
+  return this;
+};
+
+function ready(error, results) {
+ 	if (error) rci2log.log(error);//throw error;
+	rci2log.log('311 ready all done');
+}
+
+function rci2_numspaces(num1,roundingdigits ) {
+	var num2=num1;
+	if(roundingdigits || roundingdigits==0) {
+		if(roundingdigits==0) {
+			num2=Math.round((num1*10)/10)
+			num2=num2.toFixed(0);;
+			return num2.toString();
+		}
+		if(roundingdigits==1) {
+			num2=(Math.round(num1*10)/10).toFixed(1);;
+		}
+	}
+	var num3= num2.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	var decimalsep=LangLocal('decimal_separator');
+	if(decimalsep==',') {
+		num3 = num3.replace(".",",");
+	}
+	return num3;
+}
+
+function rsi2_sortNumber(a,b) {
+    return a - b;
+}
+
+// only unique values in an array
+function rsi2_onlyUnique(value, index, self) {
+    return self.indexOf(value) === index;
+}
+function rsi2_quantile(array, percentile) {
+    array.sort(rsi2_sortNumber);
+    index = percentile/100. * (array.length-1);
+    if (Math.floor(index) == index) {
+    	result = array[index];
+    } else {
+        i = Math.floor(index)
+        fraction = index - i;
+        result = array[i] + (array[i+1] - array[i]) * fraction;
+        rci2log.log(211,604,result);
+    }
+    return result;
+}
+
+function rsi2_logArrayElements(element, index, array) {
+	//rci2log.log(element + " --> " + rsi2_quantile(data, element));
+}
+
+function rsi2_getScore(array, val) {
+    return array.sort(function(a, b) {
+        return b.value - a.value;
+    }).map(function(item) {
+        return item.value;
+    }).indexOf(val);
+}
+
+function zoomToFeature(e) {
+	rsiMap.fitBounds(e.target.getBounds());
+}
+
+function rci_highlightFeature(e,layer) {
+    if(!layer) var layer = e.target;
+	layer.setStyle({
+        weight: 2,
+        color: '#222222',
+    });
+}
+function rci_resetHighlight(e,layer) {
+    if(!layer) var layer = e.target;
+	layer.setStyle({
+        weight: 0.5,
+		color: '#222222'
+    });
+}
+
+
+function rci_mouseoverFeature(e, layer) {
+	var featureID = layer.feature.id
+	if(!featureID) return false;
+	// change region
+	currentHoverRegion=featureID;
+
+	rci2_barcode_triggerHover(currentHoverRegion);
+
+    $('#rciInfoPup').hide();
+	if(!layer) var layer = e.target;
+	if(current_chart ==='barcode') {
+
+	}
+	//rci2log.log('rci_highlightFeature '+layer.feature.id);
+	//rci2log.log(layer);
+	//rci2log.log(layer.options.style);
+	// find new color, 20% lighter
+	var newc=(ColorLuminance(layer.options.fillColor,0.2))
+	// save it
+	layer.options.originalFillColor=layer.options.fillColor;
+	//rci2log.log('highlight '+layer.feature.id +' from '+layer.options.fillColor+' to '+newc);
+	// set it
+	layer.setStyle({
+        fillColor: newc,
+        fillOpacity: 1,
+        /*weight: 2,
+        color: '#222222',  */
+        opacity: 1,
+        dashArray: '0'
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
+}
+function rci_mouseoutFeature(e, layer) {
+	var featureID = layer.feature.id
+	if(!featureID) return false;
+	// change region
+	currentOutRegion=featureID;
+
+	rci2_barcode_triggerOut(currentOutRegion);
+
+    $('#rciInfoPup').hide();
+    if(!layer)  var layer = e.target;
+	var newc=layer.options.originalFillColor;
+	if(newc) {
+		//rci2log.log('rci_resethighlightFeature '+layer.feature.id+' from '+layer.options.fillColor+' to '+newc);
+		layer.setStyle({
+			fillColor: newc,
+			fillOpacity: 1,
+			opacity: 1,
+			/*weight: 1,
+			color: '#454545',*/
+			dashArray: '0'
+		});
+	} else {
+		//rci2log.log('rci_resethighlightFeature '+layer.feature.id+' from '+layer.options.fillColor+' to nothing '+newc);
+	}
+
+}
+
+
+
+// setup a copy of the nuts features and attach to a data source
+function rsi2_nuts_features(keyX,regions_nutsX) {
+	//rci2log.log('150: '+keyX);
+	rsi2_sources[keyX].regions_nuts = $.extend(true, {}, regions_nutsX);
+	//rci2log.log(rsi2_sources[keyX].regions_nuts);
+	rci2log.log(242,regions_nutsX);
+	var rnuts=rsi2_sources[keyX].regions_nuts.features;
+	if(rnuts) {
+		rnuts.forEach(function(nut1) {
+			nut1.properties.pane=keyX;
+		});
+	} else { // we have a topojson
+		var rnuts1=rsi2_sources[keyX].regions_nuts.objects;
+		rci2log.log(242,rnuts1);
+	}
+}
+
+function rsi2_nuts_topo_features_reload(keyX) {
+	rci2log.log('topo0',keyX,'reload');
+	if(rsi2_sources[keyX].sNUTS==0) {
+		rsi2_nuts_topo_features(keyX,regions_nuts0,'topoOverride');
+	}
+	if(rsi2_sources[keyX].sNUTS==1) {
+		rsi2_nuts_topo_features(keyX,regions_nuts1,'topoOverride');
+	}
+	if(rsi2_sources[keyX].sNUTS==2) {
+		rsi2_nuts_topo_features(keyX,regions_nuts2,'topoOverride');
+	}
+	if(rsi2_sources[keyX].sNUTS==3) {
+		rsi2_nuts_topo_features(keyX,regions_nuts3,'topoOverride');
+	}
+}
+function rsi2_nuts_topo_features(keyX,regions_nutsX, topoOverride) {
+	rci2loading_perc('Maps for '+keyX)
+	rci2log.time('time rsi2_topo_nuts_features '+keyX);
+	if(regions_nutsX==regions_nuts0) {
+		if(!rci2Maps['regions_nuts0_topo'] && regions_nuts0) {
+			for (key in regions_nuts0.objects) {
+				if (regions_nuts0.objects.hasOwnProperty(key)) {
+					regions_nutsX_topo = topojson.feature(regions_nuts0, regions_nuts0.objects[key]);
+					rci2Maps['regions_nuts0_topo'] = $.extend(true, {}, regions_nutsX_topo);
+				}
+			}
+		}
+		if(rci2Maps['regions_nuts0_topo']) {
+			rsi2_sources[keyX].regions_nuts=rci2Maps['regions_nuts0_topo'];
+		}
+	}
+	if(regions_nutsX==regions_nuts1) {
+		if(!rci2Maps['regions_nuts1_topo'] && regions_nuts1) {
+			for (key in regions_nuts1.objects) {
+				if (regions_nuts1.objects.hasOwnProperty(key)) {
+					regions_nutsX_topo = topojson.feature(regions_nuts1, regions_nuts1.objects[key]);
+					rci2Maps['regions_nuts1_topo'] = $.extend(true, {}, regions_nutsX_topo);
+				}
+			}
+		}
+		if(rci2Maps['regions_nuts1_topo']) {
+			rsi2_sources[keyX].regions_nuts=rci2Maps['regions_nuts1_topo'];
+		}
+	}
+	if(regions_nutsX==regions_nuts2) {
+		if(!rci2Maps['regions_nuts2_topo'] && regions_nuts2) {
+			for (key in regions_nuts2.objects) {
+				if (regions_nuts2.objects.hasOwnProperty(key)) {
+					regions_nutsX_topo = topojson.feature(regions_nuts2, regions_nuts2.objects[key]);
+					rci2Maps['regions_nuts2_topo'] = $.extend(true, {}, regions_nutsX_topo);
+				}
+			}
+		}
+		if(rci2Maps['regions_nuts2_topo']) {
+			rsi2_sources[keyX].regions_nuts=rci2Maps['regions_nuts2_topo'];
+		}
+	}
+	if(regions_nutsX==regions_nuts3) {
+		if(!rci2Maps['regions_nuts3_topo'] && regions_nuts3) {
+			for (key in regions_nuts3.objects) {
+				if (regions_nuts3.objects.hasOwnProperty(key)) {
+					regions_nutsX_topo = topojson.feature(regions_nuts3, regions_nuts3.objects[key]);
+					rci2Maps['regions_nuts3_topo'] = $.extend(true, {}, regions_nutsX_topo);
+				}
+			}
+		}
+		if(rci2Maps['regions_nuts3_topo']) {
+			rsi2_sources[keyX].regions_nuts=rci2Maps['regions_nuts3_topo'];
+		}
+	}
+	//rsi2_sources[keyX].regions_nuts=regions_nutsX
+	rci2log.timeEnd('time rsi2_topo_nuts_features '+keyX);
+	return;
+	//
+	if(!rsi2_sources[keyX].regions_nuts ) { //|| topoOverride
+		loadperc=loadperc+2;
+		var t1=rsi2_sources[keyX].ShortTitle;
+		if(!t1) t1=keyX;
+		loadpercDot=loadpercDot+'.';
+		$('#rciInfoLoading').html(LangCur['rciPleaseHold1']+' '+LangCur['rciPleaseHold2data']+' ('+loadperc+'%) '+LangCur['rciPleaseHold3on']+' <u>'
+			+t1 +'</u>. '+LangCur['rciPleaseHold4']+' '+loadpercDot);
+		rci2log.time('time rsi2_topo_nuts_features '+keyX);
+		//rci2log.log('topo0',keyX,rsi2_sources[keyX].regions_nuts,regions_nutsX);
+		var ccf=0;
+		for (key in regions_nutsX.objects) {
+			if (regions_nutsX.objects.hasOwnProperty(key)) {
+				ccf++;
+				//rsi2_sources[keyX].regions_nuts = topojson.feature(regions_nutsX, regions_nutsX.objects[key]);
+				var regions_nutsX_topo = topojson.feature(regions_nutsX, regions_nutsX.objects[key]);
+				rsi2_sources[keyX].regions_nuts = $.extend(true, {}, regions_nutsX_topo);
+				/*var rnuts=rsi2_sources[keyX].regions_nuts.features;
+				if(rnuts) {
+					rnuts.forEach(function(nut1) {
+						nut1.properties.pane=keyX;
+						//if(nut1.properties.NUTS_ID=='DE11') rci2log.log('topo',keyX,nut1.properties);
+					});
+				}
+				*/
+				//rci2log.log('topo2',ccf, keyX,rsi2_sources[keyX].regions_nuts);
+			} else {
+				//rci2log.log('topo3',ccf, keyX,rsi2_sources[keyX].regions_nuts);
+			}
+        }
+		rci2log.timeEnd('time rsi2_topo_nuts_features '+keyX);
+    } else {
+		rci2log.log('rsi2_topo_nuts_features '+keyX+' already there');
+	}
+}
+
+function rsi2_load_data(sIndicator, DataSource, keyCode, sIndex, callback) {
+
+	rci2log.log("280 Hello, " + keyCode + "!");
+	ValueofRegion= {};
+	d3.json(DataSource, function(data) {
+		//rci2log.log('285 running rsi2_load_data = '+sIndicator+' sIndex: '+sIndex);
+		//rci2log.log(data);
+		/////// index of regions
+		var geo_sIndicator = data[sIndicator];
+		// setup up database title
+		//rci2log.log('285 running rsi2_load_data = '+geo_sIndicator.title);
+		if(!rsi2_sources[keyCode].FullTitle) {
+			if(rsi2_sources[keyCode].FixNUTStitle) {
+				var s1= geo_sIndicator.title.replace("NUTS 2","NUTS "+rsi2_sources[keyCode].sNUTS);
+				s1 = s1.replace("NUTS 3","NUTS "+rsi2_sources[keyCode].sNUTS);
+				rsi2_sources[keyCode].FullTitle = s1;
+			} else {
+				rsi2_sources[keyCode].FullTitle = geo_sIndicator.title;
+			}
+		}
+		//
+		var geo_index = geo_sIndicator.dimension.geo.category['index'];
+		if(geo_index) {
+			Object.keys(geo_index).forEach(function(key) {
+			  var i = geo_index[key];
+			  //rci2log.log(key + ' / ' + i);
+			  /////  key=AT1 // i = 0
+			  IndexofRegion[i] = key;
+			  /// opposite
+			  Key2RegionIndex[key] = i;
+			});
+		}
+		/////// index of times
+		var time_index = geo_sIndicator.dimension.time.category['index'];
+		if(time_index) {
+			Object.keys(time_index).forEach(function(key) {
+			  var i = time_index[key];
+			  rci2log.log('171time: '+key + ' / ' + i);
+			  /////  key=AT1 // i = 0
+			  TimeSlots[i] = key;
+			});
+		}
+
+
+
+		/////// value of regions
+		var geo_value = geo_sIndicator['value'];
+		//rci2log.log(geo_value);
+		if(geo_value) {
+			var cc=0;
+			var timeI=0;
+			var regionI=0;
+			//// loop each value line
+			geo_value.forEach(function(value) {
+			  /////  key=AT1 // value = 0
+			  var ior=IndexofRegion[regionI];
+			  //ValueofRegion[ior] = value;
+			  tempVals[timeI]=value;
+			  if(key=='AL01') rci2log.log(cc+' ; '+timeI +' ; '+regionI + ' : ' + ior + ' / ' + value);
+			  cc++;
+			  timeI++;
+			  if(timeI >= Object.keys(time_index).length) {
+				timeI=0;
+				regionI++;
+				//if(key=='AL01') rci2log.log(cc+'AA;'+timeI +' ; '+regionI + ' : ' + ior + ' / ' + value);
+				ValueofRegion[ior]=tempVals;
+				if(inlets_nuts1to2[ior]) {
+				  //rci2log.log('33/ '+inlets_nuts1to2[ior]);
+				  inlets_nuts1to2[ior].forEach(function(ior_nuts2) {
+					//rci2log.log('34/ '+ior_nuts2);
+
+
+					ValueofRegion[ior_nuts2]=tempVals;
+				  });
+				}
+				if(inlets_nuts1to3[ior]) {
+				  inlets_nuts1to3[ior].forEach(function(ior_nuts3) {
+					ValueofRegion[ior_nuts3]=tempVals;
+				  });
+				}
+				tempVals={};
+			  }
+			});
+			//rci2log.log(ValueofRegion);
+		}
+		/////// labels
+		var geo_labels = geo_sIndicator.dimension.geo.category['label'];
+		rci2log.log(506,geo_labels);
+		if(geo_labels) {
+			Object.keys(geo_labels).forEach(function(key) {
+			  var value = geo_labels[key];
+			  //rci2log.log(376,value.substring(0,16),key + ' / ' + value);
+			  /////  key=AT1 // value = Ostösterreich
+			  NameofRegion[key] = value;
+			  if(value.substring(0,16)=='Extra-Regio NUTS' ) {
+				NameofRegion[key] = value+' ('+key+')';
+			  }
+			  //
+			});
+		}
+		rci2log.log("279 setting values, " + keyCode + "!");
+		Values_of_Region[keyCode]=ValueofRegion;
+
+		// last
+		if(sIndex==rsi2_srCC) {
+		// loaded separately -> 	leaflet_init(); // start map
+		}
+
+	});
+	/*
+	var id = setTimeout(function() {
+	   rci2log.log("280 Bye, " + keyCode + "!");
+	   callback(null);
+	 }, 1600);
+	 return {
+	   abort: function() {
+		 clearTimeout(id);
+	   }
+	 };*/
+
+}
+
+function onEachFeatureData(fName,CountryISO2,FullCountry,IDCountry,name1,currentPane) {
+	var valuethisyear='';var valuethisyear0='';
+   	var flagthisyear='';
+	var datavaluesC='';
+		// add Unit
+		if(CategoriesofRegion) {
+			if(!CategoriesofRegionShown) var CategoriesofRegionShown=[];
+			if(fName=='BE100') rci2log.log(530, fName);
+			if(CategoriesofRegion[fName]) {
+			if(fName=='BE100') rci2log.log(530,CategoriesofRegion[fName]);
+				var CategoriesofRegionR = CategoriesofRegion[fName]
+				for (var key in CategoriesofRegionR) {
+					var keyShown=fName+'_'+key+'-shown';
+					if(!CategoriesofRegionShown[keyShown]) {
+						//rsi2_sources[key1].TypologyLabel
+						if(fName=='BE100') rci2log.log(530, keyShown, key, CategoriesofRegionR[key]);
+						var tooltipContentRow='<tr class="tooltip_'+key1+' tooltiprow"><td>'+key+':</td><td class=tipValue>'+CategoriesofRegionR[key]+'</td></tr>';
+						datavaluesC+=tooltipContentRow;
+						CategoriesofRegionShown[keyShown]=1; // show once
+					}
+				}
+			}
+		}
+		//
+		for (var key in rsi2_sources) {
+		  vrf1=[]; vrf1bar=[]; vrf1table=[];
+		  flagthisyear='';
+		  var flagthisyear_Y=''; var flagthisyearP_Y='';
+		  var flagthisyear_Z=''; var flagthisyearP_Z='';
+		  if (rsi2_sources.hasOwnProperty(key)) {
+		    var key1=rsi2_sources[key].keyCode;
+			if((!rci2_layout.tooltipContent) || CountryISO2=='EU' || CountryISO2=='EA' || (key1==currentPane && rci2_layout.tooltipContent=='current')) {
+
+				var tempV=Values_of_Region[key1];
+				var tempVflag=Flags_of_Region[key1];
+
+				var TimeSlotsInd=rsi2_sources[key].TimeSlots;
+				///
+				//	if(fName=='BE10') rci2log.log(167,1289,fNameTime, inR);
+
+				for(var iTime in TimeSlotsInd) {
+					var flagthisyearP = '';
+					flagthisyear = '';
+					iTime=iTime*1;// convert to number
+
+					var runYear=TimeSlotsInd[iTime];
+					var fNameTime=runYear+'|'+fName; //current_year
+					var inR = Key2RegionIndex[fName];//+'.'+runYear; // 0  for AT11
+
+					var key1year = key1+'_'+runYear;
+
+					//if(fName=='BE100') rci2log.log(tempV, '222 pane:'+currentPane+' '+CountryISO2+' '+key1+' '+fName+' v:'+valuethisyear,'/ '+current_year, TimeSlotsInd);
+
+					if(typeof tempV !== 'undefined' && typeof Value_Region_feature[key1year] !== 'undefined' ) {
+						if(typeof tempV[fNameTime] === 'undefined' ) {
+							tempV[fNameTime]={};
+							tempV[fNameTime][iTime]='';
+						}
+						if(typeof tempVflag[fNameTime] === 'undefined' ) {
+							tempVflag[fNameTime]={};
+							tempVflag[fNameTime][iTime]='';
+						}
+						if(typeof tempV[fNameTime] !== 'undefined' && typeof FullCountry!== 'undefined')
+						{
+							valuethisyear=tempV[fNameTime][iTime];
+              //
+              if((valuethisyear=='' || isNaN(valuethisyear))) {
+
+              if((valuethisyear=='' || isNaN(valuethisyear)) && rci2_layout.timeGapsFill) {
+                var iTime0=iTime-1;
+                var runYear0=TimeSlotsInd[iTime0];
+      					var fNameTime0=runYear0+'|'+fName; //current_year
+                if(iTime0>=0) {
+                  valuethisyear0=tempV[fNameTime0][iTime0];
+                  if(valuethisyear0) {
+                    valuethisyear = valuethisyear0; // replace value with last year
+                    tempV[fNameTime][iTime] = valuethisyear;
+                    var flagnow=tempVflag[fNameTime][iTime];
+                    if(flagnow) flagnow=flagnow.replace(':','');
+                    else flagnow='';
+                    tempVflag[fNameTime][iTime] = flagnow + 'g'; // add an extra flag
+                      //rci2log.log( '626 638 pane:'+currentPane+' itime '+iTime, iTime0, key1+' '+fName+' v:'+valuethisyear,'=',valuethisyear0,'/ '+current_year);
+                  }
+                }
+              }
+              /* fill in data from uuper nuts level  */
+              if((valuethisyear=='' || isNaN(valuethisyear)) && rci2_layout.nutsGapsFill) {
+                if(rci2_layout.nutsGapsFill=='nuts0') {
+                  var fNameTime0=runYear+'|'+CountryISO2;
+                  if(typeof tempV[fNameTime0] !== 'undefined') {
+                    valuethisyear0=tempV[fNameTime0][iTime];
+                      //rci2log.log( '626-7a '+fName, CountryISO2, fNameTime0, iTime, 'v=',valuethisyear0);
+                  }
+                }
+                if(rci2_layout.nutsGapsFill=='nuts1') {
+                  var fNameTime0=runYear+'|'+fName.substr(0,3);
+                    //rci2log.log( '626-8 '+fName, CountryISO2, fNameTime0, iTime);
+                  if(typeof tempV[fNameTime0] !== 'undefined') {
+                    valuethisyear0=tempV[fNameTime0][iTime];
+                  }
+                }
+                if(valuethisyear0) {
+                  valuethisyear = valuethisyear0; // replace value with upper level
+                  tempV[fNameTime][iTime] = valuethisyear;
+                  var flagnow=tempVflag[fNameTime][iTime];
+                  if(flagnow) flagnow=flagnow.replace(':','');
+                  else flagnow='';
+                  tempVflag[fNameTime][iTime] = flagnow  + 'U'; // add an extra flag
+                    //rci2log.log( '626-78 '+fName, CountryISO2, tempV[fNameTime][iTime], 'v=', valuethisyear, tempVflag[fNameTime][iTime]);
+                }
+              }
+                /// value is now set , add to bar
+                var name1=NameofRegion[fName];
+                // bar chart values
+                if(rci2_layout.barEnabled) {
+                  vrf1bar=Value_Region_feature[key1year+'_bar'];
+                  if(valuethisyear!='' || flagthisyearP) {
+                    var barRow={name: name1+' ('+fName+')', y: valuethisyear, time: runYear, Code: fName, flag: flagthisyearP, country: FullCountry};
+                    var string1 = JSON.stringify(barRow)
+                    if(Value_Region_featureIndex[string1] == null) {
+                      vrf1bar[vrf1bar.length]=barRow
+                      Value_Region_featureIndex[string1]=1;
+                    }
+                  }
+                  Value_Region_feature[key1year+'_bar']=vrf1bar;
+                }
+
+              }
+              ///
+
+
+
+              //
+							if(isNaN(valuethisyear)) {
+								valuethisyear="(:)";
+							} else if (valuethisyear!='') {
+                if(rci2_layout.valuesPrecision) {
+                  valuethisyear=rci2_numspaces(valuethisyear,rci2_layout.valuesPrecision);
+                } else {
+                  valuethisyear=rci2_numspaces(valuethisyear,1);
+                }
+								valuethisyear='<span class=mapTipValueNum>'+valuethisyear+'</span> '+rsi2_sources[key1].sUnit;
+							} else {
+							}
+							if(typeof tempVflag !== 'undefined' ) {
+								if(typeof tempVflag[fNameTime] !== 'undefined' ) {
+									flagthisyear=tempVflag[fNameTime][iTime];
+								}
+							}
+							if(flagthisyear) flagthisyearP=' ('+flagthisyear+')';
+
+							//
+							rsi2_sources[key].loops++
+							//
+							//if( fName.substring(0,2)=='AL' && (key1=='11-1_edat_lfse_22' || key1=='6-2_edat_lfse_22')) {
+							//	rci2log.log(167,'285 '+fNameTime+', '+key1+'/'+key1year+', '+valuethisyear, iTime, flagthisyearP);
+							//}
+							// tooltip content
+							if (!flagthisyearP && !valuethisyear) valuethisyear='(:)';
+							var valuethisyearLabel = valuethisyear;
+							//
+							if(rsi2_sources[key1].TypologyLabel) {
+								var LabelTY=rsi2_sources[key1].TypologyLabel;
+								if(CategoriesofRegion[fName]) {
+									var catRegion=CategoriesofRegion[fName]; // categories that the region has
+									if(catRegion[LabelTY]) {
+										valuethisyearLabel = catRegion[LabelTY]; // replace label of value
+									}
+								}
+							}
+							////// run only for current year
+							if(runYear==current_year) {
+								if(rci2_layout.tooltipContent=='current') {
+									if(key1==currentPane) { //current = show only currently selected indicator
+										if(!rsi2_sources[key1].TypologyLabel) {
+											datavaluesC='<tr class="tooltip_'+key1+' tooltiprow"><td>'+rsi2_sources[key1].FullTitle+', '+current_year+
+												':</td><td class=tipValue>'+valuethisyearLabel+flagthisyearP+'</td></tr>';
+										}
+									}
+									if(fName=='BE100') rci2log.log(';'+valuethisyearLabel, datavaluesC, runYear+'='+current_year,CountryISO2,'222 pane:'+currentPane+'='+key1+', '+fName, ' v/:'+valuethisyear, TimeSlotsInd);
+								} else {
+									if (!flagthisyearP && !valuethisyear) valuethisyear = '(:)';
+									var tooltipContentRow='<tr class="tooltip_'+key1+' tooltiprow"><td>'+rsi2_sources[key1].ShortTitle+':</td><td class=tipValue>'+valuethisyearLabel+flagthisyearP+'</td></tr>';
+									if(!rsi2_sources[key1].TypologyLabel) {
+										datavaluesC+=tooltipContentRow;
+									}
+								}
+
+								//// map, charts and table values
+
+								//
+								////
+								// scatter plot values
+								if(rci2_layout.scatterplotEnabled) {
+									vrf1=Value_Region_feature[key1year+'_scatter'];
+									//if(fName=='BE10') rci2log.log('11xx x: '+key1+' y:'+key_scatterY+' z: '+key_scatterZ);
+									var tempV_Y=Values_of_Region[key_scatterY];
+									var tempVflag_Y=Flags_of_Region[key_scatterY];
+									var TimeSlotsInd_Y=rsi2_sources[key_scatterY].TimeSlots;
+									var iTimeY=0;
+									for(var iY in TimeSlotsInd_Y) {
+										iY=iY*1;// convert to number
+										var runYear_Y=TimeSlotsInd_Y[iY];
+										if(runYear_Y==runYear) {
+											iTimeY=iY;
+										}
+									}
+									if(typeof tempVflag_Y !== 'undefined' ) {
+										if(typeof tempVflag_Y[fNameTime] !== 'undefined' ) {
+											flagthisyear_Y=tempVflag_Y[fNameTime][iTimeY];
+										}
+									}
+									if(flagthisyear_Y) flagthisyearP_Y=' ('+flagthisyear_Y+')';
+									//
+									var tempV_Z=Values_of_Region[key_scatterZ]; // get values of Z indicators
+									var tempVflag_Z=Flags_of_Region[key_scatterZ];
+									var TimeSlotsInd_Z=rsi2_sources[key_scatterZ].TimeSlots;
+									var iTimeZ=0;
+									for(var iZ in TimeSlotsInd_Z) {
+										iZ=iZ*1;// convert to number
+										var runYear_Z=TimeSlotsInd_Z[iZ];
+										if(runYear_Z==runYear) {
+											iTimeZ=iZ;
+										}
+									}
+									if(typeof tempVflag_Z !== 'undefined' ) {
+										if(typeof tempVflag_Z[fNameTime] !== 'undefined' ) {
+											flagthisyear_Z=tempVflag_Z[fNameTime][iTimeZ];
+										}
+									}
+									if(flagthisyear_Z) flagthisyearP_Z=' ('+flagthisyear_Z+')';
+									if(typeof tempV_Y !== 'undefined' && typeof tempV_Z !== 'undefined' ) {
+										if(typeof tempV_Y[fNameTime] !== 'undefined'
+											&& typeof tempV_Z[fNameTime] !== 'undefined'
+											&& valuethisyear!="(:)" && valuethisyear!="" && flagthisyearP.indexOf(':')<0 ) {
+												if(tempV_Y[fNameTime][iTimeY]!='' && tempV_Z[fNameTime][iTimeZ]!='') {
+													//vrf1.push();
+													vrf1row={name: name1, x: tempV[fNameTime][iTime], time: runYear, y: tempV_Y[fNameTime][iTimeY], Code: fName, flag: flagthisyearP, flag_y: flagthisyearP_Y, flag_z: flagthisyearP_Z, country: FullCountry, z: tempV_Z[fNameTime][iTimeZ]};
+													vrf1[vrf1.length]=vrf1row
+												}
+										}
+									}
+									Value_Region_feature[key1year+'_scatter']=vrf1;
+								}
+								// end scatter
+							}// end if current year
+
+							// big data table
+							var RegionTableYear=RegionTable[runYear];
+							//
+							if(typeof RegionTableYear=== 'undefined' ) {
+								var RegionTableYear=[];
+							}
+							if(typeof RegionTableYear[inR]=== 'undefined' ) {
+									//if(fName=='ES70') rci2log.log(1289,inR,fName,key1);
+									RegionTableYear[inR] = { Region: NameofRegion[fName], Code: fName };
+							}
+							//if(fName=='EU28' || fName=='BE10') rci2log.log(RegionTableYear);
+							if(rci2_layout.datatableEnabled) {
+									var tableRow1 = [];
+									tableRow1 = RegionTableYear[inR];
+										var columnName= rsi2_sources[key1].ShortTitle+' <span class=rciDataColumnSubTitle>'+rsi2_sources[key1].SubTitle+'</span>';
+										tableRow1['Country'] = FullCountry;
+										tableRow1[columnName+' Flag']=flagthisyearP;
+										//TableFlagsFilter.push(columnName+' Flag');
+										TableFlagsFilter[TableFlagsFilter.length]=columnName+' Flag'
+										tableRow1[columnName]='';
+										if(tempV) {
+											if(tempV[fNameTime]) {
+												tableRow1[columnName]=valuethisyearLabel; // show label is it exists - tempV[fNameTime][iTime];
+											}
+										}
+									//if(fName=='BE100') rci2log.log(1289,'222 ', 'inR '+inR,key1+' '+fName,'tempV fNameTime', tempV[fNameTime], 'fNameTime '+fNameTime, ' ',tableRow1);
+									RegionTableYear[inR] =tableRow1;
+							}
+							//
+							RegionTable[runYear]=RegionTableYear;
+							//
+						} // end if tempV
+
+					}/// end if we have value
+					//
+
+
+				}
+				// end loop year
+			}// enf if current pane
+		  }// end loop sources
+		}
+	var r2={'datavaluesC':datavaluesC,'valuethisyear':valuethisyear, 'valuethisyearLabel':valuethisyearLabel};
+	return r2;
+}
+
+function onEachEUEAdata() {
+	// run onEachFeatureData for each EU/EA row
+	rci2log.log(Key2RegionIndex);
+	//rci2log.log('//316');
+	rci2log.time('time onEachEUEAdata');
+	for (var rRegion in Key2RegionIndex) {
+		var rKey=Key2RegionIndex[rRegion];
+		var code2=rRegion.substr(0,2);
+		if(rRegion.length>2 && (code2=='EU' || code2=='EA')) {
+			rci2log.log('//316 '+rRegion+' '+Key2RegionIndex[rRegion]);
+			//onEachFeatureData('EU28','EU','European Union',CountryName2ID['EU'],'European Union (EU28)');
+			//onEachFeatureData(fName,CountryISO2,FullCountry,IDCountry,name1,currentPane)
+			onEachFeatureData(rRegion,code2,'-','',NameofRegion[rRegion]+' ('+rRegion+')',CurrentPane);
+		}
+	}
+	rci2log.timeEnd('time onEachEUEAdata');
+}
+/*	*/
+function onEachFeatureDo(feature, layer) {
+    // does this feature have a property named description?
+    //rci2log.log(layer.defaultOptions.pane);
+
+    // wanted for search
+	//bind each layer (marker) to the feature it is associated with,
+     feature.layer = layer;
+    //currentPane
+    var runningPane=layer.defaultOptions.pane;
+	//console.log(629,feature,feature.properties.NUTS_ID);
+	var fName=feature.properties.NUTS_ID;//Name
+	if(!fName && feature.properties.URAU_CODE) { // cities
+		fName=feature.properties.URAU_CODE;//Name
+	}
+   	var valuethisyear='';
+   	var valuethisyearGDP='';
+    if (feature.properties && ( feature.properties.URAU_CODE || feature.properties.NUTS_ID )) {//Name
+		var rsiLayer_id=L.stamp(layer);
+		//rci2log.log(rsiLayer_id);
+		layer._leaflet_id = rsiLayer_id; // we will need this to fire the click
+		nutscodeLayer[runningPane+'_'+fName] = rsiLayer_id;
+		nutscodeLayer['inlet'+fName] = rsiLayer_id; // used for inlet bounds
+
+  	if(!NameofRegion[fName]) {
+			NameofRegion[fName]=feature.properties.NUTS_NAME;//NAME_LATN
+			if(!NameofRegion[fName] && feature.properties.URAU_NAME) { // cities
+				NameofRegion[fName]=feature.properties.URAU_NAME;//Name
+			}
+			if(NameofRegion[fName].substring(0,16)=='Extra-Regio NUTS' ) {
+				NameofRegion[fName] = NameofRegion[fName]+' ('+fName+')';
+			}
+      if(NameofRegion[fName].substring(0,14)=='Germany (until' ) {
+				NameofRegion[fName] = 'Germany';
+			}
+      if(regions_labels) {
+        if(regions_labels[fName]) {
+          NameofRegion[fName]=regions_labels[fName].label;
+        }
+      }
+		}
+		//ISO2 => SE
+		if(!CountryofRegion[fName]) CountryofRegion[fName]=feature.properties.SHRT_ENGL;
+		var CountryISO2=feature.properties.CNTR_CODE;
+		if(!CountryofRegion[fName] && feature.properties.CNTR_CODE) { // used for cities
+			CountryofRegion[fName]=CountryName[CountryISO2];//counry
+		}
+		//Full country name => Sweden
+		var FullCountry=CountryName[CountryISO2];
+		//ID of country
+		var IDCountry=CountryName2ID[CountryISO2];
+		//if(!IDCountry) rci2log.log('177/ not found '+CountryISO2);
+    	// set value for chart use later
+    	var name1=NameofRegion[fName]+' ('+fName+')';    	///CountryofRegion[fName]
+		var datavaluesC='';
+
+		//// do data arrays
+		var datavaluesCthisyear=onEachFeatureData(fName,CountryISO2,FullCountry,IDCountry,name1,runningPane);
+		//if(fName=='RO32') rci2log.log(180,datavaluesCthisyear);
+		datavaluesC=datavaluesCthisyear['datavaluesC'];
+		valuethisyear=datavaluesCthisyear['valuethisyear'];
+		var valuethisyearLabel= datavaluesCthisyear['valuethisyearLabel'];
+		if(fName=='BE100') rci2log.log(734, fName, NameofRegion[fName],datavaluesC,valuethisyear, valuethisyearLabel);
+		//
+		var tooltipC = '';
+
+    //
+    var dontShowCountry='';
+    if(fName.length==2) { // countrylevel
+      dontShowCountry=1;
+    }
+    //
+    if(NameofRegion[fName].substring(0,14)=='Germany (until' ) {
+      NameofRegion[fName] = 'Germany';
+    }
+		// bind popup
+		if(!rci2_layout.tooltipLayout) rci2_layout.tooltipLayout='';
+		if(rci2_layout.tooltipLayout=='') {
+      if(dontShowCountry) {
+        var tooltipC='<div class=mapTipHeader><b>'+ NameofRegion[fName] + '</b> (' + fName + ')';
+      } else {
+        var tooltipC='<div class=mapTipHeader><b>'+ NameofRegion[fName] + '</b> (' + fName + ') <em>' + CountryofRegion[fName]+'</em>';
+      }
+			if (!datavaluesC) datavaluesC='<tr class=tooltiprow><td>'+LangCur['Data not available']+'</td></tr>';
+			//if(valuethisyear)
+			tooltipC+='<div class=mapTipContent><table class=tipTable>'+datavaluesC+'</table></div>';
+      //
+      inletTooltips[fName]='<div class=mapTipContent><table class=tipTable>'+datavaluesC+'</table></div>';
+      //
+			tooltipC+='</div>';
+    } else if (rci2_layout.tooltipLayout=='RegionOnly' ) {
+      		var tooltipC='<table class=" '+rci2_layout.tooltipLayout+'"><tr><td><div class=mapTipHeader><b>'+ NameofRegion[fName] + '</b> (' + fName + ')<BR><em>' + CountryofRegion[fName]+'</em></div></td>';
+      		tooltipC+='</tr></table>';
+		} else if (rci2_layout.tooltipLayout=='condensed' || rci2_layout.tooltipLayout=='condensedtwolines') {
+      if(dontShowCountry) {
+        var tooltipC='<table class="mapTipCondensed '+rci2_layout.tooltipLayout+'"><tr><td><div class=mapTipHeader><b>'+ NameofRegion[fName] + '</b> (' + fName + ')</div></td>';
+      } else {
+        var tooltipC='<table class="mapTipCondensed '+rci2_layout.tooltipLayout+'"><tr><td><div class=mapTipHeader><b>'+ NameofRegion[fName] + '</b> (' + fName + ')<BR><em>' + CountryofRegion[fName]+'</em></div></td>';
+      }
+			if(rci2_layout.tooltipLayout=='condensedtwolines') { tooltipC=tooltipC+"</tr><tr>"; }
+			if(!valuethisyear) valuethisyear="(:)";
+			if(valuethisyear) tooltipC+='<td class=mapTipValueTD><span class=mapTipValue> '+valuethisyearLabel+' </span></td>';
+			tooltipC+='</tr></table>';
+		}
+		if(rci2_layout.mapEnabled) {
+			var def_PopupTooltip='popup';
+			if (typeof rci2_PopupTooltip !== 'undefined') {
+				def_PopupTooltip=rci2_PopupTooltip;
+			}
+			if(def_PopupTooltip=='popup') {
+				//rci2log.log('bind popup '+layer.feature.id);
+				layer.bindPopup(tooltipC, {autoPan:true, autoPanPadding:[50,50], keepInView:true, closeButton:false,maxWidth:250});
+			} else if(def_PopupTooltip=='tooltip') {
+				var tooltipOptions={};
+				var TooltipCountries=['NO','IS','FI','SE']
+				if(TooltipCountries.includes(feature.properties.CNTR_CODE)) {
+					tooltipOptions={direction: 'bottom'};
+				}
+        var TooltipCountries=['ES','PT']
+				if(TooltipCountries.includes(feature.properties.CNTR_CODE)) {
+					tooltipOptions={direction: 'right'};
+				}
+				var TooltipCountries=['IT','EL','CY','MT']
+				if(TooltipCountries.includes(feature.properties.CNTR_CODE)) {
+					tooltipOptions={direction: 'top'};
+				}
+				layer.bindTooltip(tooltipC, tooltipOptions);
+			}
+			layer.on('mouseover', function (e) {
+				//rci_highlightFeature(e);
+				rci_mouseoverFeature(e, this);
+				if(def_PopupTooltip=='popup') {
+					this.openPopup();
+				}
+			});
+			layer.on('mouseout', function (e) {
+				//rci_resetHighlight(e);
+				//rci2log.log('out '+fName+' '+CurrentRegion)
+				//if(fName!=CurrentRegion)
+				rci_mouseoutFeature(e, this);
+				this.closePopup();
+			});
+			layer.on('click', function (e) {
+				rci2_regionClick(fName);
+				if(currentRegionHighlight) { rci_resetHighlight(currentRegionHighlight); }
+				currentRegionHighlight=e;
+				rci_highlightFeature(e);
+				/*if(def_PopupTooltip=='popup') {
+					this.openPopup();
+				}*/
+			});
+		}
+	}
+}
+
+function rci2_regionClick(fName) {
+	rci2log.log('click '+fName);
+	if(!fName) return false;
+	// change region
+	CurrentRegion=fName;
+	// click on a region leads to a new page
+	if (typeof rci2_regionLink !== 'undefined') {
+		if(rci2_regionLink) {
+			//window.parent.document.location.replace(rci2_regionLink+'?reg='+fName);
+			window.open(rci2_regionLink+'?reg='+fName);
+		}
+	}
+	//
+	if(rci2_layout.regionClick=='mapvis') {
+		var CurrentLayerID = nutscodeLayer[CurrentPane+'_'+fName];
+		rci2log.log('click source :'+clickSource+': region '+CurrentPane+' / '+fName+':'+NameofRegion[fName]+' layer id='+CurrentLayerID);
+		var CurrentLayer=rsiMap._layers[CurrentLayerID];
+		//zoom to region
+		/*if(!inletsDivs[fName]) {
+			var regLevel = CurrentLayer.feature.properties.LEVL_CODE;
+			rsiMap.fitBounds(CurrentLayer.feature.layer.getBounds(),{maxZoom: rci2_search_zoom[regLevel] });
+		}*/
+		if(current_chart=='datatable') {
+			if(rci2_layout.regionComparison) {
+				rci2log.log('select region on table');
+				// in comparison mode
+				rci2_layout.regionDefault=fName;
+				rci2_InitDataTable();
+			} else { //regular table
+				if(clickSource=='') {
+					var table0 = $('#gene_table').DataTable();
+					// Find indexes of rows which have fName in the second column
+					var indexes = table0.rows().eq( 0 ).filter( function (rowIdx) {
+						if(table0.cell( rowIdx, 1 ).data() == fName) {	return true;}
+						else {		return false;		}
+					} );
+					var index0=indexes[0];
+					$('.dataTables_scrollBody tr').removeClass('selected');
+					$('.DTFC_LeftBodyWrapper tr').removeClass('selected');
+					table0.row( index0 ).select();
+					var $row0 = $(table0.row( index0 ).node());
+					if($row0 && index0) {
+						var $row00=$row0[0];
+						var row0scroll =  $row00['offsetTop'];  ;
+						rci2log.log('select region on table0 '+index0+' / '+row0scroll);
+						$('.dataTables_scrollBody').animate({ scrollTop: row0scroll }, 1000);
+						$('.DTFC_LeftBodyLiner').animate({ scrollTop: row0scroll }, 1000);//DTFC_LeftBodyWrapper
+					} else {
+						rci2log.log('458 error select region '+fName+' on table0 '+index0+' / '+row0scroll, table0);
+					}
+				}
+				clickSource='';//reset
+			}
+		}
+		if(current_chart == 'trend') {
+			rci2_chartTrend(vis_div)
+		}
+    if(current_chart === 'barcode' && current_chart !== 'trend') {
+      if(currentHoverRegion) { // trigger out previous
+        rci2_barcode_triggerOut(currentHoverRegion)
+      }
+      currentHoverRegion=fName;// set new
+      rci2_barcode_triggerHover(currentHoverRegion);
+    }
+
+		if(current_chart !== 'barcode' && current_chart !== 'trend') {
+				//rci2log.log('datavis 457 '+current_chart);
+			if(clickSource=='') { // if is coming from chart, dont run
+				var s1=0; // series to work with
+				if(current_chart=='distribution') {
+					s1=1; // 0 is country, 1 is all data
+				}
+				rci2log.log('datavis 458 '+current_chart+' '+s1);
+				//
+				var cData=current_chart_object.series[s1].data;
+				$(cData).each(function(i,v) {
+					if(v['name']==(NameofRegion[fName]+' ('+fName+')')) {
+						current_chart_object.series[s1].data[i].select();
+						current_chart_object.series[s1].data[i].setState('hover');
+						current_chart_object.tooltip.refresh(current_chart_object.series[s1].data[i]);
+						var row0scroll = i * 15;
+						if(current_chart=='bar') {
+							$('#rightContainer').animate({ scrollTop: row0scroll }, 1000);
+						}
+						//rci2log.log(i+' / '+v['name']+' ='+row0scroll);
+					}
+				});
+			}
+			clickSource=''; // reset
+		}
+	}
+}
+
+function rci2_chart_regionpop(fName) {
+}
+
+function style_nuts_regions(feature) {
+	var fName=feature.properties.NUTS_ID+''; //Name
+	if(!fName && feature.properties.URAU_CODE) { // cities
+		fName=feature.properties.URAU_CODE;//Name
+	}
+	if(!CountryofRegion[fName]) CountryofRegion[fName]=feature.properties.SHRT_ENGL;
+	if(!CountryofRegion[fName]) {
+	     CountryofRegion[fName]=CountryName[feature.properties.CNTR_CODE];
+	}
+	if(fName=='UKL') {
+		//rci2log.log(feature.properties);
+	}
+	var cntrcode = feature.properties.CNTR_CODE;
+	color1=CountryColor[CountryofRegion[fName]];
+	if(!color1) color1=CountryColor[cntrcode];// CountryofRegion2[fName]];
+	if(!color1) color1=CountryColor[CountryofRegion3[fName]];
+	//rci2log.log('311/ '+fName+' '+color1+' / '+cntrcode+': '+CountryofRegion[fName]);
+	//
+	if(!rci2_layout['color_na']) rci2_layout['color_na']='#7F7F7F';
+	if(!color1) color1=rci2_layout['color_na']; //Not available
+	//
+	// override, use one colour for everything
+	if(OneColour) color1=OneColour;
+	// save it for reset
+	if(feature.layer) feature.layer.options.originalFillColor=color1;
+	// return
+	return {
+			fillColor: color1,
+			fillOpacity: 1,
+			weight: 1,
+			opacity: 0.5,
+			color: '#454545',
+			dashArray: '0'
+	};
+}
+
+function style_nuts_inlets(feature,opacity) {
+	var fName=feature.properties.NUTS_ID+''; //Name
+	if(!fName && feature.properties.URAU_CODE) { // cities
+		fName=feature.properties.URAU_CODE;//Name
+	}
+ 	if (fName  === regionNUTScode_bounds) {
+		//rci2log.log(555,'inlets boundaries', fName, CurrentPane);
+		return style_nuts(feature,opacity,'inlets');
+	} else if(inletRegionCodes.indexOf(fName)>=0) {
+		//rci2log.log(555,'inlets content', fName, CurrentPane);
+		return style_nuts(feature,opacity,'inlets');
+	}else {
+	}
+}
+
+function RGBMix(colorA, colorB) {
+	var Color = net.brehaut.Color;
+	var color1 = Color(colorA);
+	var color2 = Color(colorB);
+	var r = (color1.getRed() + color2.getRed()) / 2;
+	var g = (color1.getGreen() + color2.getGreen()) / 2;
+	var b = (color1.getBlue() + color2.getBlue()) / 2;
+	//console.log(555, color1.getValue() ,r,g,b);
+	return Color().setRed(r).setGreen(g).setBlue(b) ; ///setValue([r, g, b]);
+  }
+
+  function rgba2hex(orig) {
+	var a, isPercent,
+	  rgb = orig.replace(/\s/g, '').match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i),
+	  alpha = (rgb && rgb[4] || "").trim(),
+	  hex = rgb ?
+	  (rgb[1] | 1 << 8).toString(16).slice(1) +
+	  (rgb[2] | 1 << 8).toString(16).slice(1) +
+	  (rgb[3] | 1 << 8).toString(16).slice(1) : orig;
+
+	if (alpha !== "") {
+	  a = alpha;
+	} else {
+	  a = 01;
+	}
+	// multiply before convert to HEX
+	a = ((a * 255) | 1 << 8).toString(16).slice(1)
+	//hex = hex + a;
+
+	return '#'+hex;
+  }
+
+function style_nuts(feature,opacity,calledby) {
+	var fName=feature.properties.NUTS_ID+''; //Name
+	if((fName=='' || fName=='undefined') && feature.properties.URAU_CODE) { // cities
+		fName=feature.properties.URAU_CODE;//Name
+	}
+	if((fName=='' || fName=='undefined')) {
+		fName=feature.id; // last resort
+	}
+	var fNameTime=current_year+'|'+fName;
+	//
+	if(!rci2_layout['color_na']) rci2_layout['color_na']='#7F7F7F';
+	color1=rci2_layout['color_na']; //Not available
+	//color1='#7F7F7F';
+	//
+	var colorStripe='';
+	//
+	var KeyZ;
+	//;//
+	var key1=runningKey;// feature.properties.pane;
+	if(calledby=='inlets' ) {//|| CurrentPane
+		key1=CurrentPane;
+	}
+	//
+	var tempV=Values_of_Region[key1];
+  var tempVflag=Flags_of_Region[key1];
+	var TimeSlotsInd=rsi2_sources[key1].TimeSlots;
+	for(var iTime in TimeSlotsInd) {
+		if(current_year==TimeSlotsInd[iTime]) {
+			var current_year_index=iTime;
+		}
+	}
+	var keyB='';
+	var tempB='';
+	var color2='';
+	if( rsi2_sources[key1].biVariate) {
+		keyB = rsi2_sources[key1].biVariate;
+		tempB=Values_of_Region[keyB];
+	}
+	//
+	//if(fName=='BE001L3')
+	//rci2log.log(555,629,key1,feature, feature.id , fName+'/');//,tempV);
+	//
+	if(fName && tempV) {
+    if(!tempV[fNameTime]) {
+      tempV[fNameTime]=[current_year_index];
+      tempVflag[fNameTime]=[current_year_index]
+      //console.log(1202, fNameTime, tempV[fNameTime]);
+    }
+		if(tempV[fNameTime]) {
+			//rci2log.log(ValueofRegion[fName]['0']);
+			//color1='#d76e2d';
+      var valuethisyear = tempV[fNameTime][current_year_index];
+      var valuethisyear0 ='';
+      if((valuethisyear=='' || isNaN(valuethisyear)) && rci2_layout.timeGapsFill) {
+        var iTime0=current_year_index-1;
+        var runYear0=TimeSlotsInd[iTime0];
+        var fNameTime0=runYear0+'|'+fName; //current_year
+        if(iTime0>=0 && tempV[fNameTime0]) {
+          valuethisyear0=tempV[fNameTime0][iTime0];
+          if(valuethisyear0) {
+            valuethisyear = valuethisyear0; // replace value with last year
+            tempV[fNameTime][current_year_index] = valuethisyear;
+            var flagnow=tempVflag[fNameTime][current_year_index];
+            if(flagnow) flagnow=flagnow.replace(':','');
+            else flagnow='';
+            tempVflag[fNameTime][current_year_index] = flagnow + 'g'; // add an extra flag
+            //rci2log.log( '555 626 :'+' itime '+current_year_index+ key1+' '+fName+' v:'+valuethisyear,'=',valuethisyear0,'/ '+current_year);
+          }
+        }
+      }
+      /* fill in data from uuper nuts level  */
+      if((valuethisyear=='' || isNaN(valuethisyear)) && rci2_layout.nutsGapsFill) {
+        if(rci2_layout.nutsGapsFill=='nuts0') {
+          var CountryISO2=fName.substr(0,2); //BE
+          var runYear=TimeSlotsInd[current_year_index];
+          var fNameTime0=runYear+'|'+CountryISO2;
+          if(typeof tempV[fNameTime0] !== 'undefined') {
+            valuethisyear0=tempV[fNameTime0][current_year_index];
+            if((valuethisyear0=='' || isNaN(valuethisyear0)) && rci2_layout.timeGapsFill) {
+              var iTime0=current_year_index-1;
+              if(iTime0>=0 && tempV[fNameTime0]) {
+                valuethisyear0=tempV[fNameTime0][iTime0];
+                var flagnow=tempVflag[fNameTime][current_year_index];
+                if(flagnow) flagnow=flagnow.replace(':','');
+                else flagnow='';
+                tempVflag[fNameTime][current_year_index] = flagnow + 'g'; // add an extra flag
+          }
+        }
+            //rci2log.log( '555 626-7b!! '+fName, CountryISO2,fNameTime0, iTime0, 'v=', valuethisyear0)
+          }
+        }
+        if(rci2_layout.nutsGapsFill=='nuts1') {
+          var fNameTime0=runYear+'|'+fName.substr(0,3); //BE1
+          var runYear=TimeSlotsInd[current_year_index];
+          var fNameTime0=runYear+'|'+fNameTime0;
+          //rci2log.log( '555 626-8c!! '+fName, fNameTime0)
+          if(typeof tempV[fNameTime0] !== 'undefined') {
+            valuethisyear0=tempV[fNameTime0][current_year_index];
+          }
+        }
+        if(valuethisyear0) {
+          valuethisyear = valuethisyear0; // replace value with upper level
+          tempV[fNameTime][current_year_index] = valuethisyear;
+          var flagnow=tempVflag[fNameTime][current_year_index];
+          if(flagnow) flagnow=flagnow.replace(':','');
+          else flagnow='';
+          tempVflag[fNameTime][current_year_index] = flagnow + 'U'; // add an extra flag
+          //rci2log.log( '555 626-7b '+fName, CountryISO2, valuethisyear, tempVflag[fNameTime][current_year_index]);
+        }
+      }
+    }
+  }
+  // ask again after above checks
+  if(fName && tempV) {
+		if(tempV[fNameTime]) {
+			if (tempV[fNameTime][current_year_index]=='') {
+				color1=rci2_layout['color_na'];
+			} else {
+				var sZones = rsi2_sources[key1].sZones;
+				for (var keyZ in sZones) {
+					if (sZones.hasOwnProperty(keyZ) || keyZ == 0) {
+						if (tempV[fNameTime][current_year_index] >= sZones[keyZ].valueLow) {
+							color1 = sZones[keyZ].color;
+							colorStripe = zStripes[keyZ];
+						}
+					}
+				}
+			}
+
+			if(keyB && tempB) {
+				if(tempB[fNameTime][current_year_index]) {
+					var sZonesB = rsi2_sources[keyB].sZones;
+					for (var keyZ in sZonesB) {
+						if (sZonesB.hasOwnProperty(keyZ) || keyZ == 0) {
+							if (tempB[fNameTime][current_year_index] >= sZonesB[keyZ].valueLow) {
+								color2 = bColors[keyZ];
+							}
+						}
+					}
+				}
+				if(color2 && color1!=rci2_layout['color_na']) {
+					var color1orig=color1;
+					var mix = RGBMix(color1, color2);
+					color1= rgba2hex ( mix.toCSS() ) ;
+					if(fName=='BE10') {
+						rci2log.log('555a',fName,  color1orig+'+'+color2, tempB[fNameTime][current_year_index], color1, mix.toCSS() )
+					}
+				} else {
+					color1=rci2_layout['color_na'];
+				}
+			}
+			if (fName=='BE10') {
+				if(feature) {
+					rci2log.log(917,555, color1, feature.properties.pane,'cur '+CurrentPane, 'rky '+runningKey, calledby+' /', 'val='+tempV[fNameTime][current_year_index], 'current_year_index ' + current_year_index, current_year, fNameTime);
+				}
+			}
+		}
+	}
+  //if (fName=='FRB0') { rci2log.log( '555 626-7CC '+fName, tempV[fNameTime][current_year_index], '/', color1); }
+
+	if(fName && rci2_layout.colorbyCategory) {
+		if(CategoriesofRegion[fName]) {
+			var catRegion=CategoriesofRegion[fName];
+			if(catRegion[rci2_layout.colorbyCategory]) {
+				//var catRegion1=catRegion[rci2_layout.colorbyCategory];
+				//color1=CategoryColor[catRegion1];
+				var catRegion1=catRegion[rci2_layout.colorbyCategory];
+				var catRegion2=CategoryColors[rci2_layout.colorbyCategory];
+				color1=catRegion2[catRegion1];
+				if(fName=='BE10') {
+					rci2log.log(CategoriesofRegion[fName], color1,catRegion1);
+				}
+			}
+		}
+	}
+	if(!opacity) opacity=1;
+	//tempV[fName]['0']+
+	if(fName=='BE10') {
+		///rci2log.log('555aaa '+fNameTime+' / '+key1+' / ',tempV[fNameTime],' : '+color1);
+		if( rsi2_sources[key1].biVariate) {
+			//var mix = RGBMix(color1, color2);
+			//rci2log.log('555a', rsi2_sources[key1].biVariate,  mix.toString() )
+		}
+	}
+	// save it
+	if(feature.layer) feature.layer.options.originalFillColor=color1;
+	//
+	if(!rci2_layout['color_regions_border']) rci2_layout['color_regions_border']='#222222';
+	// return
+	if(colorStripe) {
+		return {
+			fillColor: color1,
+			fillPattern: colorStripe,
+			fillOpacity: 1,
+			weight: 0.5,
+			opacity: 1,
+			color: rci2_layout['color_regions_border'],
+			dashArray: '0'
+		};
+
+	} else {
+		return {
+			fillColor: color1,
+			fillOpacity: opacity,
+			weight: 0.5,
+			opacity: 1,
+			color: rci2_layout['color_regions_border'],
+			dashArray: '0'
+		};
+	}
+}
+
+
+
+
+function style_map_world(feature) {
+  if(!rci2_layout['color_world']) rci2_layout['color_world']='#e5e5e5';
+  if(!rci2_layout['color_world_coast']) rci2_layout['color_world_coast']='#e5e5e5';
+    return {//
+        fillColor: rci2_layout['color_world'],
+        weight: 1,
+        opacity: 1,
+        color: rci2_layout['color_world_coast'],
+        dashArray: '0',
+        fillOpacity: 1
+    };
+}
+function style_map_countries(feature) {
+	if(!rci2_layout['color_countries']) rci2_layout['color_countries']='none';
+	if(!rci2_layout['color_countries_border']) rci2_layout['color_countries_border']='#222222';
+	var opacity1=1;
+	if(!CountryColor[feature.properties.CNTR_ID]) opacity1=0;
+	if(CountryColor[feature.properties.CNTR_CODE]) opacity1=1; // using nuts0 file
+    // rci2log.log('432 '+feature.properties.CNTR_ID+'/'+feature.properties.CNTR_CODE+' = '+opacity1);
+	return {//none
+        fillColor: rci2_layout['color_countries'],
+        fillOpacity: 1,
+        weight: 1,
+        opacity: opacity1,
+        color: rci2_layout['color_countries_border'],
+        dashArray: '0'
+    };
+}
+
+
+// default chart type, set active on load
+$('#rci2_nav_tabs .btn').each(function() {
+	if($(this).attr('chart-type')==current_chart)  {
+		$('#rci2_nav_tabs .btn').removeClass('active');
+		$(this).addClass('active');
+	}
+});
+
+// on click chart type
+$('#rci2_nav_tabs .btn').click(function() {
+	$('#rci2_nav_tabs .btn').removeClass('active');
+	$(this).addClass('active');
+	rci2log.log('135 '+$(this).attr('id'));
+	if($(this).attr('chart-type'))  {
+		current_chart=$(this).attr('chart-type') ;
+		chart_init(current_chart);
+	}
+});
+
+
+function ColorLuminance(hex, lum) {
+
+	// validate hex string
+	hex = String(hex).replace(/[^0-9a-f]/gi, '');
+	if (hex.length < 6) {
+		hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+	}
+	lum = lum || 0;
+
+	// convert to decimal and change luminosity
+	var rgb = "#", c, i;
+	for (i = 0; i < 3; i++) {
+		c = parseInt(hex.substr(i*2,2), 16);
+		c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
+		rgb += ("00"+c).substr(c.length);
+	}
+
+	return rgb;
+}
+
+
+function rci2_indic_label(key) {
+	var info1='';
+	if(typeof rsi2_sources[key] !== 'undefined') {
+		if(rsi2_sources[key].DatabaseTitle && rsi2_sources[key].DatabaseDimensions) {
+			info1="Full database title & dimensions: "+rsi2_sources[key].DatabaseTitle+', '+rsi2_sources[key].DatabaseDimensions
+					+" ("+rsi2_sources[key].sIndicator+"), last updated: "+rsi2_sources[key].LastUpdated;
+		}
+	}
+	if(info1) {
+		if(rci2_layout.infoIndicatorNoYear=='yes') {
+			return "<a href='https://ec.europa.eu/eurostat/web/products-datasets/product?code="+rsi2_sources[key].sIndicator+"' target=_blank class='labelDBinfo fa fa-info-circle' title='"+info1+"'></a> <span title='"+info1+"'>"+rsi2_sources[key].FullTitle+"</span>";
+		} else {
+			return "<a href='https://ec.europa.eu/eurostat/web/products-datasets/product?code="+rsi2_sources[key].sIndicator+"' target=_blank class='labelDBinfo fa fa-info-circle' title='"+info1+"'></a> <span title='"+info1+"'>"+rsi2_sources[key].FullTitle+', '+current_year+"</span>";
+		}
+	} else if(rci2_layout.infoIndicatorShowDescription=='yes') {
+		return "<span >"+rsi2_sources[key].FullTitle+', '+current_year+"</span><div class=infoSubDescription>"+rsi2_sources[key].Description+"</div>";
+	} else if(rci2_layout.infoIndicatorNoYear=='yes') {
+		return "<span class='noyear' >"+rsi2_sources[key].FullTitle+"</span>";
+	} else {
+		if(typeof rsi2_sources[key] !== 'undefined') {
+			return "<span class='withyear' >"+rsi2_sources[key].FullTitle+', '+current_year+"</span>";
+		}
+	}
+}
+
+///json
+
+function rsi2_load_data_2(sIndicator, DataSource, keyCode, sIndex, callback) {
+	var ValueofRegion= {};
+	var FlagofRegion= {};
+	JSONstat(DataSource,  function() {
+	  //	rci2log.log('start time load2'+keyCode);
+	  rci2log.time('time load2 total '+keyCode);
+	  rci2log.time('time load2_0- '+keyCode);
+        var dataset = this;
+        if (dataset.Dataset(0) == null) {
+            rci2log.log('8 : something went wrong');
+        } else {
+            //rci2log.log('10 : loaded json stat for '+keyCode);
+            //rci2log.log(dataset.Dataset(0).label);
+            //rci2log.log(DataSource);
+            var datasetTitle = dataset.Dataset(0).label;
+       		rsi2_sources[keyCode].DatabaseTitle = datasetTitle;
+			var lastU = new Date(dataset.Dataset(0).updated);
+			rsi2_sources[keyCode].LastUpdated=lastU.getDate()+'/'+(lastU.getMonth()+1)+'/'+lastU.getFullYear();
+			//
+			if(!rsi2_sources[keyCode].FullTitle) {
+				if(rsi2_sources[keyCode].FixNUTStitle) {
+					var s1= datasetTitle.replace("NUTS 2","NUTS "+rsi2_sources[keyCode].sNUTS);
+					s1 = s1.replace("NUTS 3","NUTS "+rsi2_sources[keyCode].sNUTS);
+					rsi2_sources[keyCode].FullTitle = s1;
+				} else {
+					rsi2_sources[keyCode].FullTitle = datasetTitle;
+				}
+			}
+			//
+			loadperc=loadperc+3;//(38/rsi2_srCC);
+			//loadperc=Math.round(loadperc);
+			loadpercDot=loadpercDot+'.';
+			var t1=rsi2_sources[keyCode].ShortTitle;
+			if(!t1) t1=keyCode;
+			$('#rciInfoLoading').html(LangCur['rciPleaseHold1']+' '+LangCur['rciPleaseHold2map']+' ('+loadperc+'%) '
+				+LangCur['rciPleaseHold3on']+' <u>'+t1 +'</u>. '+LangCur['rciPleaseHold4']+' '+loadpercDot);
+			//
+
+		  	//
+			rsi2_sources[keyCode].Code = dataset.Dataset(0).extension.datasetId;
+			var lastU = new Date(dataset.Dataset(0).updated);
+			rsi2_sources[keyCode].LastUpdated=lastU.getDate()+'/'+(lastU.getMonth()+1)+'/'+lastU.getFullYear();
+			rsi2_sources[keyCode].Description='';
+			// not part of the feed if(geo_sIndicator.description) rsi2_sources[keyCode].Description = dataset.Dataset(0).description;
+		  	rsi2_sources[keyCode].selectorTitle=rsi2_sources[keyCode].FullTitle;
+		  	if(rsi2_sources[keyCode].ShortTitle) rsi2_sources[keyCode].selectorTitle=rsi2_sources[keyCode].ShortTitle;
+
+		  	if(rsi2_sources[keyCode].sDefault=='yes') rsi2_sources[keyCode].is_selected='selected';
+
+		  	var dDim = dataset.Dataset(0);
+			var dDimensions=[];
+			var dDimensions4Geo={}; // sub-dimensions used to get slice of values
+			var dDimensions4GeoIndex={}; // index of sub-dimensions used to get slice of values
+			var dDimensions4GeoIndexNum={}; // index of sub-dimensions used to get slice of values
+			var dDimensions4GeoAll={}; // sub-dimensions used to get slice of values -- all sex variations
+			var dDimensions4Extra={};// store extra values for new codes
+			var newCodes=[];
+			var i1=0; var n1=0;
+			var loops=0;
+			var loops1=0;
+			var loops2=0;
+			var loops3=0;
+			var loops4=0;
+			// loop dimensions (geo, sex, age)
+			for (i = 0; i < dDim.length; i++) {
+				var dDim_label=dataset.Dataset(0).Dimension(i).label; // dimension code (=geo)
+				var dDim_count=dataset.Dataset(0).Dimension(i).length; // number of values per dimension (=377)
+				if(dDim_label!='geo' && dDim_label!='cities' && dDim_label!='time') {
+					//rci2log.log('v2 43 i: '+keyCode+ ' / '+i+ ' / '+ dataset.Dataset(0).Dimension(i).label
+					//			+ ' / '+ dataset.Dataset(0).Dimension(i).length
+					//			+ ' = '+ dataset.Dataset(0).Dimension(i).Category(0).label);
+					// find how many value we have in this dimension
+					var dDimSub=dataset.Dataset(0).Dimension(i);
+					if(dDimSub.length>1) {
+						// get value except the final one which stays in the main code
+						for (k = 0; k < (dDimSub.length); k++) {//-1
+							//dDimensions4Extra
+							var new_keyCode=keyCode+'_'+dDim_label+dDimSub.Category(k).index;
+							newCodes[n1]=new_keyCode;
+							n1++;
+							rsi2_sources[new_keyCode]={};
+							for(i3=rci2_layout.timeStart; i3<=rci2_layout.timeEnd; i3++) {
+								var key1year = new_keyCode+'_'+i3;
+								RegionTable[i3]=[];//RegionTable[2016]
+								Value_Region_feature[key1year]=[];
+								Value_Region_feature[key1year+'_table']=[];
+								Value_Region_feature[key1year+'_bar']=[];
+								//rci2log.log ('303 '+key1year);//+'_bar_'+k);
+								for (var k3 in CountryName){
+									if (CountryName.hasOwnProperty(k3)) {
+										loops++;
+										// k3 is ISO2 code of country
+										Value_Region_feature[key1year+'_bar_'+k3]=[];
+										Value_Region_feature[key1year+'_plot_'+k3]=[];
+									}
+								}
+								Value_Region_feature[key1year+'_scatter']=[];
+							}
+							rsi2_sources[new_keyCode].keyCode=new_keyCode;
+							rsi2_sources[new_keyCode].sUnit=rsi2_sources[keyCode].sUnit;
+							//rsi2_sources[new_keyCode].regions_nuts=rsi2_sources[keyCode].regions_nuts; no we need fresh stuff
+							rsi2_sources[new_keyCode].sNUTS=rsi2_sources[keyCode].sNUTS;
+							rsi2_sources[new_keyCode].SubTitle=rsi2_sources[keyCode].SubTitle;
+							rsi2_sources[new_keyCode].sIndicator=rsi2_sources[keyCode].sIndicator;
+							rsi2_sources[new_keyCode].Group=rsi2_sources[keyCode].Group;
+							rsi2_sources[new_keyCode].GroupTitle=rsi2_sources[keyCode].GroupTitle;
+							if(rsi2_sources[new_keyCode].sNUTS==0) {
+								rsi2_nuts_topo_features(new_keyCode,regions_nuts0);
+							}
+							if(rsi2_sources[new_keyCode].sNUTS==1) {
+								rsi2_nuts_topo_features(new_keyCode,regions_nuts1);
+							}
+							if(rsi2_sources[new_keyCode].sNUTS==2) {
+								rsi2_nuts_topo_features(new_keyCode,regions_nuts2);
+							}
+							if(rsi2_sources[new_keyCode].sNUTS==3) {
+								rsi2_nuts_topo_features(new_keyCode,regions_nuts3);
+							}
+							rsi2_sources[new_keyCode].AA=rsi2_sources[keyCode].AA*1+(n1/10);
+							rsi2_sources[new_keyCode].FullTitle=rsi2_sources[keyCode].FullTitle+', '+dDimSub.Category(k).label;
+							rsi2_sources[new_keyCode].selectorTitle=rsi2_sources[keyCode].FullTitle+', '+dDimSub.Category(k).label;
+							rsi2_sources[new_keyCode].ShortTitle=rsi2_sources[keyCode].ShortTitle+', '+dDimSub.Category(k).label;
+							rsi2_sources[new_keyCode].GroupTitleSub=dDimSub.Category(k).label;
+							if(rsi2_sources[keyCode].ShortTitle) rsi2_sources[new_keyCode].selectorTitle=rsi2_sources[keyCode].ShortTitle+', '+dDimSub.Category(k).label;
+							//rci2log.log(927, new_keyCode+' '+k+' / '+dDim_label+': '+dDimSub.Category(k).label + ' / '+ dDimSub.Category(k).index); // sex: Females / 0
+							rsi2_sources[keyCode].hasSubDimensions=1;
+						}
+					}
+					//loop sub dimension values (0=Females, 1=Males, 2=Totals)
+					for (k = 0; k < dDimSub.length; k++) {
+						//rci2log.log(118,keyCode,k,dataset.Dataset(0).Dimension(i).Category(k));
+						dDimensions[i1]=dDim_label+': '+dataset.Dataset(0).Dimension(i).Category(k).label; //sex: Total
+						dDimensions4Geo[dDim_label]=dataset.Dataset(0).Dimension(i).Category(k).label; //sex: Total
+						dDimensions4GeoIndex[dDim_label+k]=dataset.Dataset(0).Dimension(i).id[k];//sex: T
+						dDimensions4GeoIndexNum[dDim_label+k]=dataset.Dataset(0).Dimension(i).Category(k).index;//sex: 0
+						//rci2log.log(118,keyCode,dDim_label,dDimensions4GeoIndex[dDim_label]);
+						if(dDimSub.length>1) {
+							// title in grouped layers menu
+							rsi2_sources[keyCode].GroupTitleSub=dDimSub.Category(k).label;
+							//
+							var n_i=dDimSub.Category(k).index;
+							var dimTemp={};
+							// store current Sex value
+							dimTemp[dDim_label]=dataset.Dataset(0).Dimension(i).Category(k).label;
+							// loop other dimensions
+							for (i2 = 0; i2 < dDim.length; i2++) {
+								var dDim_label2=dataset.Dataset(0).Dimension(i2).label; // dimension code (=geo)
+								if(dDim_label2!=dDim_label) {
+									loops1++;
+									if(dDim_label2!='geo' && dDim_label2!='cities' && dDim_label2!='time') {
+										dimTemp[dDim_label2]=dataset.Dataset(0).Dimension(i2).Category(0).label;
+									}
+								}
+							}
+							//
+							var nk1=dDim_label+dDimSub.Category(k).index;
+							dDimensions4GeoAll[nk1]=dimTemp;
+						}
+					}
+					i1++;
+				}
+				if(dDim_label=='geo') var geo_dim_id=i;
+				else if(dDim_label=='cities') var geo_dim_id=i;
+				else if(dDim_label=='unit' || dDim_label=='currency') var unit_dim_id=i;
+				else if(dDim_label=='time') var time_dim_id=i;
+				else if(dDim_label=='status') var status_dim_id=i;
+				else {
+					//if(keyCode=='8-2_lfst_r_lfe2emprt')
+					//rci2log.log(1078, dDimensions);
+				}
+			}
+			if(dDimensions) {
+				rsi2_sources[keyCode].DatabaseDimensions=dDimensions.join(', ');
+				rci2log.log('44 / ',keyCode,rsi2_sources[keyCode].DatabaseDimensions);
+				rci2loading_perc(rsi2_sources[keyCode].ShortTitle);
+			}
+			// if the indicator does not have multiple sex values
+			if(n1==0) {
+				dDimensions4GeoAll['all']=dDimensions4Geo;
+			}
+			//rci2log.log(newCodes);
+
+		  	// 1 -> geo
+			var geo_index = dataset.Dataset(0).Dimension(geo_dim_id).id;
+			//rci2log.log(geo_index);
+			if(geo_index) {
+				Object.keys(geo_index).forEach(function(key) {
+				  var i = geo_index[key];
+				  var keyNum= key*1;
+				  var iCountry=i.substring(0,2); //BE
+				  var i1000= Key2RegionIndex[iCountry]; // 3000
+				  var key10000 = key*1 + i1000*1 +1; // 3009
+				  loops2++;
+				 // if(iCountry=='EU') rci2log.log('v2 133:: '+key + ' / ' + i+ ' / ' + key10000 + ':'+i1000+' ; '+iCountry);
+				  /////  key=0 // i = AT1
+				  /// IndexofRegion[i] = key;
+				  //IndexofRegion[key] = i;// 0-1200 , used for data functions --  inverse in json v2
+				  IndexofRegion[key10000] = i;// inverse in json v2
+				  Index2RegionKey[key] = i;// 0-1200 , used for data functions
+				  rsi2_sources[keyCode].Index2RegionKey[key] = i;// 0-1200 , used for data functions
+				  /// opposite
+			      Key2RegionIndex[i] = key10000; // used in data tables
+				  ///
+				  if(dataset.Dataset(0).Dimension(geo_dim_id).Category(keyNum)) {
+						var value = dataset.Dataset(0).Dimension(geo_dim_id).Category(keyNum).label;
+						NameofRegion[i] = value;
+						//rci2log.log(376,NameofRegion[i].substring(0,16),i);
+						if(NameofRegion[i].substring(0,16)=='Extra-Regio NUTS' ) {
+							NameofRegion[i] = NameofRegion[i]+' ('+i+')';
+						}
+            //regiondictonary
+            if(regions_labels) {
+              if(regions_labels[i]) {
+                NameofRegion[i]=regions_labels[i].label;
+              }
+            }
+						//
+						//RegionTable[key10000] = { Region: value, Code: i }; // used for data table
+						//rci2log.log('v2 134 '+i + ' / ' + key10000 + ' | '+value);
+				  } else {
+					  rci2log.log('not found '+keyNum);
+				  }
+				});
+			}
+			//rci2log.log(167, 1128,keyCode, rsi2_sources[keyCode].Index2RegionKey);
+			//rci2log.log(RegionTable);
+			/////// labels
+			var geo_labels = dataset.Dataset(0).Dimension(geo_dim_id);
+			//rci2log.log(geo_labels);
+			var i;
+			//
+			// 0 -> unit
+			if (unit_dim_id) {
+
+				sub_index = dataset.Dataset(0).Dimension(unit_dim_id).id;
+				rsi2_sources[keyCode].subIndicatorCode = sub_index[0];
+				rsi2_sources[keyCode].subIndicatorTitle = dataset.Dataset(0).Dimension(unit_dim_id).Category(0).label;
+			}
+		  	//rci2log.log('v2 77 key: '+rsi2_sources[keyCode].subIndicatorCode + ' / i: ' + rsi2_sources[keyCode].subIndicatorTitle);
+
+			/////// index of times
+		  	// 2 -> time
+			var time_index = dataset.Dataset(0).Dimension(time_dim_id).id;
+			var TimeSlotsInd=[]; // timeslots for this indicator
+			if(time_index) {
+				Object.keys(time_index).forEach(function(key) {
+				  var i = time_index[key];
+				  if(key==0) {
+					  //rci2log.log('v2 166: '+keyCode+' : key '+key + ' / i ' + i);
+				  }
+				  rsi2_sources[keyCode].Year = i; //key;
+				  /////  key=0 // i = 2016
+				  //TimeSlots[i] = key; --- key and i are the opposite in v2
+				  TimeSlotsInd[key] = i;
+				});
+			}
+			rsi2_sources[keyCode].TimeSlots=TimeSlotsInd;
+
+			////
+			var flag_value = dataset.Dataset(0).status;
+			//rci2log.log(167, keyCode, status_dim_id, dataset.Dataset(0).Dimension(status_dim_id), dataset.Dataset(0).status);
+			if(flag_value) {
+				var cc=0;
+				var timeI=0;
+				var regionI=0;
+				//// loop each value line
+				flag_value.forEach(function(value) {
+				//let flagRun = flag_value.map(value => {
+					/////  key=AT1 // value = 0
+				  var ior=rsi2_sources[keyCode].Index2RegionKey[regionI]; // Index2RegionKey[regionI]// IndexofRegion[regionI];
+				  //
+				  if(value===null) {
+					value='';
+				  } else {
+				  }
+				  tempVals[timeI]=value;
+				  //
+					//if(  ior.substring(0,2)=='AL' && ( keyCode=='6-1_edat_lfse_22' || keyCode=='6-2_edat_lfse_22')) {
+					//	rci2log.log(167,1190,keyCode,'ior '+ior,'regionI '+regionI,'&'+cc+' ; '+TimeSlots[timeI]+':'+TimeSlotsInd[timeI]+':'+timeI +' ; '+ value,tempVals);
+					//}
+				  //
+				  var iRegTime=TimeSlotsInd[timeI]+'|'+ior;
+				  FlagofRegion[iRegTime]=tempVals; //2016|BE10
+				  //
+				  cc++;
+				  timeI++;
+				  if(timeI >= Object.keys(time_index).length) {
+					timeI=0;
+					regionI++;
+					loops3++
+					var iRegTime=TimeSlotsInd[timeI]+'|'+ior;
+					// moved above - FlagofRegion[iRegTime]=tempVals; //2016|BE10
+					if(inlets_nuts1to2[ior]) {
+					  //rci2log.log('33/ '+inlets_nuts1to2[ior]);
+					  inlets_nuts1to2[ior].forEach(function(ior_nuts2) {
+						//rci2log.log('34/ '+ior_nuts2);
+						FlagofRegion[ior_nuts2]=tempVals;
+					  });
+					}
+					if(inlets_nuts1to3[ior]) {
+					  inlets_nuts1to3[ior].forEach(function(ior_nuts3) {
+						FlagofRegion[ior_nuts3]=tempVals;
+					  });
+					}
+					tempVals={};
+				  }
+				});
+				if(keyCode=='9-2_lfst_r_lfu3rt' ) {
+					rci2log.log('151 '+keyCode+' / '+rsi2_sources[keyCode].selectorTitle, FlagofRegion);
+				}
+			}
+			//	end flags
+			////
+			////
+			/////// value of regions
+			//var geo_value = dataset.Dataset(0).value;
+			//rci2log.log('v2 118 ',sIndicator);
+			//rci2log.log(118,keyCode,dDimensions4Geo);
+			//Data().dDimensions4Geo
+			//rci2log.log(dDimensions4GeoAll);
+			//var geo_value = dataset.Dataset(0).value;
+			//rci2log.log(geo_value);
+
+			rci2log.timeEnd('time load2_0- '+keyCode);
+
+
+			// loop sex values
+			for (var dDimProp in dDimensions4GeoAll) {
+				if (dDimensions4GeoAll.hasOwnProperty(dDimProp)) {
+					// setup sub code
+					var sub_keyCode=keyCode+'_'+dDimProp; // 11-2_edat_lfse_22_1824 + _sex0
+					// if it doesnt exist, use the main
+					if(!rsi2_sources[sub_keyCode]) {
+						sub_keyCode=keyCode;
+					}
+
+					rci2log.time('time load2_1- '+sub_keyCode);
+					//rci2log.time('time load2-118 '+sub_keyCode+'//'+dDimProp);
+					///rci2log.log('118/ ' +dDimProp+' : '+sub_keyCode);
+					//rci2log.log(dDimensions4GeoAll[dDimProp]);
+					// get array for specific Sex value
+					var dDimensions4Geo1=dDimensions4GeoAll[dDimProp];//dDimensions4Geo;
+					// filter values according to last sub dimension (Total in sex, not Females)
+
+					if(dDimProp=='all') {
+						var geo_value=dataset.Dataset(0).value;
+						//rci2log.log('118/ ',sub_keyCode,'dDimProp1='+dDimProp1+' ; ', 	geo_value );
+					} else {
+						for (var dDimProp1 in dDimensions4Geo1) {
+							if (dDimensions4Geo1.hasOwnProperty(dDimProp1)) {
+								// /**/
+								if(dDimProp==dDimProp1+dDimensions4GeoIndexNum[dDimProp]) {
+									var DataBKP= JSONstat (JSON.parse(JSON.stringify( dataset )) ) ;
+									var DataSlice=DataBKP.Slice([
+											[
+												dDimProp1 , dDimensions4GeoIndex[dDimProp]]
+											])  ;
+									/*rci2log.log('118/ ',sub_keyCode,'dDimProp1='+dDimProp1+' ; ', dDimensions4Geo1[dDimProp1], 'dDimProp='+dDimProp,
+												dDimensions4GeoIndexNum[dDimProp],
+												dDimensions4GeoIndex[dDimProp],
+												DataSlice.Dataset(0).value );
+									*/
+									var geo_value=DataSlice.Dataset(0).value;
+								}
+							}
+						}
+					}
+					//rci2log.timeEnd('time load2-118 '+sub_keyCode+'//'+dDimProp);
+
+					//
+					//
+					if(geo_value) {
+						//
+						var ValueofRegion= {};
+						//
+						var cc=0;
+						var timeI=0;
+						var regionI=0;
+						//// loop each value line
+						geo_value.forEach(function(value) {
+						//for (gv1 = 0; gv1 < geo_value.length; gv1++) {
+						   //var value=geo_value[gv1];
+						   loops4++;
+						  /////  key=AT1 // value = 0
+						  var ior=Index2RegionKey[regionI];// IndexofRegion[regionI];
+						  if(!ior) {
+							rci2log.log(1324,'ior not found for '+regionI,keyCode);
+						  }
+						  if(value===null) {
+							value='';  //rci2log.log('== '+cc+' ; '+timeI +' ; '+regionI + ' : ' + ior + ' + ' + sIndicator + ' / ' + value);
+						  } else {
+						  }
+						  tempVals[timeI]=value;
+						  /////// timeI=1, timeSlot=2016
+						  var TimeSlotsInd=rsi2_sources[keyCode].TimeSlots;
+						  rsi2_sources[sub_keyCode].TimeSlots=rsi2_sources[keyCode].TimeSlots;;
+						  //
+						  var iRegTime=TimeSlotsInd[timeI]+'|'+ior;
+						  ValueofRegion[iRegTime]=tempVals;		 //2016|BE10
+						  ///
+						  /////// charts and table
+						  var key1year=sub_keyCode+'_'+TimeSlotsInd[timeI];//keyCode
+						  //if(ior=='BG31') rci2log.log('166& '+cc+'; '+timeI +'='+TimeSlotsInd[timeI]+';'+regionI+' : '
+						  	//						+ iRegTime +'+ ' + key1year+'/ '+ sIndicator + ' / ' + value, FlagofRegion[iRegTime]);
+						  ///
+							if(typeof Value_Region_feature[key1year] !== 'undefined' && typeof ior !== 'undefined' ) {
+								var NameRegion=NameofRegion[ior]+' ('+ior+')';
+								var CountryISO2="";
+								if(typeof ior !== 'undefined' ) {
+									CountryISO2=ior.substr(0,2); //BE
+								} else {
+									rci2log.log('v2 45 '+regionI);
+								}
+								//Full country name => Belgium
+								var FullCountry=CountryName[CountryISO2];
+								//ID of country
+								var IDCountry=CountryName2ID[CountryISO2];
+								var runYear=TimeSlotsInd[timeI];
+								var flagthisyearP0=FlagofRegion[iRegTime];
+								var flagthisyearP='';
+								if(typeof flagthisyearP0 !== 'undefined'  ) {
+									flagthisyearP=flagthisyearP0[timeI];
+								} else {
+									rci2log.log(180, runYear, regionI, iRegTime);
+								}
+								// distr.plot values
+								vrf1=Value_Region_feature[key1year];
+								if(rci2_layout.distributionplotEnabled) {
+                  if(rci2_layout.valuesPrecision) {
+                    var val1=rci2_numspaces(value,rci2_layout.valuesPrecision);
+                  } else {
+                    var val1=rci2_numspaces(value,1);
+                  }
+									var vrf1row = { name: NameRegion, key1year: key1year, x: value, xF: val1  , time: runYear, y: IDCountry, Code: ior,
+										 flag: flagthisyearP, country: FullCountry, z: value};
+										var string1 = JSON.stringify(vrf1row)
+										if(Value_Region_featureIndex[string1] == null) {
+											//vrf1.push(vrf1row);
+											vrf1[vrf1.length]=vrf1row
+											Value_Region_feature[key1year]=vrf1;
+											Value_Region_featureIndex[string1]=1;
+										}
+									// distr.plot values of country
+									if(value!='') {
+										var key1country=key1year+'_'+IDCountry;
+										//if(FullCountry=='Finland') rci2log.log('166: '+key1country+';'+fNameTime+';'+tempV[fNameTime]['0']);
+										if(!Value_Region_feature[key1country]) Value_Region_feature[key1country]=[];
+										vrf1a=Value_Region_feature[key1country];
+										//vrf1a.push()
+                    if(rci2_layout.valuesPrecision) {
+                      var val1=rci2_numspaces(value,rci2_layout.valuesPrecision);
+                    } else {
+                      var val1=rci2_numspaces(value,1);
+                    }
+										vrf1arow={ name: NameRegion, x: value, xF: val1, time: runYear, y: IDCountry, Code: ior, flag: flagthisyearP, country: FullCountry, z: value};
+										vrf1a[vrf1a.length]=vrf1arow
+										Value_Region_feature[key1country]=vrf1a;
+									}
+								}
+								// data table values
+								vrf1table=Value_Region_feature[key1year+'_table'];
+								var tableRow={Region: NameofRegion[ior], time: runYear, Flag: flagthisyearP, Code:ior, Country: FullCountry};
+									var columnName= rsi2_sources[sub_keyCode].ShortTitle+' <span class=rciDataColumnSubTitle>'+rsi2_sources[sub_keyCode].SubTitle+'</span>';
+									TableCols2Key[columnName]=sub_keyCode;
+									tableRow[columnName]=value;
+									var string1 = JSON.stringify(tableRow)
+									if(Value_Region_featureIndex[string1] == null) {
+										//vrf1table.push(tableRow);
+										vrf1table[vrf1table.length]=tableRow
+										Value_Region_featureIndex[string1]=1;
+										//}
+									}
+									Value_Region_feature[key1year+'_table']=vrf1table;
+								///
+								var name1=NameofRegion[ior];
+								var fName=ior;
+								// bar chart values
+								if(rci2_layout.barEnabled) {
+									vrf1bar=Value_Region_feature[key1year+'_bar'];
+									if(value!='' || flagthisyearP) {
+										var barRow={name: name1+' ('+fName+')', y: value, time: runYear, Code: fName, flag: flagthisyearP, country: FullCountry};
+										var string1 = JSON.stringify(barRow)
+										if(Value_Region_featureIndex[string1] == null) {
+											//vrf1bar.push(barRow);
+											vrf1bar[vrf1bar.length]=barRow
+											Value_Region_featureIndex[string1]=1;
+											//}
+										}
+									}
+									Value_Region_feature[key1year+'_bar']=vrf1bar;
+								}
+							} else {
+								//if(ior=='BG31') rci2log.log(1410,'error',key1year,ior);
+							}
+						  ////
+						  cc++;
+						  timeI++;
+						  if(timeI >= Object.keys(time_index).length) { // we reached the end of time rows for this region
+							timeI=0; // reset
+							regionI++; // move  index of region to next one
+							//if(ior=='AL01') rci2log.log('166&A'+cc+' ; '+timeI +'='+TimeSlots[timeI]+' ; '+regionI + ' : ' + ior + ' + ' + sIndicator + ' / ' + value);
+							//ValueofRegion[ior]=tempVals;
+							if(inlets_nuts1to2[ior]) {
+							  //rci2log.log('33/ '+inlets_nuts1to2[ior]);
+							  inlets_nuts1to2[ior].forEach(function(ior_nuts2) {
+								//rci2log.log('34/ '+ior_nuts2);
+								ValueofRegion[ior_nuts2]=tempVals;
+							  });
+							}
+							if(inlets_nuts1to3[ior]) {
+							  inlets_nuts1to3[ior].forEach(function(ior_nuts3) {
+								ValueofRegion[ior_nuts3]=tempVals;
+							  });
+							}
+							tempVals={};
+						  }
+						}); // end loop geovalue
+						//
+						//rci2log.log('151 '+rsi2_sources[keyCode].selectorTitle);
+						//rci2log.log(ValueofRegion);
+						// sort for Zones
+						//rci2log.time('time load2-b '+sub_keyCode);
+						if(!rsi2_sources[keyCode].sZones || !rsi2_sources[sub_keyCode].sZones) {
+
+							var ValueofRegionSort=geo_value;
+							ValueofRegionSort.clean(null); // get values without the null
+							ValueofRegionSort.sort();
+							var zMin_data=ValueofRegionSort[0]; // what is the lowest value
+							ValueofRegionSort.reverse();
+							var zMax_data=ValueofRegionSort[0]; // what is the highest value
+
+							var ValueofRegionSort_unique = ValueofRegionSort.filter( rsi2_onlyUnique );
+							//if(keyCode=='10-2_tran_r_avgo_nm') rci2log.log(1405,': '+zMin_data+' -> '+zMax_data, ValueofRegionSort,ValueofRegionSort_unique);
+
+							// set zones
+							var zZones=[]; var valueLow=[]; var valueMax=[];
+							var zZone1={};
+							var zI=0;
+							var zMin=0;
+							var zMax=0;
+							[0, 16, 33, 51, 68, 84, 100].forEach(function(element, index, array) {
+								var qNum = rsi2_quantile(ValueofRegionSort_unique, element);
+								//if(keyCode=='10-2_tran_r_avgo_nm') rci2log.log(1405,zI+': '+element + " --> " + qNum );
+								valueLow[zI]=qNum; // set the start of the zone
+								if(zI>0) {
+									if(zI>5) qNum++;
+									valueMax[(zI-1)]=qNum; // set the end of the previous zone
+								}
+								zI++;
+							});
+							$.each(valueLow, function(index,value) {
+								if(index<6) {
+									//rci2log.log('valueLow: '+index + " --> " + value );
+									zZones.push ( { 'valueLow': value, 'value': valueMax[index], 'color': zColors[index] } );
+								}
+							});
+
+							rsi2_sources[keyCode].sZones = zZones;
+							rsi2_sources[sub_keyCode].sZones = zZones;
+							//rci2log.log(valueLow);
+							//rci2log.log(valueMax);
+							//rci2log.log(1405,keyCode,zZones, sub_keyCode);
+							//
+							///// assign zones to new codes
+							/*for (k = 0; k < newCodes.length; k++) {
+								var new_k1=newCodes[k];
+								rci2log.log(1405,new_k1);
+								rsi2_sources[new_k1].sZones=rsi2_sources[keyCode].sZones;
+							}*/
+						}
+						/// end if not Zones
+						//rci2log.timeEnd('time load2-b '+sub_keyCode);
+					}
+					//end if geo_value
+					//
+					rci2log.log('time load2 - '+sub_keyCode,dDimProp, 'loops', loops, loops1, loops2, loops3, loops4);
+					loops4=0;
+					//
+					rci2log.timeEnd('time load2_1- '+sub_keyCode);
+				}
+
+				// store values per keycode
+				Values_of_Region[sub_keyCode]=ValueofRegion;//				//keyCode
+				//rci2log.log("v2 1500 ",  keyCode,ValueofRegion);
+				Flags_of_Region[sub_keyCode]=FlagofRegion;
+        		rci2log.log("v2 loaded sub ",sub_keyCode);
+				rsi2_sources[sub_keyCode].Loaded=1;
+			}
+
+			// end loop sex* values
+			if(rsi2_sources[keyCode].hasSubDimensions==1) {
+				rci2log.log("v2 1500 deleting main, " + keyCode + "!");
+				delete rsi2_sources[keyCode]; // remove source after we added the sub dimensions
+			}
+			////
+			//rci2log.log("v2 279 setting values, " + keyCode + "!");
+			// last
+			if(sIndex==rsi2_srCC) {
+				rci2log.log("v2 195 init leaflet ");
+				//layout_init(currentNUTSlevel); // leaflet_init(currentNUTSlevel); // start map with NUTS 2 layers
+			}
+			////
+        } // end if dataset null
+		rci2log.timeEnd('time load2 total '+keyCode);
+		//if(rsi2_sources[keyCode]) rsi2_sources[keyCode].Loaded=1;
+    }
+    ); // end json stat
+  rci2log.log("v2 end load for ",keyCode);
+	//rsi2_sources[keyCode].Loaded=1;
+
+	/*var id = setTimeout(function() {
+	   //rci2log.log("v2 280 Bye, " + keyCode + "!");
+	   callback(null);
+	 }, 1600);
+	 return {
+	   abort: function() {
+		 clearTimeout(id);
+	   }
+	 };
+	*/
+	callback(null);;
+}
+
+if($.fn.dataTable) {
+	$.fn.dataTable.Api.register( 'order.neutral()', function () {
+		return this.iterator( 'table', function ( s ) {
+			s.aaSorting.length = 0;
+			s.aiDisplay.sort( function (a,b) {
+				return a-b;
+			} );
+			s.aiDisplayMaster.sort( function (a,b) {
+				return a-b;
+			} );
+		} );
+	} );
+}
+
+function rci2_highghtColumnTable() {
+	var colIdx=0;
+	var sourceIndex='';
+	for (var key in rsi2_sources) {
+		if (rsi2_sources.hasOwnProperty(key)) {
+			colIdx++;
+			if(key == CurrentPane) sourceIndex=colIdx+3;
+		}
+	}
+	rci2log.log(1246, 'index '+sourceIndex, 'pane '+CurrentPane);
+	$('#gene_table tr > td').removeClass( 'ActiveIndicator' );
+	if(sourceIndex) {
+		$('#gene_table tr > td:nth-child('+sourceIndex+')').addClass( 'ActiveIndicator' );
+	} else {
+		rci2log.log(1246, 'not found sourceIndex');
+	}
+	//
+}
+
+// based on http://bl.ocks.org/ahmohamed/4c4980f31abdef64e7e2
+function rci2_makeTable() {
+	var data, flags, sort_by, filter_cols; // Customizable variables
+	var table; // A reference to the main DataTable object
+
+	// This is a custom event dispatcher.
+	var dispatcher = d3.dispatch('highlight', 'select');
+
+	// Main function, where the actual plotting takes place.
+	function _table(targetDiv) {
+	  rci2log.log(1289, data);
+	  //rci2log.log(1289, filter_cols);
+	  // Create and select table skeleton
+	  var tableSelect = targetDiv.append("table")
+	    .attr("class", "display compact")
+			// Generally, hard-coding Ids is wrong, because then
+			// you can't have 2 table plots in one page (both will have the same id).
+			// I will leave it for now for simplicity. TODO: remove hard-coded id.
+	    .attr("id", "gene_table")
+	    .style("visibility", "hidden"); // Hide table until style loads;
+
+		//
+		//var filter_cols=[];
+		//filter_cols[0]='Key';
+		// Set column names
+		if(typeof data[0] !== 'undefined'){
+			var colnames = Object.keys(data[0]);
+			if(typeof filter_cols !== 'undefined'){
+				// If we have filtered cols, remove them.
+				colnames = colnames.filter(function (e) {
+						// An index of -1 indicate an element is not in the array.
+						// If the col_name can't be found in the filter_col array, retain it.
+						return filter_cols.indexOf(e) < 0;
+				});
+			}
+		} else {
+			rci2log.log(1289, 'missing data!',data);
+		}
+		//rci2log.log('1667a',colnames);
+		// Here I initialize the table and head only.
+		// I will let DataTables handle the table body.
+	  var headSelect = tableSelect.append("thead");
+	  headSelect.append("tr")
+	    .selectAll('td')
+	    .data(colnames).enter()
+		    .append('td')
+		    .html(function(d) {
+				if((!rci2_layout.regionComparison) || (rci2_layout.regionComparison && d!='Key')) {
+					return d;
+				}
+			});
+
+		if(typeof sort_by !== 'undefined'){
+			// if we have a sort_by column, format it according to datatables.
+			sort_by[0] = colnames.indexOf(sort_by[0]); //colname to col idx
+			sort_by = [sort_by]; //wrap it in an array
+		}
+			var cc=0;
+		var tColumns = colnames.map(function(e) {
+			if((!rci2_layout.regionComparison) || (rci2_layout.regionComparison && e!='Key')) {
+				trcc++;
+				if(trcc==1) return {data: e,  "defaultContent": "" };
+				else return {data: e,  "defaultContent": "", render:  function ( data, type, row  ) {
+						if(type==='display'){
+							var data1='';
+							if (typeof data !== 'undefined') {
+								data1=data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+								if(row.Key) {
+									var tablekey=row.Key;
+									var key1=tablekey.replace("table_","",tablekey);
+								} else {
+									/// e = GDP per inhabitant
+									if(TableCols2Key[e]) { // we can get the key from the full column title
+										key1=TableCols2Key[e]; // key1= 2-nama_10r_2gdp
+									}
+								}
+								if(key1 && e!='Indicator') {
+									if (data1 && rsi2_sources[key1].sUnit) {
+										data1=data1+' '+rsi2_sources[key1].sUnit; // add unit next to number
+									}
+								}
+								var flag1='';
+								if(rci2_layout.regionComparison) { // transposed mode
+									var indic1=e; // full region title as in heading
+									var indic2=indic1+'_Flag';// construct flag variable
+									var flag1=row[indic2];
+									//rci2log.log(e+' / '+flag1)
+									if(flag1) data1=data1+''+flag1+''; // add flag next to number/unit
+								} else {
+									cc++;
+									if(cc) {
+										//rci2log.log(';');
+										//rci2log.log(e);
+										//rci2log.log(row);
+										var indic1=e; // full region title as in heading
+										var indic2=indic1+' Flag';// construct flag variable
+										var flag1=row[indic2];
+										//rci2log.log(e+' / '+flag1)
+										if(flag1) data1=data1+''+flag1+''; // add flag next to number/unit
+									}
+								}
+							}
+							return data1;
+						} else return data;
+					}
+				};
+			}
+		});
+		//rci2log.log('1667b',tColumns, tColumns.length, Object.keys(rsi2_sources).length );
+
+		// Apply DataTable formatting: https://www.datatables.net/
+		$(document).ready(function() {
+			$.fn.dataTable.ext.errMode = "none"; // instead of alerts, write to javascript
+			var dtPaging=true; var dtSearching=true; var dtInfo=true;
+			var dtScrollX=true;
+			var dtScrollY=(rci2_layout.height_table_scroll)+"px";
+			var dtFixedColumns={ leftColumns: 1 };
+			var dtOrdering=true;
+			if(rci2_layout.tableOrdering==false) dtOrdering=false;
+			if(data.length<10 && rci2_layout.mode!='outermost') {
+				dtFixedColumns=false; dtScrollX=false;dtScrollY=false;  dtSearching=false; dtPaging=false; dtInfo=false;
+			}
+			if(rci2_layout.mode=='outermost') {
+				dtSearching=false; dtPaging=true; dtInfo=false;
+			}
+			rci2log.log('2108',dtScrollX, data.length, dtScrollY );
+			if(rci2_layout.regionComparison) {
+				var tRowID='Key';
+				var dDom='t';// just the table
+				var dButtons=[];
+			} else {
+				var tRowID='Code';
+				var dDom='tfB'; // Buttons, filter, table
+				if(dtSearching) {
+					var dButtons=[
+						{
+							text: '<i class="fa fa-sort" alt="Reset order"></i> Reset view',
+							action: function ( e, dt, node, config ) {
+								//$('#gene_table').dataTable()
+								table.order.neutral().draw();
+							}
+						}
+					];
+				} else {
+					var dButtons=[];
+				}
+			}
+			// setup DT
+			table = $('#gene_table').on( 'error.dt', function ( e, settings, techNote, message ) {
+				rci2log.log( 'An error has been reported by DataTables: ', message );
+			} ).DataTable({
+					// Here, I am supplying DataTable with the data to fill the table.
+					// This is more efficient than supplying an already contructed table.
+					// Refer to http://datatables.net/manual/data#Objects for details.
+			  data: data ,
+			  rowId: tRowID,
+			  columns: tColumns,
+			  language: { 'thousands': " "},
+			  columnDefs: [{className:"col1", targets: [0]},{className:"col2", targets: [1]},{className:"col3", targets: [2] }],
+			  "bLengthChange": false, // Disable page size change
+			  "bDeferRender": true,
+			  "autowidth": false,
+			  "order": sort_by,
+			  "retrieve": true,
+			  "deferRender": false,
+			  /*		  "pageLength": 10000, */
+			  "info": false, /* showing 10 of X entries*/
+			  "paging": false /*dtPaging*/,
+			  "searching": dtSearching,
+			  "ordering": dtOrdering,
+			  "scrollY": dtScrollY,
+			  "scrollX": dtScrollX,
+			  "scrollCollapse": true,
+			  "select": true,
+			  "order": [] ,
+			  "fixedColumns" : dtFixedColumns,
+			  "dom": dDom,
+			  "buttons": dButtons,
+			});
+
+			tableSelect.style("visibility", "visible");
+			d3.selectAll('#gene_table_wrapper table').style("visibility", "visible");
+			$('#gene_table tbody')
+				.on( 'mouseover', 'tr', function () { highlight(this, true); } )
+				.on( 'mouseleave', 'tr', function () { highlight(this, false); } )
+				.on('click', 'tr', function () {
+					$('#gene_table tr').removeClass('selected').removeClass('highlight');
+					var cRegion=$(this).attr('id');
+					if(!cRegion) {
+						rci2log.log($(this));
+						if($(this).is('td')) {
+							var pThis=$(this).parent().attr('id');
+							if(pThis) cRegion=pThis;
+						}
+					}
+					rci2log.log("clicked "+cRegion);
+					//
+					if(rci2_layout.regionComparison && cRegion && TranspRow) { // if in transposed mode, click on row will change the map indicator
+						//
+						var tr_queue=d3.queue(1); // 1 loads concurrently
+						tr_queue.defer(rciInfoLoading_start);
+						tr_queue.defer(function(this1, callback) {
+							//rci2log.log($(this1).attr('cc'));
+							var trCC=$(this1).attr('id'); //table_Key
+							var trCCt=TranspRow[trCC]; // full title
+							trCCt=trCCt.trim();
+							rci2log.log('439 id '+trCC+' : '+trCCt);
+							var spanCC=0; var spanCCclicked='';
+							$('form.leaflet-control-layers-list span').each(function() {
+								var spanhtml=$(this).html();
+								spanhtml=spanhtml.trim();
+								if(spanhtml==trCCt) {
+									rci2log.log($(this).html());
+									rci2log.log(spanCC);
+									spanCCclicked=spanCC;
+								}
+								spanCC++;
+							});
+							$('form.leaflet-control-layers-list input').eq(spanCCclicked).trigger('click');
+							/*var id = setTimeout(function() {
+							   callback(null);
+							 }, 160);
+							 return {
+							   abort: function() {
+								 clearTimeout(id);
+							   }
+							 };*/
+						}, this);
+						tr_queue.defer(rciInfoLoading_end);
+						tr_queue.await(ready);
+					} else {
+						/////// regular layout
+						clickSource='table';
+						rci2_changeRegion(cRegion );
+					}
+					// mark row selected
+					select(this);
+				});
+
+			if(CurrentRegion && rci2_layout.scheme=='twocolumns') rci2_regionClick(CurrentRegion);
+			// selected row
+			$('#gene_table tr').removeClass('selected').removeClass('highlight');
+			$('#gene_table #table_'+CurrentPane).addClass('selected').addClass('highlight');
+			//update height
+			rci2_layout.height_visRow2 = $('#gene_table_wrapper').height()*1;
+			rci2log.log('h1', 'visrow2',rci2_layout.height_visRow2  );
+			//
+			rci2_highghtColumnTable(); // highlight column according to current indicator
+			//
+		});
+
+
+	}
+
+	/**** Helper functions to highlight and select data **************/
+	function highlight(row, on_off) {
+		if(typeof on_off === 'undefined'){
+			// if on_off is not provided, just toggle class.
+			on_off = !d3.select(row).classed('highlight');
+		}
+		// Set the row's class as highlighted if on==true,
+		// Otherwise remove the 'highlighted' class attribute.
+		// In DataTables, this is handled automatically for us.
+		d3.select(row).classed('highlight', on_off);
+
+		// Fire a highlight event, with the data and highlight status.
+		dispatcher.highlight(table.rows(row).data()[0], on_off);
+	}
+	function select(row, on_off) {
+		// Similar to highlight function.
+		if(typeof on_off === 'undefined'){
+			on_off = !d3.select(row).classed('selected');
+		}
+
+		d3.select(row).classed('selected', on_off);
+
+		// Fire a select event, with the data and selected status.
+		dispatcher.select(table.rows(row).data()[0], on_off);
+	}
+
+	/**** Setter / getters functions to customize the table plot *****/
+	_table.datum = function(_){
+		if (!arguments.length) {return data;}
+		data = _;
+		return _table;
+	};
+	_table.flagum = function(_){
+		if (!arguments.length) {return flags;}
+		flags = _;
+		return _table;
+	};
+	_table.filterCols = function(_){
+		if (!arguments.length) {return filter_cols;}
+		filter_cols = _;
+		return _table;
+	};
+	_table.sortBy = function(colname, ascending){
+		if (!arguments.length) {return sort_by;}
+		sort_by = [];
+		sort_by[0] = colname;
+		sort_by[1] = ascending ? 'asc': 'desc';
+		return _table;
+	};
+
+
+	// This allows other objects to 'listen' to events dispatched by the _table object.
+	d3.rebind(_table, dispatcher, 'on');
+
+	// This is the return of the main function 'makeTable'
+	return _table;
+}
+
+
+function scatterYtitle() {
+	for (var key in rsi2_sources) {
+      if (rsi2_sources.hasOwnProperty(key)) {
+		  if(rsi2_sources[key].scatterY) {
+			return rsi2_sources[key].ShortTitle+' '+rsi2_sources[key].SubTitle;
+		  }
+	  }
+	}
+}
+function scatterZtitle() {
+	for (var key in rsi2_sources) {
+      if (rsi2_sources.hasOwnProperty(key)) {
+		  if(rsi2_sources[key].scatterZ) {
+			return rsi2_sources[key].ShortTitle+' '+rsi2_sources[key].SubTitle;
+		  }
+	  }
+	}
+}
+function inIframe () {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+}

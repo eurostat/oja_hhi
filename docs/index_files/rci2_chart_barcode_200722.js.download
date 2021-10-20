@@ -1,0 +1,103 @@
+var rci2Barcode;
+
+
+// function called by the barcode when hovering over the bar
+function barcodeOverCallback(d) {
+  //console.log("barcode.hover 0722:", d);
+  rci2_changeRegion(d.Code); // change active region and show popup
+}
+// function called by the barcode when hovering out of the bar
+function barcodeOutCallback(d) {
+  // console.log("barcode.out:", d);
+  rsiMap.closePopup(); // hide RCI popup
+}
+
+function rci2_chartBarcode(vis_div, mouseoverHandler, mouseoutHandler) {
+  var PADDING_LEFT = 5;
+  var PADDING_RIGHT = 10;
+
+  $('#'+vis_div).html("barcode starting ");
+  $('#'+vis_div).css("background-color", '#ffffff');
+  $('#'+vis_div).html("").addClass('px-2').css('position','relative');
+  $('#'+vis_div).append('<div style="height:100%" id="'+vis_div+'_barcode"></div>');
+  var visHeight =  $("#"+vis_div+'_barcode').height()
+  var visWidth =  $("#"+vis_div+'_barcode').width() - (PADDING_LEFT + PADDING_RIGHT)
+  // generate the chart
+  var key1year = defLayer.pane+'_'+current_year;
+  disDataAll=Value_Region_feature[key1year+'_bar'];
+  var disDataAllSorted=[];
+  $.each(disDataAll, function(i) {
+    /// exclude empty values and candidate countries
+    if(disDataAll[i].y!='' && disDataAll[i].country!='Albania' && disDataAll[i].country!='Montenegro'
+          && disDataAll[i].country!='Serbia'
+          && disDataAll[i].country!='North Macedonia' && disDataAll[i].country!='Turkey') {
+            disDataAllSorted.push(disDataAll[i]);// ignore empty lines
+    }
+  })
+
+  var barcodeoptions={
+      bindto: "#"+vis_div+'_barcode',
+      padding: {
+        left: PADDING_LEFT,
+        right: PADDING_RIGHT
+      },
+      size: {
+        height: 80,
+        width: visWidth,
+      },
+      tick: {
+        format: function (d) {
+          return d
+        },
+        count: 8,
+        padding: 4
+      },
+      bar: {
+        height: 80,
+        width: 4,
+        overheight:20,
+        styleclass: 'bar-normal',
+        styleoverclass: 'bar-over'
+      },
+      color: {
+        default: function (d) {
+          return rci2_chartColor(d.y)
+        },
+        over: function (d) {
+          // apply color depending on color class
+          return rci2_chartColor(d.y)
+        }
+      },
+      tooltip: {
+        offset: {
+          left: 10
+        },
+        format: function (d) {
+          return "<span class='bolded'>" + d.name + '</span>' /*:  + d.y*/
+        }
+      },
+      data: {
+        json: disDataAllSorted,
+        name: 'name',
+        value: 'y',
+        id: 'Code',
+        // onclick: clickHandler,
+        onover: mouseoverHandler,
+        onout: mouseoutHandler
+      }
+  }
+  //console.log('barcode ', CurrentRegion, barcodeoptions)
+  rci2Barcode = eurostatBarcodeGenerator.generateBarcode(barcodeoptions);
+}
+
+function rci2_barcode_triggerHover(region) {
+  if(rci2Barcode) {
+    rci2Barcode.triggerHover( region); // trigger region
+  }
+}
+
+function rci2_barcode_triggerOut(region) {
+  if(rci2Barcode) {
+    rci2Barcode.triggerOut( region );
+  }
+}

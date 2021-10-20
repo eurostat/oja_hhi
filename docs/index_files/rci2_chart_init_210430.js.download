@@ -1,0 +1,721 @@
+var lastBarcode='';
+
+// default chart type, set active on load
+$('#rci2_nav_tabs .btn').each(function() {
+ if($(this).attr('chart-type')==current_chart)  {
+   $('#rci2_nav_tabs .btn').removeClass('active');
+ rci2log.log('11135 '+$(this).attr('id'));
+   $(this).addClass('active');
+ }
+});
+
+
+function chart_init(chart_type, vis_div) {
+
+ if(!vis_div) vis_div='visContainer';
+
+ var h18=rci2_layout.height_vis;// reset to default each time -- $('#rightContainer').height();
+ if(rci2_layout.selectorOneHeader=='Right') {
+   if(vis_div=='visContainer') {
+     h18 = h18 - $('#rsi2_indic_selector_containerRight').height()-8;
+   }
+ }
+ if(rci2_layout.selectorOneHeader=='Left') {
+   if(vis_div=='visContainerLeft') {
+     h18 = h18 - $('#rsi2_indic_selector_containerLeft').height()-8;
+   }
+ }
+ if(rci2_layout.infoMapFooter!='') {
+  if(rci2_layout.scheme=='tworows') {
+    h18 = h18 - $('#mapInfoFooter').height()-2;
+  }
+ }
+
+
+if(!chart_type) {
+ chart_type=current_chart;
+}
+if(chart_type) {
+  $('#'+vis_div).html('101 Loading '+chart_type).height(h18);
+}
+
+ //rci2log.log(defLayer);
+ ////
+ var key1year = defLayer.pane+'_'+current_year;
+ rci2log.log(101, '/30/ '+chart_type+' / '+key1year, h18, vis_div, rci2_layout.selectorOneHeader);
+
+ if(!defLayer.zone) {
+   //$('#'+vis_div).html('No chart displayed for a typology').height(h18);
+   rci2log.log(101, '/data 30/ not loaded '+chart_type+' / '+key1year);
+   var rsi2_lazy_queue = d3.queue(1); // 1 loads concurrently
+   rsi2_lazy_queue.defer(function(index,callback) {
+     rci2log.log(101, '/data 30/ waiting a bit  '+chart_type+' / '+key1year);
+     $('#'+vis_div).html('Still loading');
+     $('#rciInfoLoading').show();
+     //
+     var id = setTimeout(function() {
+       $('#rciInfoLoading').hide();
+       rci2log.log(101," Bye, " + index + "!");
+       callback(null);
+     }, 1000);
+     return {
+       abort: function() {
+         rci2log.log(101," abort!");
+         clearTimeout(id);
+       }
+     };
+   },1);
+   rsi2_lazy_queue.defer(function(index,callback) {
+     rci2log.log(101, '/data 30/ waiting a bit 2 '+chart_type+' / '+key1year);
+     //
+     changecurrentyear(current_year);
+     //
+   },1);
+   rsi2_lazy_queue.await(ready);
+   //
+   return;
+  }
+
+  if(chart_type=='barcode') {
+    rci2_chartBarcode(vis_div, barcodeOverCallback, barcodeOutCallback);
+  }
+
+  if(chart_type=='trend') {
+   rci2_chartTrend(vis_div);
+  }
+
+ if(chart_type=='scatterplot') {
+   $('#'+vis_div).html("");
+   var c_width=$('#'+vis_div).width();
+   $('#'+vis_div).append("<div id=visAxis_Y></div>");
+   rci2_chartAxis('Y', key_scatterY);
+   //
+   $('#'+vis_div).append("<div id=visScatterContainer></div>");
+   $('#visScatterContainer').width(c_width-30);
+   $('#visScatterContainer').append("<div id=visAxis_Z></div>");
+   $('#visAxis_Z').height('25px');
+   rci2_chartAxis('Z', key_scatterZ);
+   //
+   $('.btn-axis').css('max-width',c_width-50);
+   //
+   var c_height=h18-30;//h1n+h1Title;
+   $('#visScatterContainer').append("<div id=visScatter></div>");
+   $('#visScatter').height(c_height);
+   $('#visScatter').width(c_width-30);
+
+   var TimeSlotsInd_Y=rsi2_sources[key_scatterY].TimeSlots;
+   rci2log.log(101,"   " + key_scatterY + "!", current_year, rci2_timelineLimits() );
+   if(!TimeSlotsInd_Y.includes(current_year+'')) { // we have no date for the Y axis for this year, find the previous one
+     rci2log.log(101," move down year " + key_scatterY + "!");
+     current_year--;
+     changecurrentyear(current_year+'');
+     return;
+   }
+
+   //rci2log.log(101,Value_Region_feature[key1year+'_scatter']);
+
+   current_chart_object=Highcharts.chart('visScatter', {
+       credits: {
+       enabled: false
+       },
+       chart: {
+       marginLeft:  70,
+       height: c_height,
+       type: 'bubble',
+       zoomType: 'xy'
+       },
+       title: { enabled: false, text:''   },
+       subtitle: {	 enabled: false,text:  ''	    }, /*scatterZtitle()	*/
+       xAxis: {
+       title: {
+         enabled: true,  text: defLayer.name
+       },
+       startOnTick: false,
+       endOnTick: false,
+       showLastLabel: true,
+       /*tickPixelInterval: 130,*/
+       tickAmount: 5,
+       zIndex: 3
+       },
+       yAxis: {
+       title: { enabled:  false	 ,  text: scatterYtitle()			},
+       startOnTick: false,
+       showEmpty: false,
+       tickPixelInterval: 100,
+       },
+       legend: false,
+       plotOptions: {
+       allowPointSelect : true,
+       series: {
+         cursor: 'pointer',
+         events:{
+           click: function(){
+             rci2log.log('clicked chart');
+             if(this.halo) {
+               if(this.halo.point) {
+                 if(this.halo.point.Code) {
+                   clickSource='chart';
+                   rci2log.log(this.halo.point.Code);
+                   rci2_changeRegion(this.halo.point.Code)
+                 }
+               }
+             }
+           }
+         },
+       },
+       bubble: {
+           zoneAxis: 'x',
+           minSize: 10,
+           maxSize: 35,
+           marker: {
+               fillOpacity: 0.8,
+               lineWidth: 0.5,
+               lineColor: 'rgba(245,245,245,50)',
+           }
+         },
+       /*scatter: {
+         marker: {
+         radius: 5,
+         states: {
+           hover: {
+             enabled: true,
+             lineColor: 'rgb(100,100,100)'
+           }
+         }
+         },
+         states: {
+         hover: {
+           marker: {
+             enabled: false
+           }
+         }
+         }
+       }*/
+       } ,
+       tooltip: {
+       useHTML: true,
+       headerFormat: '',
+       pointFormat: '<div class=hChartTooltip><b>{point.name}</b> <em>{point.country}</em><br><div>{series.name} ({point.time}): <b class=hChart_bNum>{point.x:,.1f}</b> '+
+         defLayer.unit+'{point.flag}</div><div>'+rsi2_sources[key_scatterY].ShortTitle+' : <b>{point.y:,.1f}</b> '+rsi2_sources[key_scatterY].sUnit+'{point.flag_y} </div><div>'+
+         rsi2_sources[key_scatterZ].ShortTitle+' : <b>{point.z:,.1f}</b> '+rsi2_sources[key_scatterZ].sUnit+'{point.flag_z}</div></div>'
+        },
+
+       series: [{
+       name: defLayer.name,
+       zones: defLayer.zone,
+       data: Value_Region_feature[key1year+'_scatter'] /* defLayer.vals_scatter*/,
+
+       }]
+   });
+ }
+
+ /* //////////////////////////////////////////////////// */
+ if(chart_type=='distribution') {
+   //var c_height=h18;// h1n+h1Title;
+   //$('#'+vis_div).height(c_height);
+   var ccheightBar=22;//13;//25
+   var cclines = 31; // 28+3 extra(candidates, etc)
+   var ccheight= cclines * (ccheightBar+3);
+   if(ccheight<h18) ccheight=h18;
+   if(vis_div=='visContainer') $('#rightContainer').height(h18).css('overflow-y','scroll').css('max-height',h18);;
+   $("#"+vis_div).height(ccheight);
+
+   //
+   // delete EU28, EU?19
+   var CountryIDName_dist = CountryIDName;
+   //delete CountryIDName_dist[0]; //eu28
+   //delete CountryIDName_dist[1]; //eu19
+   CountryIDName_dist[1]='';
+   //
+   rci2log.log(CountryIDName_dist, 134 );
+   var disDataAll0=Value_Region_feature[key1year];//defLayer.vals;
+   rci2log.log(disDataAll0, 134);
+   //const disDataAll = disDataAll0.filter(disDataAll1 => disDataAll1.y > 1);
+   //rci2log.log(disDataAll,134);
+   var disDataAll = disDataAll0;
+
+   var disHighLow=[];
+   var dis_bottom_data=[];
+   var dis_max_data=[];
+   // create object for Range chart
+   $.each(CountryIDName_dist,function(iCountryID, vCountryName) {
+     //rci2log.log(133, iCountryID+';'+vCountryName+';'+defLayer.pane );
+     var iCID=key1year+'_'+iCountryID;
+     if(Value_Region_feature[iCID]) {
+       var disData=Value_Region_feature[iCID];
+       disData.sort(function(a, b){ // sort by z (value) -- low to high
+         var a1= a.z, b1= b.z; // values in plot array are in z
+         if(a1== b1) return 0;
+         return a1 > b1? 1: -1; // change to > for opposite order
+       });
+       var disData1=disData.slice(0, 1);
+       dis_bottom_data[iCountryID] = 1 * disData1[0].z; // what is the bottom value - used in   dist.plot -> xF for formatted
+       var disData2=disData.slice(-1);
+       dis_max_data[iCountryID] = 1 * disData2[0].z; // what is the highest value - used in   dist.plot -> xF for formatted
+       //rci2log.log('456 '+dis_max_data+' -> '+dis_bottom_data);
+       disHighLow.push({ x: dis_bottom_data[iCountryID], xF: rci2_numspaces(dis_bottom_data[iCountryID],1),
+         time: disData1[0].time, x2: dis_max_data[iCountryID], x2F: rci2_numspaces(dis_max_data[iCountryID], 1),
+          y: parseInt(iCountryID), name: vCountryName, color: 'rgba(44,44,44,0.2)'});
+     }
+   });
+   //
+
+   rci2log.log(disHighLow, 134 );
+
+   // setup top-bottom labels in the regular plot series
+   $.each(disDataAll,function(iLine, vData) {
+     if (dis_bottom_data[vData.y] != dis_max_data[vData.y]) {
+       if (vData.x == dis_bottom_data[vData.y]) {
+         var Line1 = disDataAll[iLine];
+         Line1.xF= rci2_numspaces(vData.x,1);
+         Line1.dataLabels = { format: '{point.xF}', enabled: true, verticalAlign: 'middle', align: 'right', x: -14 };
+         disDataAll[iLine] = Line1;
+       }
+       if (vData.x == dis_max_data[vData.y]) {
+         var Line1 = disDataAll[iLine];
+         Line1.xF= rci2_numspaces(vData.x,1);
+         Line1.dataLabels = { format: '{point.xF}',  enabled: true, verticalAlign: 'middle', align: 'left', x: +14 };
+         disDataAll[iLine] = Line1;
+       }
+     }
+   });
+   //rci2log.log(133, disDataAll, disHighLow, CountryIDName_dist);
+   //rci2log.log(defLayer.zone);
+   //
+   current_chart_object=Highcharts.chart(vis_div, {
+       credits: {
+       enabled: false
+       },
+       chart: {
+       marginLeft:  120,
+       height: c_height,
+       /*type: 'bubble',*/
+       zoomType: 'xy'
+       },
+       title: {
+       enabled: false, text:'' /*text: 'GDP '*/
+       },
+       subtitle: {	/*text: 'Source: Eurostat  2003'*/
+       },
+       xAxis: {
+       title: {
+         enabled: false,
+         text: ''
+       },
+       tickPixelInterval: 125,
+       opposite: true,
+       startOnTick: true,
+       endOnTick: true,
+       showLastLabel: true,
+       zIndex: 3
+       },
+       yAxis: {
+       max: 38, /* otherwise we have an empty "37" line */
+       title: {
+           enabled:  false	/*    text: 'Countries'*/
+         },
+       categories: CountryIDName_dist, /* {0:'BE',1:'UK',2:'FR',3:'DE',4:'GR'}*/
+       startOnTick: false,
+       min: 0, /* 2= remove first countries? */
+       reversed: true
+       },
+       legend: false,
+       /*legend: {
+     layout: 'vertical',
+     align: 'left',
+     verticalAlign: 'top',
+     x: 100,
+     y: 70,
+     floating: true,
+     backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
+     borderWidth: 1
+       },*/
+       plotOptions: {
+       animation: true,
+       allowPointSelect : true,
+       series: {
+         cursor: 'pointer',
+         events:{
+           click: function(){
+             rci2log.log('clicked chart');
+             if(this.halo) {
+               if(this.halo.point) {
+                 if(this.halo.point.Code) {
+                   clickSource='chart';
+                   rci2log.log(this.halo.point.Code);
+                   rci2_changeRegion(this.halo.point.Code)
+                 }
+               }
+             }
+           }
+         },
+       },
+       bubble: {
+           minSize: 12,
+           maxSize: 12,
+         marker: {
+             fillOpacity: 0.8,
+             lineWidth: 1,
+             lineColor: 'rgba(222,222,222,0.2)',
+         }
+       },
+       scatter: {
+         /*marker: {
+           minSize: 15,
+           maxSize: 15,
+           fillOpacity: 1,
+           radius: 5,
+           states: {
+                 select: {
+                   enabled: true,
+                   lineColor: 'rgba(1,1,1,1)'
+                 },
+                 hover: {
+                   enabled: true ,
+                   lineColor: '#550101'
+                 }
+               }
+             },
+         states: {
+           hover: {
+             marker: {
+               enabled: false
+             }
+           }
+         } */
+       }
+       } ,
+       tooltip: {
+       useHTML: true,
+       headerFormat: '',
+       pointFormat: '<div class=hChartTooltip><b>{point.name}</b> <em>{point.country}</em><br><div class=hChartTooltipSeries>{series.name} ({point.time}): '+
+         '<b class=hChart_bNum>{point.x}</b> '+defLayer.unit+'{point.flag}</div></div>'
+        }, /* xF */
+
+       series: [{
+       name: 'Range',
+       type: 'xrange',
+       borderColor: 'rgba(99,99,99,0.1)',
+       borderWidth: 1,
+       pointWidth: 11,
+       data: disHighLow,
+       dataLabels: { enabled: false } ,
+       tooltip: {
+         useHTML: true,
+         headerFormat: '',
+         pointFormat: '<b>{point.name}</b><br><div>{series.name} ({point.time}): <b class=hChart_bNum>{point.xF} - {point.x2F}</b> '+defLayer.unit+'</div>'
+        }
+     }
+     ,
+     {
+       name: defLayer.name,
+       type: 'bubble',
+       zones: defLayer.zone,
+       data: disDataAll,
+       dataLabels: {
+         rotation: 0,
+         color: '#999999',
+         borderWidth: 0,
+         style: { fontWeight: "normal", fontSize: "10px", color: "gray" }
+       },
+       }]
+   });
+ }
+
+ /* //////////////////////////////////////////////////// */
+
+
+ if(chart_type=='bar') {
+   var ccheightBar=13;//25
+   var cclines = (defLayer.vals_bar.length);
+   if(cclines<6) cclines=6; // treat as if we have 6
+   var ccheight= cclines * (ccheightBar+3);
+   if(ccheight<h18) {
+     var labelcontainer=0;
+     if(rci2_layout.selectorOneHeader=='Left') labelcontainer=$('#rsi2_indic_selector_containerLeft').height();
+     if(rci2_layout.selectorOneHeader=='Right') labelcontainer=$('#rsi2_indic_selector_containerRight').height();
+     ccheight=h18-labelcontainer; // minimum height
+     ccheightBar= ((ccheight-50-labelcontainer)/cclines) - 3
+     ccheightBar = Math.round(ccheightBar);
+     if(ccheightBar>30) ccheightBar=30;
+     //rci2log.log('bar', ccheightBar);
+   }
+
+   var allEUdata=Value_Region_feature[key1year+'_bar'];//defLayer.vals_bar;
+   allEUdata.sort(function(a, b){ // sort by y (value)
+     var a1= a.y, b1= b.y;
+     if(a1== b1) return 0;
+         return a1< b1? 1: -1; // change to > for opposite order
+   });
+
+   if(vis_div=='visContainer') $('#rightContainer').height(h18).css('overflow-y','scroll').css('max-height',h18);;
+   $("#"+vis_div).height(ccheight);
+   //
+   //rci2log.log(376,defLayer.vals_bar);
+   //
+   current_chart_object=Highcharts.chart(vis_div, {
+      credits: {
+       enabled: false
+         },
+     chart: {
+       marginLeft:  170,
+       type: 'bar',
+       animation: false
+     },
+     title: {
+       enabled: false, text: ' ' /*defLayer.name*/,
+       style: {
+           fontSize: '11px'
+         }
+     },
+     subtitle: {
+       text: ' '
+     },
+     xAxis: {
+       type: 'category',
+       offset: 2,
+       tickLength: 5,
+       gridLineWidth: 1,
+       gridLineColor: '#eeeeee',
+       //tickPosition: "inside",
+       labels: {
+         ///rotation: -45,
+         autoRotation: false,
+         style: {
+           fontSize: '9px'
+         },
+         padding: 4
+       }
+     },
+     yAxis: {
+       opposite:true,
+       tickPixelInterval: 125,
+       min: 0,
+       title: {
+         text: ''
+       }
+     },
+     plotOptions: {
+       allowPointSelect : true,
+       series: {
+         cursor: 'pointer',
+         events:{
+           click: function(event){
+             rci2log.log('clicked chart');
+             if(event) {
+               if(event.point) {
+                 if(event.point.Code) {
+                   clickSource='chart';
+                   rci2log.log(event.point.Code);
+                   rci2_changeRegion(event.point.Code)
+                 }
+               }
+             }
+           }
+         },
+       },
+     },
+     legend: {
+       enabled: false
+     },
+     tooltip: {
+       useHTML: true,
+       headerFormat: '',
+       pointFormat: '<b>{point.name}</b> <em>{point.country}</em><br><div>{series.name} ({point.time}): <b class=hChart_bNum>{point.y:,.1f}</b> '+defLayer.unit+'{point.flag}</div>'
+     },
+     series: [{
+       name: defLayer.name,
+       zones: defLayer.zone,
+       data: allEUdata,
+       animation: false,
+       turboThreshold: 0,
+       pointPadding: 0.1,
+       pointWidth: ccheightBar,
+       groupPadding: 0,
+         borderWidth: 0,
+         shadow: false,
+       dataLabels: {
+         enabled: true,
+         rotation: 0,
+         color: '#999999',
+         borderWidth: 0,
+         /*align: 'right',*/
+         format: '{point.y:,.1f}', // one decimal, thousands separator
+         y: 0, // 10 pixels down from the top
+         style: {
+           fontSize: '10px', fontWeight: 'normal', color: 'gray'
+         }
+       }
+     }]
+   });
+ }
+
+
+
+}
+
+function rci2_timelineLimits() {
+ var TimeSlotsInd=rsi2_sources[CurrentPane].TimeSlots;
+ var iTimeStart='';
+ var iTimeEnd='';
+ for(var i in TimeSlotsInd) {
+   if(i==0) {
+     iTimeStart=1*TimeSlotsInd[i];// set minimum
+     iTimeEnd=1*TimeSlotsInd[i];// set anything
+   }
+   if(i<20 && TimeSlotsInd[i]>iTimeEnd) {
+     iTimeEnd=1*TimeSlotsInd[i];
+   }
+ }
+ rci2log.log(101, iTimeStart, iTimeEnd, CurrentPane);
+ if(iTimeStart <  rci2_layout.timeStart) {
+   iTimeStart=1*rci2_layout.timeStart;
+   rci2log.log(101, iTimeStart, iTimeEnd, 'rci2layoutStart');
+ }
+ if(iTimeEnd >  rci2_layout.timeEnd) {
+   iTimeEnd=rci2_layout.timeEnd;
+   rci2log.log(101, iTimeStart, iTimeEnd, 'rci2layoutEnd');
+ }
+ if(current_chart=='scatterplot') {
+   var TimeSlotsInd_Y=rsi2_sources[key_scatterY].TimeSlots;
+   var iTimeEndY=TimeSlotsInd[0];// set anything
+   for(var i in TimeSlotsInd_Y) {
+     if(i==0 && TimeSlotsInd_Y[i]>iTimeStart) {
+       iTimeStart=1*TimeSlotsInd_Y[i];// set minimum
+       rci2log.log(101, iTimeStart, 'min Y changed', key_scatterY );
+     }
+     if(i<20 && TimeSlotsInd_Y[i]>iTimeEndY) {
+       iTimeEndY=TimeSlotsInd_Y[i];
+     }
+   }
+   if(iTimeEndY<iTimeEnd) {
+     iTimeEnd=iTimeEndY;
+     rci2log.log(101, iTimeEnd, 'max Y changed', key_scatterY );
+   }
+   var TimeSlotsInd_Z=rsi2_sources[key_scatterZ].TimeSlots;
+   var iTimeEndZ=TimeSlotsInd[0];// set anything
+   for(var i in TimeSlotsInd_Z) {
+     if(i==0 && TimeSlotsInd_Z[i]>iTimeStart) {
+       iTimeStart=1*TimeSlotsInd_Z[i];// set minimum
+       rci2log.log(101, iTimeStart, 'min Y changed', key_scatterZ );
+     }
+     if(i<20 && TimeSlotsInd_Z[i]>iTimeEndZ) {
+       iTimeEndZ=1*TimeSlotsInd_Z[i];
+     }
+   }
+   if(iTimeEndZ<iTimeEnd) {
+     iTimeEnd=iTimeEndZ;
+     rci2log.log(101, iTimeEnd, 'max Z changed', key_scatterZ );
+   }
+ }
+ rci2log.log(101, iTimeStart, iTimeEnd, 'final', current_chart );
+ //
+ for(i=rci2_layout.timeStart; i<=rci2_layout.timeEnd; i++) {
+   if(i>=iTimeStart && i<=iTimeEnd) {
+     $('#rci2_timetab_'+i).removeClass('disabled');
+   } else {
+     $('#rci2_timetab_'+i).addClass('disabled');
+   }
+ }
+ return { 'tStart':iTimeStart, 'tEnd': iTimeEnd }
+}
+
+////
+
+/// return color for value
+function rci2_chartColor(fValue) {
+	var key1=defLayer.pane;
+  var color1='';
+  var sZones = rsi2_sources[key1].sZones;
+  for (var keyZ in sZones) {
+    if (sZones.hasOwnProperty(keyZ) || keyZ == 0) {
+      if (fValue >= sZones[keyZ].valueLow) {
+        color1 = sZones[keyZ].color;
+      }
+    }
+  }
+  return color1;
+}
+
+
+
+
+////
+function rci2_chartAxis(XYZ, axisYZ) {
+ var divContainer='visAxis_'+XYZ
+ rci2log.log(495,divContainer,axisYZ);
+ var sel1=divContainer+'_sel';
+ var dropType = 'dropdown';
+ if(axisYZ=='Y') {
+   dropType = 'dropright';
+ }
+ $('#'+divContainer).append("<div class='btn-group "+dropType+"' id='"+sel1+"'></div>");
+ var selBtn=divContainer+'_selBtn';
+ for (var key in rsi2_sources) {
+   if (rsi2_sources.hasOwnProperty(key)) {
+     if(key==axisYZ) $('#'+sel1).append("<button type='button' id='"+selBtn+"' class='btn btn-axis dropdown-toggle' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>"+rsi2_sources[key].FullTitle+"</button>");
+   }
+ }
+ var selMenu=divContainer+'_selMenu';
+ $('#'+sel1).append("<div id='"+selMenu+"' class='dropdown-menu'></div>");
+ for (var key in rsi2_sources) {
+   if (rsi2_sources.hasOwnProperty(key)) {
+     // belongs in group
+     if(rsi2_sources[key].Group) {
+       if(!$('#'+selMenu+'_group'+rsi2_sources[key].Group).length) {
+         // add group
+         $('#'+selMenu).append("<div id='"+selMenu+"_group"+rsi2_sources[key].Group+"' class='btn-group-menu-container btn-group' class='dropdown'></div>");
+         // add button that toggles menu
+         $('#'+selMenu+'_group'+rsi2_sources[key].Group).append("<button  id='"+selMenu+"_group"+rsi2_sources[key].Group+"btn' parentid='"+selMenu+"' openid='"+selMenu+"_group"+rsi2_sources[key].Group+"' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false' class='btn btn-group-menu dropdown-toggle'>"+rsi2_sources[key].GroupTitle+"</button>");
+         // add second level menu
+         $('#'+selMenu+'_group'+rsi2_sources[key].Group).append("<div id='"+selMenu+"_group"+rsi2_sources[key].Group+"menu' class='btn-second-menu dropdown-menu'></div>");
+       }
+       /// add buttons in second level menu
+       $('#'+selMenu+'_group'+rsi2_sources[key].Group+'menu').append("<button class='btn-axis-menu dropdown-item' id='axis"+XYZ+"-"+key+"' axis='"+XYZ+"' value='"+key+"'>"+rsi2_sources[key].FullTitle+"</button>");
+
+     } else {
+       // not in group
+       $('#'+selMenu).append("<button class='btn-axis-menu dropdown-item' id='axis"+XYZ+"-"+key+"' axis='"+XYZ+"' value='"+key+"'>"+rsi2_sources[key].FullTitle+"</button>");
+     }
+   }
+ }
+
+
+ $('.btn-group-menu-container').hover(function() {
+   var tid=$(this).attr('id');
+   //rci2log.log('516a '+$(this).attr('id'));
+   $('.btn-second-menu').hide();
+   $('#'+tid+'menu').show();
+   $(this).parent().scrollTop($(this).parent().scrollTop()+120);
+ }, function() {
+   $('.btn-second-menu').hide();
+ });
+
+
+ $('.btn-group-menu').click(function() {
+   //var tid=$(this).attr('parentid');
+   //$('#'+tid+'').show();
+   var tid=$(this).attr('openid');
+   rci2log.log('516a '+$(this).attr('id'));
+   $('.btn-second-menu').hide();
+   $('#'+tid+'menu').show();
+ });
+
+ /// on click menu of axis
+ $('.btn-axis-menu').click(function() {
+   rci2log.log('516 '+$(this).attr('id'),CurrentPane);
+   // new value for Axis selection
+   var newKeyXYZ = $(this).attr('value');
+   var axisXYZ = $(this).attr('axis');
+   if(axisXYZ=='Y') {
+     key_scatterY = newKeyXYZ;
+   }
+   if(axisXYZ=='Z') {
+     key_scatterZ = newKeyXYZ;
+   }
+   // redraw chart
+   changecurrentyear(current_year);
+   // change label of button
+   $('#visAxis_'+axisXYZ+'_selBtn').html( rsi2_sources[newKeyXYZ].FullTitle );
+ })
+}

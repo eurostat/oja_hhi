@@ -1,0 +1,1761 @@
+var inletRegionBounds=[];
+var inletTooltips=[];
+
+var overseasInletRegions = {
+
+	properties: {
+
+		PANE_TOP: 1, 		// Space between each inlet pane.
+		PANE_WTH: 80,		// Width of each inlet pane.
+		PANE_HGT: 55,		// Height of each inlet pane.
+		Y_OFFSET: 22,		// Offset (pixels) added to the width of the container that holds the inlet panes (#inletContainer) if a vertical scroll bar is present.
+		MAX_PANES: 7,		// Maximum number of inlet panes to be displayed (vertical scroll for any overflow).
+		HEADR_FN: 9,		// Font size of each inlet pane header.
+		HEADR_BG:  true, 	// Show the background (colour) for inlet pane headers (region names). This background colour has a default opacity of 0.1
+		INLET_BG:  false,	// Show the background (colour) of the inlet panes container (#inletContainer).
+		RGION_BG_OPA: false,	// Set the inlet panes background colour to opaque (default value of 0.7).
+		INLET_BG_OPA: false 	// Set the inlet panes container (#inletContainer) background to opaque (default value of 0.5). Only effective if INLET_BG is true.
+
+	},
+
+	countries: { 			// coords: [] - Each value represents the index number of a country's geometry.coordinates array (the coords for a region).
+
+		/* --- Spain --- */
+
+		ES: {
+
+			inlet: {
+
+				region_1: {
+
+					coords: [2,3,4,5,7,9,10],
+					properties: {
+						NUTS_0: 'ES',
+						NUTS_1: 'ES7',
+						NUTS_2: 'ES70',
+						NUTS_3: 'ES703',
+						NUTS_1_2016: 'ES7',
+						NUTS_2_2016: 'ES70',
+						NUTS_3_2016: 'ES703',
+						NUTS_3_all: [ 'ES704','ES705','ES706','ES707', 'ES708','ES709'],
+						SHRT_ENGL: "Canarias",
+						SHRT_FREN: "Canarias",
+						SHRT_GERM: "Canarias",
+						fitPadding: 10
+
+					}
+				}
+
+			}
+
+		},
+
+		/* --- France --- */
+
+		FR: {
+
+			inlet: {
+
+				region_1: {
+
+					coords: [5,6,9],
+					properties: {
+						NUTS_0: 'FR',
+						NUTS_1: 'FRA',
+						NUTS_2: 'FRA1',
+						NUTS_3: 'FRA10',
+						NUTS_1_2016: 'FRY',
+						NUTS_2_2016: 'FRY1',
+						NUTS_3_2016: 'FRY10',
+						SHRT_ENGL: "Guadeloupe",
+						SHRT_FREN: "Guadeloupe",
+						SHRT_GERM: "Guadeloupe",
+						fitPadding: 1
+
+					}
+
+				},
+
+				region_2: {
+
+					coords: [4],
+					properties: {
+						NUTS_0: 'FR',
+						NUTS_1: 'FRA',
+						NUTS_2: 'FRA2',
+						NUTS_3: 'FRA20',
+						NUTS_1_2016: 'FRY',
+						NUTS_2_2016: 'FRY2',
+						NUTS_3_2016: 'FRY20',
+						SHRT_ENGL: "Martinique",
+						SHRT_FREN: "Martinique",
+						SHRT_GERM: "Martinique",
+						fitPadding: 10
+
+					}
+
+				},
+
+				region_3: {
+
+					coords: [1],
+					properties: {
+						NUTS_0: 'FR',
+						NUTS_1: 'FRA',
+						NUTS_2: 'FRA3',
+						NUTS_3: 'FRA30',
+						NUTS_1_2016: 'FRY',
+						NUTS_2_2016: 'FRY3',
+						NUTS_3_2016: 'FRY30',
+						SHRT_ENGL: "Guyane",
+						SHRT_FREN: "Guyane",
+						SHRT_GERM: "Guyane",
+						fitPadding: 10
+
+					}
+
+				},
+
+				region_4: {
+
+					coords: [3],
+					properties: {
+						NUTS_0: 'FR',
+						NUTS_1: 'FRA',
+						NUTS_2: 'FRA4',
+						NUTS_3: 'FRA40',
+						NUTS_1_2016: 'FRY',
+						NUTS_2_2016: 'FRY4',
+						NUTS_3_2016: 'FRY40',
+						SHRT_ENGL: "Réunion",
+						SHRT_FREN: "Réunion",
+						SHRT_GERM: "Réunion",
+						fitPadding: 10
+
+					}
+
+				},
+				region_5: {
+
+					coords: [3],
+					properties: {
+						NUTS_0: 'FR',
+						NUTS_1: 'FRA',
+						NUTS_2: 'FRA5',
+						NUTS_3: 'FRA50',
+						NUTS_1_2016: 'FRY',
+						NUTS_2_2016: 'FRY5',
+						NUTS_3_2016: 'FRY50',
+						SHRT_ENGL: "Mayotte",
+						SHRT_FREN: "Mayotte",
+						SHRT_GERM: "Mayotte",
+						fitPadding: 1
+
+					}
+
+				}
+
+			}
+
+		},
+
+		/* --- Portugal --- */
+
+		PT: {
+
+			inlet: {
+
+				region_1: {
+
+					coords: [1,3,4,5,6,8,9],
+					properties: {
+						NUTS_0: 'PT',
+						NUTS_1: 'PT2',
+						NUTS_2: 'PT20',
+						NUTS_3: 'PT200',
+						NUTS_1_2016: 'PT2',
+						NUTS_2_2016: 'PT20',
+						NUTS_3_2016: 'PT200',
+						SHRT_ENGL: "Açores",
+						SHRT_FREN: "Açores",
+						SHRT_GERM: "Açores",
+						fitPadding: 0
+
+					}
+
+				},
+
+				region_2: {
+
+					coords: [2],
+					properties: {
+						NUTS_0: 'PT',
+						NUTS_1: 'PT3',
+						NUTS_2: 'PT30',
+						NUTS_3: 'PT300',
+						NUTS_1_2016: 'PT3',
+						NUTS_2_2016: 'PT30',
+						NUTS_3_2016: 'PT300',
+						SHRT_ENGL: "Madeira",
+						SHRT_FREN: "Madère",
+						SHRT_GERM: "Madeira",
+						fitPadding: 12
+
+					}
+
+				}
+
+			}
+
+		}
+
+	}
+
+};
+
+/// match inlets NUTS2 region to NUTS1 and NUTS3
+	var inlets_nuts1to2={}; // array
+	var inlets_nuts1to3={};
+	var countryKeys  = Object.keys(overseasInletRegions.countries); 	// Get the country codes whose regions are required.
+	var idNum 	   = 0; // ID number for the inlet region pane id.
+	var objCount   = 0; // Counter to ensure we get the duplicate regions (because of the parent loop).
+	for (var i=0; i < countryKeys.length; i++){
+		var countryId  = countryKeys[i]; // Grab the country id.
+		var regionKeys = Object.keys(overseasInletRegions.countries[countryId].inlet); 	// Grab the region keys defined in the properties file.
+		for (var r = 0; r < regionKeys.length; r++){
+			var region      = regionKeys[r]; // Get the country overseas region
+			var regionObj   = overseasInletRegions.countries[countryId].inlet[region]; 	// Grab the region object
+			var regionProps = regionObj.properties; // Assign the properties, so we can use the later
+			//if(nuts1316=='nuts2016') {
+				if(!inlets_nuts1to2[regionProps.NUTS_1_2016]) inlets_nuts1to2[regionProps.NUTS_1_2016]=[]; // make object
+					inlets_nuts1to2[regionProps.NUTS_1_2016].push(regionProps.NUTS_2_2016);
+				if(!inlets_nuts1to3[regionProps.NUTS_1_2016]) inlets_nuts1to3[regionProps.NUTS_1_2016]=[]; // make object
+					inlets_nuts1to3[regionProps.NUTS_1_2016].push(regionProps.NUTS_3_2016);
+			//} else {
+				if(!inlets_nuts1to2[regionProps.NUTS_1]) inlets_nuts1to2[regionProps.NUTS_1]=[]; // make object
+					inlets_nuts1to2[regionProps.NUTS_1].push(regionProps.NUTS_2);
+				if(!inlets_nuts1to3[regionProps.NUTS_1]) inlets_nuts1to3[regionProps.NUTS_1]=[]; // make object
+					inlets_nuts1to3[regionProps.NUTS_1].push(regionProps.NUTS_3);
+			//}
+		}
+	}
+
+//rci2log.log('16/ ');
+//rci2log.log(inlets_nuts1to2);
+//rci2log.log(inlets_nuts1to3);
+
+/// functions
+
+function rci2_toggleinlets(){
+	if(!rci2_inlets_open_status) {
+		rci2_showinlets(defLayer); rci2_inlets_open_status='open';
+	}
+	else {
+		if(rci2_inlets_open_status=='open') {
+			rci2_inlets_open_status='closed';
+		}else 		if(rci2_inlets_open_status=='closed') {
+			rci2_inlets_open_status='open';
+		}
+		$('#inletsbar').toggleClass('open');
+		$('.leaflet-left').toggleClass('leaflet_let_open');
+	}
+	rci2log.log('rci2_inlets_open_status '+rci2_inlets_open_status);
+}
+function rci2_showinlets(useLayer){
+	$('#inletsbar').addClass('open');
+	$('#inletsbar').css('top',h1n_in);
+	$('.leaflet-left').addClass('leaflet_let_open');
+
+	rci2log.time('time rci2_showinlets');
+	//rci2log.log(useLayer);
+	//rci2log.log(useLayer.pane);
+	//rci2log.log('18/');
+	//rci2log.log(useLayer.mapData);
+	//rci2log.log('nutslevel '+useLayer.nutslevel);
+	//rci2log.log('19// ');
+
+
+	var paneNum  	 = 0;
+	var html_inlets='';
+	var displayProps = overseasInletRegions.properties; 				// Global display properties from overseas-inlet-regions.js properties object file.
+	var countryKeys  = Object.keys(overseasInletRegions.countries); 	// Get the country codes whose regions are required.
+	//var geoFeats 	 = getRegionsGeometry(geofeatures, countryKeys); 	// Get the geometric features for each country.
+
+	var topPosPx = displayProps.PANE_TOP; // Distance (pixels) between each inlet pane (int value).
+	var maxPanes = displayProps.MAX_PANES; // Max number of inlet panes to be display before vertical scroll overflow (int value).
+	var paneHgt  = rci2_layout.inletsHeight;//displayProps.PANE_HGT; // Height of each inlet pane (int value).
+	var paneWth  = rci2_layout.inletsWidth;//displayProps.PANE_WTH; // Width of each inlet pane (int value).
+	var paneFnt	 = displayProps.HEADR_FN; // Font size of each inlet pane header (int value).
+	var yOffset  = displayProps.Y_OFFSET; // Offset width of vertical scroll bar (int value).
+
+	rci2_clearOverseasInletRegions(); // Clear any inlet objects from the DOM, so objects can be recreated.
+
+	for (var i=0; i < countryKeys.length; i++){
+
+		var idNum 	   = 0; // ID number for the inlet region pane id.
+		var objCount   = 0; // Counter to ensure we get the duplicate regions (because of the parent loop).
+		var countryId  = countryKeys[i]; // Grab the country id.
+		// Grab the region keys defined in the properties file.
+		var regionKeys = Object.keys(overseasInletRegions.countries[countryId].inlet);
+		//var coords     = geoFeats[i].geometry.coordinates; // Get the coordinates objects for the country.
+
+		// Loop through the region keys
+
+		for (var r = 0; r < regionKeys.length; r++){
+
+			if (objCount < regionKeys.length){
+				var region      = regionKeys[r]; // Get the country overseas region
+				var regionObj   = overseasInletRegions.countries[countryId].inlet[region]; 	// Grab the region object
+				var regionProps = regionObj.properties; // Assign the properties, so we can use them later
+				//var allCoords   = getAllCoords(regionObj.coords, coords); // Grab all the coordinates for a region
+				// Add the country id (FID) to the region's properties
+				// so we can grab it click with an event
+				regionProps["FID"] = countryId;
+				//regionProps["COUNTRY"] = getRegionCountry(countryId, "country");
+				idNum++;
+				objCount++;
+			}
+
+			// Assign an id for each inlet pane DOM element (ie: "ES_1").
+			var regionDivId = countryId + "_" + idNum;
+
+			// find the code of the inlet according to the nuts level of the main map
+			if(useLayer.nutslevel=='NUTS_0') regionNUTScode = regionProps.NUTS_0;
+			if(useLayer.nutslevel=='NUTS_0' && nuts1316=='nuts2016') regionNUTScode = regionProps.NUTS_0;
+			if(useLayer.nutslevel=='NUTS_1') regionNUTScode = regionProps.NUTS_1;
+			if(useLayer.nutslevel=='NUTS_1' && nuts1316=='nuts2016') regionNUTScode = regionProps.NUTS_1_2016;
+			if(useLayer.nutslevel=='NUTS_2') regionNUTScode = regionProps.NUTS_2;
+			if(useLayer.nutslevel=='NUTS_2' && nuts1316=='nuts2016') regionNUTScode = regionProps.NUTS_2_2016;
+			if(useLayer.nutslevel=='NUTS_3') {
+				regionNUTScode = regionProps.NUTS_3;
+				if(nuts1316=='nuts2016') { regionNUTScode = regionProps.NUTS_3_2016; }
+				regionNUTScode_outermost = regionProps.NUTS_3_all; // other nuts 3 regions that need to be removed from the main map
+				if(regionNUTScode_outermost) {
+					regionNUTScode_outermost.forEach(function(fNameElement) {
+						inletRegionCodes.push(fNameElement); // used to remove the element from the main map
+						inletsDivs[fNameElement]='#'+regionDivId; // set inlet div to have it's qtip opened in search results
+					});
+				}
+			}
+			rci2log.log('inl285; '+useLayer.nutslevel+' - nutscode = '+regionNUTScode);
+			//
+			inletRegionCodes.push(regionNUTScode);
+			//
+			regionInletPadding = regionProps.fitPadding;
+
+			// Add the inlet pane to the inlet container.
+			$("#inletsbar").append("<div id='" + regionDivId + "' nutscode='"+regionNUTScode+"' class='inlet_"+regionNUTScode+" inlet-regions'></div>");
+			// add in array so we trigger it in search
+			inletsDivs[regionNUTScode]='#'+regionDivId;
+
+			// Assign the configurable pane style properties
+			var regionPaneStyle = {
+
+				marginTop: paneNum < 1 ? 0 : displayProps.PANE_TOP,
+				width: 	   paneWth + "px",
+				height:    paneHgt + "px"
+
+			};
+
+			//	Add the styles to the pane DOM element
+			$("#" + regionDivId).css(regionPaneStyle);
+
+			// the map
+			// Create a map object for each pane and remove the "Leaflet" label.
+
+			mapObj = "map_" + regionDivId;
+			mapObj = L.map(regionDivId, {attributionControl: false, zoomControl:false});
+			mapObj.createPane('inlet'+regionNUTScode);
+		 	mapObj.getPane('inlet'+regionNUTScode).style.zIndex = 450;
+ 			mapObj.getPane('inlet'+regionNUTScode).style.pointerEvents = 'all';
+
+			//regionDivId=="ES_1" || regionDivId=="FR_3" ||
+			if(regionDivId=="FR_3") {
+				mapObj.createPane('WorldCoast');
+				mapObj.getPane('WorldCoast').style.zIndex = 400;
+				mapObj.getPane('WorldCoast').style.pointerEvents = 'none';
+				geojsonCountry = L.topoJson(map_world, {
+					style: style_map_world,
+					 pane: 'WorldCoast'
+				}).addTo(mapObj);
+			}
+			CurrentPaneInlets=(useLayer.pane);
+			var inletStyleFunction=useLayer.style /* function for style, example for employment: style_nuts*/
+			if(rsi2_sources[CurrentPaneInlets]) {
+				// a datasource pane
+				inletStyleFunction=style_nuts_inlets;
+			}
+			///
+			//loop the nuts2 layers so that get the proper boundaries for the french islands
+			regionNUTScode_bounds = regionProps.NUTS_2;
+			//
+			if(nuts1316=='nuts2016') regionNUTScode_bounds = regionProps.NUTS_2_2016;
+			//
+			inletRegionBounds.push(regionNUTScode_bounds);
+			// filter map
+			var inlet_regions = useLayer.pane;
+			// nuts2  features
+			//var regions_nutsX= regions_nuts2;
+			if(useLayer.nutslevel=='NUTS_0') var regions_nutsX=regions_nuts0;
+			if(useLayer.nutslevel=='NUTS_1') var regions_nutsX=regions_nuts1;
+			if(useLayer.nutslevel=='NUTS_2') var regions_nutsX=regions_nuts2;
+			if(useLayer.nutslevel=='NUTS_3') var regions_nutsX=regions_nuts3;
+			rci2log.log(393,useLayer,regions_nutsX);
+			for (key in regions_nutsX.objects) {
+				if (regions_nutsX.objects.hasOwnProperty(key)) {
+					var regions_nutsX0 = topojson.feature(regions_nutsX, regions_nutsX.objects[key]);
+				}
+			}
+			//rci2log.log(555,regions_nutsX0 );
+			if(regions_nutsX0) {//useLayer.mapData
+				var mapDataI=regions_nutsX0.features; //useLayer.mapData.features;
+				var mapDataI1=[];
+				if(mapDataI) {
+					var mapDataI1 = mapDataI.filter(function(mapFeature){
+						return (inletRegionCodes.indexOf(mapFeature.id)>=0); // feature is part of the current inlets
+						//return mapFeature.id === regionNUTScode_bounds;
+					});
+					var mapDataI1obj={'type':"FeatureCollection",'features':mapDataI1};
+					//rsi2log.log(555,regionNUTScode_bounds,mapDataI1obj);
+				}
+			}
+			//rci2log.log(393,mapDataI1obj);
+			//
+			/// add layer with regions
+			inlet_pane=L.topoJson(mapDataI1obj /*useLayer.mapData*/ /* regions_nuts2 useLayer.mapData*/, {
+				pane: 'inlet'+regionNUTScode,
+				mapData: useLayer.mapData /*  regions_nuts2*/,
+				style: inletStyleFunction ,
+				onEachFeature: inlet_onEachFeatureDo
+			}).addTo(mapObj);
+
+			//rci2log.log(285, regionNUTScode_bounds);
+ 			//rsi2_geojson[CurrentPane]
+			geojson_regions2.eachLayer(function (layer) { //geojson_regions2
+				//rci2log.log(285, 'rci inlet '+layer.feature.properties.NUTS_ID);
+			 	if (layer.feature.properties.NUTS_ID === regionNUTScode_bounds) { // feature is a nuts 2 region used for bound
+				    //rci2log.log('285 :a: bounds inlet of '+regionNUTScode+' to '+layer.feature.properties.NUTS_ID);
+			 		// Zoom to that layer.
+ 					mapObj.fitBounds(layer.getBounds(), {padding: [regionInletPadding, regionInletPadding]} );
+				}
+			});
+
+			// Disable any events for each inlet pane
+			mapObj.touchZoom.disable();
+			mapObj.doubleClickZoom.disable();
+			mapObj.scrollWheelZoom.disable();
+			mapObj.boxZoom.disable();
+			mapObj.keyboard.disable();
+			mapObj.dragging.disable();
+
+			// do header
+			//			$("#" + regionDivId).html(''+regionProps.SHRT_ENGL+' ('+countryId+')');
+			$("#" + regionDivId).append(rci2_getRegionHeader(regionProps, countryId)); // Add the region name to the inlet pane
+
+			/// do tooltip
+			var fName = regionNUTScode;
+		   	var valuethisyear='';
+		   	var valuethisyearGDP='';
+		    /*if(ValueofRegion[fName]){
+		    	valuethisyear=ValueofRegion[fName]['0'];//+'%';
+    		}
+    		if(ValueofRegion_GDP[fName]){
+				  valuethisyearGDP=ValueofRegion_GDP[fName]['0']+' EUR';
+    		}*/
+
+    		var CountryISO2=fName.substring(0,2);
+        //Full country name => Sweden
+        var FullCountry=CountryName[CountryISO2];
+        //ID of country
+        var IDCountry=CountryName2ID[CountryISO2];
+        var name1=NameofRegion[fName]+' ('+fName+')';
+        var datavaluesCthisyear=onEachFeatureData(fName,CountryISO2,FullCountry,IDCountry,name1,CurrentPane);
+    		//if(fName=='RO32') rci2log.log(180,datavaluesCthisyear);
+    		datavaluesC=datavaluesCthisyear['datavaluesC'];
+        var valuethisyear=datavaluesCthisyear['valuethisyear'];
+        var valuethisyearLabel= datavaluesCthisyear['valuethisyearLabel'];
+
+			//
+      if(NameofRegion[fName]!=CountryofRegion[fName]) {
+        var inlet_Tooltip='<div class=mapTipHeader><b>'+ NameofRegion[fName] + '</b> (' + fName + ') <em>' + CountryofRegion[fName]+'</em>';
+      } else {
+        var inlet_Tooltip='<div class=mapTipHeader><b>'+ NameofRegion[fName] + '</b> (' + fName + ') <em>' +'</em>';
+      }
+			if(inletTooltips[fName]) inlet_Tooltip=inlet_Tooltip+inletTooltips[fName] ;
+      //
+      if (datavaluesC) {
+        if(rci2_layout.tooltipLayout=='') {
+          inlet_Tooltip+='<div class=mapTipContent><table class=tipTable>'+datavaluesC+'</table></div>';
+        } else if (rci2_layout.tooltipLayout=='RegionOnly' ) {
+        } else if (rci2_layout.tooltipLayout=='condensed' || rci2_layout.tooltipLayout=='condensedtwolines') {
+          if(!valuethisyear) valuethisyear="(:)";
+    			if(valuethisyear) inlet_Tooltip+='<div class=mapTipContent><span class=mapTipValue> '+valuethisyearLabel+' </span></div>';
+        }
+      }
+
+
+			if(regionNUTScode_outermost) {
+				regionNUTScode_outermost.forEach(function(fNameElement) {
+          if(NameofRegion[fNameElement]!=CountryofRegion[fNameElement]) {
+					  inlet_Tooltip += '<BR><b>' + NameofRegion[fNameElement] + '</b> (' + fNameElement + '), <em>' + CountryofRegion[fNameElement] + '</em>';
+          } else {
+            inlet_Tooltip += '<BR><b>' + NameofRegion[fNameElement] + '</b> (' + fNameElement + '), <em>' + '</em>';
+          }
+					if(inletTooltips[fName]) inlet_Tooltip=inlet_Tooltip+inletTooltips[fNameElement]+'/x';
+				});
+   		}
+
+			$("#" + regionDivId).qtip({
+				style: { classes: "inlet-tip qtip-light qtip-rounded" } ,
+				titlebar: true,
+        			content: {
+					text: inlet_Tooltip,
+					//<table class=tipTable><tr><td>GDP (PPSHAB):</td><td class=tipValue>'+valuethisyearGDP+'</td></tr>'+
+					//	'<tr><td>Employment rate:</td><td class=tipValue>'+valuethisyear+'</td></tr></table>
+				},
+		        	position: {
+		        	    target: "#" + regionDivId, //'mouse', // Track the mouse as the positioning target
+        			    my: 'top right',
+				        at: 'bottom center',
+        				adjust: { x: -2, y: -20 } // Offset it slightly from under the mouse
+        			}
+			});
+
+			//rci2log.log("inlet div #" + regionDivId);
+		}
+
+	}
+	//$('#inletsbar').html(html_inlets);
+
+	// disable layer of inlets from the main map
+	rsiMap.eachLayer(function(layer) {
+		//rci2log.log(453);
+		var pane1=(layer.options.pane);
+		if(rsi2_sources[pane1] || layer.options.pane === "nuts_regions" ||
+				layer.options.pane === "nuts_regions2" ||
+				layer.options.pane === "nuts_regions3") {
+			//rci2log.log(layer);
+			//rci2log.log(layer.options.pane);
+			if(layer.feature && useLayer.nutslevel!='NUTS_0') {
+				if(inletRegionCodes.indexOf(layer.feature.properties.NUTS_ID)>=0) {
+					//rci2log.log('removing region '+layer.feature.properties.NUTS_ID);
+					layer.removeFrom(rsiMap);
+				}
+				if(inletRegionBounds.indexOf(layer.feature.properties.NUTS_ID)>=0) {
+					//rci2log.log('removing region '+layer.feature.properties.NUTS_ID);
+					layer.removeFrom(rsiMap);
+				}
+			}
+		}
+	});
+	rci2log.timeEnd('time rci2_showinlets');
+}
+
+function inlet_tooltip_element(feature,fName) {
+	if(!NameofRegion[fName]) NameofRegion[fName]=feature.properties.NAME_LATN;
+	if(!CountryofRegion[fName]) CountryofRegion[fName]=feature.properties.SHRT_ENGL;
+	var Tooltip= '<b>' + NameofRegion[fName] + '</b> (' + fName + '), <em>' + CountryofRegion[fName] + '</em>';
+	return Tooltip;
+}
+
+
+//////////
+function inlet_onEachFeatureDo(feature, layer) {
+    // wanted for search
+   	var fName=feature.properties.NUTS_ID;//Name
+   	//rci2log.log('each inlet '+regionNUTScode+' // '+fName);
+	var execInletRegion='';
+
+   	if(regionNUTScode==fName) {  // only do this for the inlet layer // otherwise we mess up the main map
+   		execInletRegion=1;
+   	} else if(regionNUTScode_outermost) {
+		if(regionNUTScode_outermost.includes(fName)) { // also allow the outermost regions
+	   		execInletRegion=1;
+		}
+   	}
+   	//
+   	if(execInletRegion) {
+		//bind each layer (marker) to the feature it is associated with,
+	     feature.layer = layer;
+	    //
+	    var currentPane=layer.defaultOptions.pane;
+	   	var valuethisyear='';
+	   	var valuethisyearGDP='';
+	    if (feature.properties && feature.properties.NUTS_ID) {//Name
+
+	    	if(!NameofRegion[fName]) NameofRegion[fName]=feature.properties.NAME_LATN;
+	    	if(!CountryofRegion[fName]) CountryofRegion[fName]=feature.properties.SHRT_ENGL;
+
+	    	// set value for chart use later
+	    	var name1=NameofRegion[fName]+' ('+fName+')';    	///CountryofRegion[fName]
+			/*
+			// add Unit
+	    	if(ValueofRegion[fName]){
+			vrf1.push([name1,ValueofRegion[fName]['0']]);
+			//
+	    		valuethisyear=ValueofRegion[fName]['0']+'%';
+	    	}
+	    	if(ValueofRegion_GDP[fName]){
+			vrf2.push([name1,ValueofRegion_GDP[fName]['0']]);
+			//
+	    		valuethisyearGDP=ValueofRegion_GDP[fName]['0']+' EUR';
+	    	}
+	    	*/
+	    	// bind popup
+	        //if(valuethisyear) layer.bindPopup('<div>GDP (PPSHAB): '+valuethisyearGDP+'</div><div>Employment rate: '+valuethisyear+'</div><b>' + NameofRegion[fName] + '</b> (' + fName + ') <div><em>' + CountryofRegion[fName] + '</em></div>'); //
+			// disable values
+	       //// not needed layer.bindTooltip('<b>' + NameofRegion[fName] + '</b> (' + fName + ') <div><em>' + CountryofRegion[fName] + '</em></div>'); //
+
+	    }
+		layer.on('mouseover', function (e) {
+	    		rci_highlightFeature(e);
+					//rci2log.log('476 inlet mouseover '+name1);
+					rci2_barcode_triggerHover(fName)
+	        });
+	    layer.on('mouseout', function (e) {
+					rci_resetHighlight(e);
+					rci2_barcode_triggerOut(fName)
+	    		//rci2log.log('476 inlet mouseout '+name1);
+	        });
+		layer.on('click', function (e) {
+	    		//rci_resetHighlight(e);
+				rci2_regionClick(fName);
+	    		rci2log.log(fName+' : 561 inlet click '+name1);
+	    });
+	    //Value_Region_feature['nuts_data']=vrf1;
+	    //Value_Region_feature['nuts_data_gdp']=vrf2;
+
+   	}
+
+}
+
+// Remove all inlet objects from the DOM
+
+function rci2_clearOverseasInletRegions(){
+
+	$(".inlet-regions").remove();
+	//$("#inletContainer").remove();
+
+}
+
+
+// Return the header (region) name for each inlet pane
+
+function rci2_getRegionHeader(properties, countryFid){
+
+	var regionName = rci2_getRegionName(properties);
+
+	var regionHeader = "<div class='region-header'>";
+		regionHeader+= "<div class='region-label'>";
+		regionHeader+= regionName + " (";
+		regionHeader+= countryFid + ") ";
+		regionHeader+= "</div></div>";
+
+	return regionHeader;
+
+}
+
+// Returns the inlet region name for the selected language
+
+function rci2_getRegionName(props){
+	var name;
+	switch (language) {
+		case "en": name = props.SHRT_ENGL;
+		break;
+		case "fr": name = props.SHRT_FREN;
+		break;
+		case "de": name = props.SHRT_GERM;
+		break;
+	}
+	return name;
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// Get the required overseas inlet regions.
+
+	function getOverseasInletRegions12(geofeatures){
+
+		var numPanes;
+		var inletContainerHgt; 												// Inlet container height
+		var inletContainerWdt; 												// Inlet container width
+		var inletContainerScr; 												// Inlet container scroll
+		var inletContainerPdg; 												// Inlet container padding
+
+		var paneNum  	 = 0;
+		var displayProps = overseasInletRegions.properties; 				// Global display properties from overseas-inlet-regions.js properties object file.
+		var countryKeys  = Object.keys(overseasInletRegions.countries); 	// Get the country codes whose regions are required.
+		var geoFeats 	 = getRegionsGeometry(geofeatures, countryKeys); 	// Get the geometric features for each country.
+
+		var topPosPx = displayProps.PANE_TOP; // Distance (pixels) between each inlet pane (int value).
+		var maxPanes = displayProps.MAX_PANES; // Max number of inlet panes to be display before vertical scroll overflow (int value).
+		var paneHgt  = displayProps.PANE_HGT; // Height of each inlet pane (int value).
+		var paneWth  = displayProps.PANE_WTH; // Width of each inlet pane (int value).
+		var paneFnt	 = displayProps.HEADR_FN; // Font size of each inlet pane header (int value).
+		var yOffset  = displayProps.Y_OFFSET; // Offset width of vertical scroll bar (int value).
+
+		clearOverseasInletRegions(); // Clear any inlet objects from the DOM, so objects can be recreated.
+
+		$("#worldmap").append("<div id='inletContainer'></div>"); 			// Add the inlet container to the map (superior z-index defined in css)
+
+		// Loop through each the country (geometric) features
+
+		for (var i=0; i < countryKeys.length; i++){
+
+			var idNum 	   = 0; // ID number for the inlet region pane id.
+			var objCount   = 0; // Counter to ensure we get the duplicate regions (because of the parent loop).
+			var countryId  = countryKeys[i]; // Grab the country id.
+			var regionKeys = Object.keys(overseasInletRegions.countries[countryId].inlet); 	// Grab the region keys defined in the properties file.
+			var coords     = geoFeats[i].geometry.coordinates; // Get the coordinates objects for the country.
+
+			// Loop through the region keys
+
+			for (var r = 0; r < regionKeys.length; r++){
+
+				if (objCount < regionKeys.length){
+
+					var region      = regionKeys[r]; // Get the country overseas region
+					var regionObj   = overseasInletRegions.countries[countryId].inlet[region]; 	// Grab the region object
+					var regionProps = regionObj.properties; // Assign the properties, so we can use the later
+					var allCoords   = getAllCoords(regionObj.coords, coords); 					// Grab all the coordinates for a region
+
+					// Add the country id (FID) to the region's properties
+					// so we can grab it click with an event
+
+					regionProps["FID"] = countryId;
+					regionProps["COUNTRY"] = getRegionCountry(countryId, "country");
+
+					idNum++;
+					objCount++;
+
+				}
+
+				// Assign an id for each inlet pane DOM element (ie: "ES_1").
+
+				var regionDivId = countryId + "_" + idNum;
+
+				// Add the inlet pane to the inlet container.
+
+				$("#inletContainer").append("<div id='" + regionDivId + "' class='inlet-regions'></div>");
+
+				// Assign the configurable pane style properties
+
+				var regionPaneStyle = {
+
+					marginTop: paneNum < 1 ? 0 : displayProps.PANE_TOP,
+					width: 	   paneWth + "px",
+					height:    paneHgt + "px"
+
+				};
+
+				//	Add the styles to the pane DOM element
+
+				$("#" + regionDivId).css(regionPaneStyle);
+
+				// Create a map object for each pane and remove the "Leaflet" label.
+
+				mapObj = "map_" + regionDivId;
+				mapObj = L.map(regionDivId, {attributionControl: false});
+
+				regionProps["DIV_ID"] = regionDivId;
+
+				// Assign the map object to an empty geoJson object
+
+				var geoLayer = L.geoJson().addTo(mapObj);
+
+				//	Assign the region's features
+
+				var features = {
+
+					type: "Feature",
+					geometry: {
+
+						type: 		 "MultiPolygon",
+						coordinates: allCoords,
+						properties:  regionProps
+
+					}
+
+				};
+
+				// Assign the shape styles
+
+				var featStyle = {
+
+					weight: 	 0,
+					opacity: 	 1.0,
+					fillColor: 	 getRegionCountry(countryId, "colour"),
+					fillOpacity: 1.0
+
+				};
+
+				// Add the features and styles to the map object
+
+				L.geoJson(features, {
+
+					style: featStyle,
+					onEachFeature:
+
+						function onEachFeature(feature, layer) {
+
+							//bind events
+
+							layer.on({
+
+								click: regionClicked,
+								mouseover: regionMouseOver,
+								mouseout: regionMouseOut
+
+							});
+
+						}
+
+				}).addTo(mapObj);
+
+				geoLayer.addData(features);	// Add to the geoJson object
+
+				$("#" + regionDivId).append(getRegionHeader(regionProps, countryId)); // Add the region name to the inlet pane
+
+				mapObj.fitBounds(geoLayer.getBounds(),{padding: [5,5]}); // Center the region Polygon/MultiPolygon in the inlet pane.
+
+				// Disable any events for each inlet pane
+
+				mapObj.touchZoom.disable();
+				mapObj.doubleClickZoom.disable();
+				mapObj.scrollWheelZoom.disable();
+				mapObj.boxZoom.disable();
+				mapObj.keyboard.disable();
+				mapObj.dragging.disable();
+
+				paneNum++;
+
+			}
+
+		}
+
+		/*
+			We want to fade in each inlet region when the show/hide button is clicked, so here we ensure that they all start as faded out.
+			This is because, if we use "display: none" as a starting point, the shapes will not appear when faded in.
+		 */
+
+		$(".inlet-regions").fadeOut(0);
+
+		// Grab the css padding value for the inlet container and convert to an int value.
+
+		inletContainerPdg = $("#inletContainer").css("padding-left");
+		inletContainerPdg = inletContainerPdg.replace("px", "");
+		inletContainerPdg = parseInt(inletContainerPdg);
+
+		// Calculate the height on the inlet container based on the number of panes, their height, inlet container padding value, and the distance between each pane.
+
+		maxPanes = (maxPanes > paneNum) ? paneNum : maxPanes; // Max inlet panes cannot be more than the number of inlet regions available.
+		maxPanes = (maxPanes <= 0) ? 1 : maxPanes;			  // Max inlet panes cannot be zero or less (at least one pane will be visible).
+
+		numPanes = maxPanes;
+
+		inletContainerHgt = ((paneHgt * numPanes) + (numPanes - 1) * topPosPx) + (inletContainerPdg * (inletContainerPdg + 1));
+
+		inletContainerWdt = paneWth + yOffset; 	// Inlet container width (with scroll bar).
+		inletContainerScr = "scroll"; 			// Inlet container overflow with scroll (default).
+
+		// Calculate the correct width of the inlet container with max panes or less (no vertical scroll bar).
+
+		if (paneNum <= maxPanes){
+
+			inletContainerWdt  = paneWth;
+			inletContainerWdt += (inletContainerPdg * 2) + 1;
+			inletContainerScr  = "hidden";
+
+		}
+
+		// Configure the inlet container based on the properties file.
+
+		var inletContainerBkg = displayProps.INLET_BG;  		// Inlet container background (show/hide = true/false).
+
+		var bgc = $("#inletContainer").css("background-color"); // css background colour (overseas-inlet-regions.css).
+		var opa = "0.5";										// Default configured opacity.
+
+		var inletContainerStyle = {
+
+			height: 	inletContainerHgt,
+			overflowY: 	inletContainerScr,
+			width: 		inletContainerWdt,
+			border: 	inletContainerBkg ? "" : "none",
+			boxShadow: 	inletContainerBkg ? "" : "none",
+			background: inletContainerBkg ? (displayProps.INLET_BG_OPA ? getRbgBgOpacity(bgc, opa) : bgc) : "transparent"
+
+		};
+
+		// Configure each inlet pane header based on the properties file.
+
+		var regionHeaderStyle = {
+
+			fontSize: paneFnt,
+			background: displayProps.HEADR_BG ? "" : "transparent"
+
+		};
+
+		// Configure each inlet pane bacground colour opacity based on the properties file.
+
+		var bgc = $(".inlet-regions").css("background-color"); // css background colour (overseas-inlet-regions.css).
+		var opa = "0.7";									   // Default configured opacity.
+
+		var regionBodyStyle = {
+
+			backgroundColor: displayProps.RGION_BG_OPA ? getRbgBgOpacity(bgc, opa) : bgc
+
+		};
+
+		// Add the configured styles to the inlet container and inlet panes
+
+		$("#inletContainer").css(inletContainerStyle);
+		$(".region-header").css(regionHeaderStyle);
+		$(".inlet-regions").css(regionBodyStyle);
+
+		// Hide the zoom control for each inlet pane (map).
+
+		$(".inlet-regions .leaflet-control-zoom").css({"visibility":"hidden"});
+
+		// Fade in the inlet container.
+
+		$("#inletContainer").fadeIn(300);
+
+		// Fade in each inlet container
+
+		for (var panes = 0; panes < paneNum; panes++){
+
+			var pane = panes + 1;
+
+			showOverseasRegions(pane);
+
+		}
+
+		// Hightlight the relevant inlet regions if a legend selection has been made before the regions panel has been opened;
+
+		 if (legendRegions.length){
+
+			for (var ind = 0; ind < legendRegions.length; ind++){
+
+				legendClickColorRegions(legendRegions[ind], regionsColorStyle);
+
+			}
+			rci2log.log(regionsColorStyle);
+		}
+
+	}
+
+	// Return the geometric features for each country key in overseas-inlet-regions.js
+
+	function getRegionsGeometry(features, countries){
+
+		var featIdIndex  = 0;  // country id array index
+		var featIdArr    = []; // country id array
+		var rGeometry 	 = []; // array to hold country features objects
+
+		// First, grab all country ids from the main map geoJson object
+		L.geoJson(features, {
+
+			filter: function(feature, layer) {
+
+				featIdArr[featIdIndex] = feature.id;
+
+				featIdIndex++;
+
+			}
+
+		});
+
+		// Now grab the relevant country features
+
+		for (var i = 0; i < featIdArr.length; i++){
+
+			for (var x = 0; x < countries.length; x++){
+
+				if (featIdArr[i] == countries[x]){
+
+					var geoFeatsObj = "rGeometry" + countries[x];
+
+					geoFeatsObj  = features[i];
+					rGeometry[x] = geoFeatsObj;
+
+				}
+
+			}
+
+		}
+
+		return rGeometry; // Multi-dimensional array
+
+	}
+
+	// Returns all the coordinates necessary to display an inlet region
+
+	function getAllCoords(regionCoordsObj, coords){
+
+		var count = 0;
+		var allCoords = [];
+		var coordsObj = regionCoordsObj; // defined in overseas-inlet-regions.js (region id > coords)
+
+		coords.forEach(function(coords, x){
+
+			for (var polyCoords = 0; polyCoords < coordsObj.length; polyCoords++){
+
+				if (x == coordsObj[polyCoords]){
+
+					allCoords[count] = coords;
+
+					count++;
+
+				}
+
+			}
+
+		});
+
+		return allCoords;	// Multi-dimensional array
+
+	}
+
+	// Return the fill colour and Country name of each country so we can use it for their regions
+
+	function getRegionCountry(countryFid, property){
+
+		var geoList = dataStructure.geoList;
+
+		var regionCountry;
+		var regionFillColor;
+		var returnVar;
+
+		for (var i=0; i < geoList.length; i++){
+
+			if (geoList[i].Code == countryFid){
+
+				regionCountry 	= geoList[i].Country;
+				regionFillColor = geoList[i].Color;
+
+			}
+
+		}
+
+		returnVar = (property == "country") ? regionCountry : regionFillColor;
+
+		return returnVar;
+
+	}
+
+	// Return the configurable opacity (inlet container/pane background). Deconstructs the rgba bg colour and adds the opacity value.
+
+	function getRbgBgOpacity(bgColor, opacity){
+
+		var rgb 	  = bgColor.substring((bgColor.indexOf("(") + 1), bgColor.indexOf(")"))
+		var bgOpacity = "rgba(" + rgb + ", " + opacity + ")";
+
+		return bgOpacity;
+	}
+
+
+
+	// Displays each inlet pane with a slight delay after each (not necessary, but gives a nice smooth ripple down effect).
+
+	function showOverseasRegions(pane){
+
+		setTimeout(function(){
+
+			$("#inletContainer .inlet-regions:nth-child(" + pane + ")").fadeIn(300);
+
+		}, pane * 45);
+
+	}
+
+
+	// Display country comparison popup
+
+	function regionClicked(e) {
+
+		countryID   = this.feature.geometry.properties.FID;
+		countryName = this.feature.geometry.properties.COUNTRY;
+
+		clickCountry();
+
+	}
+
+	// Display country data
+
+	function regionMouseOver(e) {
+		//rci2log.log("boo");
+		countryID 	  = this.feature.geometry.properties.FID;
+		countryRegion = this.feature.geometry.properties.COUNTRY;
+
+		enterLayer();
+
+		var layer = e.target;
+		var divId = layer._map._container.id;
+
+		var regionBodyStyle = {
+
+			stroke:"black",
+			//strokeOpacity: 0.9,
+			strokeWidth: 1.5,
+
+		};
+
+		$("#" + divId + ".inlet-regions path.leaflet-clickable").css(regionBodyStyle);
+
+	}
+
+	// Reset region stroke highlight
+
+	function regionMouseOut(e) {
+
+		countryID 	  = this.feature.geometry.properties.FID;
+		countryRegion = this.feature.geometry.properties.COUNTRY;
+
+		enterLayer();
+
+		var layer = e.target;
+		var divId = layer._map._container.id;
+
+		var regionBodyStyle = {
+			stroke: "#7F7F7F",
+			//strokeOpacity: 0.3,
+			strokeWidth: 1
+
+		};
+
+		$("#" + divId + ".inlet-regions path.leaflet-clickable").css(regionBodyStyle);
+
+		document.getElementById("mapcountryname").innerHTML = infotext;
+	}
+
+	legendClickColorRegions = function(fid, fillStyle) {
+		//rci2log.log(fid);
+		//resetRegionColor();
+
+		if (overseasInletRegions.countries[fid]){
+
+			var regionKeys = Object.keys(overseasInletRegions.countries[fid].inlet); 	// Grab the region keys defined in the properties file.	.
+
+			// Loop through the region keys
+
+			for (var r = 0; r < regionKeys.length; r++){
+
+				var region      = regionKeys[r]; 											// Get the country overseas region
+				var regionObj   = overseasInletRegions.countries[fid].inlet[region]; 	// Grab the region object
+				var regionProps = regionObj.properties;
+
+				$("#" + regionProps["DIV_ID"] + ".inlet-regions path.leaflet-clickable").css(fillStyle);
+
+			}
+
+		}
+
+	}
+
+	resetRegionColor = function(){
+
+		var countryKeys = Object.keys(overseasInletRegions.countries);
+
+		for (var i=0; i < countryKeys.length; i++){
+
+			var countryId  = countryKeys[i];
+			var regionKeys = Object.keys(overseasInletRegions.countries[countryId].inlet); 	// Grab the region keys defined in the properties file.
+
+			// Loop through the region keys
+
+			for (var r = 0; r < regionKeys.length; r++){
+
+				var region      = regionKeys[r]; 											// Get the country overseas region
+				var regionObj   = overseasInletRegions.countries[countryId].inlet[region]; 	// Grab the region object
+				var regionProps = regionObj.properties;
+				var origColor   = getRegionCountry(countryId, "colour");
+
+				var regionBodyStyle = {
+
+					//stroke: "black",
+					stroke: "#7F7F7F",
+					//strokeOpacity: 0.3,
+					opacity: 1,
+					strokeWidth: 1,
+					fill: origColor
+
+				};
+
+				$("#" + regionProps["DIV_ID"] + ".inlet-regions path.leaflet-clickable").css(regionBodyStyle);
+
+			}
+
+		}
+
+	}
+
+	/* ------------------------------------- End ------------------------------------- */
+	// Get the required overseas inlet regions.
+
+	function getOverseasInletRegions11(geofeatures){
+
+		var numPanes;
+		var inletContainerHgt; 												// Inlet container height
+		var inletContainerWdt; 												// Inlet container width
+		var inletContainerScr; 												// Inlet container scroll
+		var inletContainerPdg; 												// Inlet container padding
+
+		var paneNum  	 = 0;
+		var displayProps = overseasInletRegions.properties; 				// Global display properties from overseas-inlet-regions.js properties object file.
+		var countryKeys  = Object.keys(overseasInletRegions.countries); 	// Get the country codes whose regions are required.
+		var geoFeats 	 = getRegionsGeometry(geofeatures, countryKeys); 	// Get the geometric features for each country.
+
+		var topPosPx = displayProps.PANE_TOP; 								// Distance (pixels) between each inlet pane (int value).
+		var maxPanes = displayProps.MAX_PANES;								// Max number of inlet panes to be display before vertical scroll overflow (int value).
+		var paneHgt  = displayProps.PANE_HGT;								// Height of each inlet pane (int value).
+		var paneWth  = displayProps.PANE_WTH;								// Width of each inlet pane (int value).
+		var paneFnt	 = displayProps.HEADR_FN;								// Font size of each inlet pane header (int value).
+		var yOffset  = displayProps.Y_OFFSET;								// Offset width of vertical scroll bar (int value).
+
+		clearOverseasInletRegions(); 										// Clear any inlet objects from the DOM, so objects can be recreated.
+
+		$("#worldmap").append("<div id='inletContainer'></div>"); 			// Add the inlet container to the map (superior z-index defined in css)
+
+		// Loop through each the country (geometric) features
+
+		for (var i=0; i < countryKeys.length; i++){
+
+			var idNum 	   = 0;																// ID number for the inlet region pane id.
+			var objCount   = 0; 															// Counter to ensure we get the duplicate regions (because of the parent loop).
+			var countryId  = countryKeys[i]; 												// Grab the country id.
+			var regionKeys = Object.keys(overseasInletRegions.countries[countryId].inlet); 	// Grab the region keys defined in the properties file.
+			var coords     = geoFeats[i].geometry.coordinates; 								// Get the coordinates objects for the country.
+
+			// Loop through the region keys
+
+			for (var r = 0; r < regionKeys.length; r++){
+
+				if (objCount < regionKeys.length){
+
+					var region      = regionKeys[r]; 											// Get the country overseas region
+					var regionObj   = overseasInletRegions.countries[countryId].inlet[region]; 	// Grab the region object
+					var regionProps = regionObj.properties; 									// Assign the properties, so we can use the later
+					var allCoords   = getAllCoords(regionObj.coords, coords); 					// Grab all the coordinates for a region
+
+					// Add the country id (FID) to the region's properties
+					// so we can grab it click with an event
+
+					regionProps["FID"] = countryId;
+					regionProps["COUNTRY"] = getRegionCountry(countryId, "country");
+
+					idNum++;
+					objCount++;
+
+				}
+
+				// Assign an id for each inlet pane DOM element (ie: "ES_1").
+
+				var regionDivId = countryId + "_" + idNum;
+
+				// Add the inlet pane to the inlet container.
+
+				$("#inletContainer").append("<div id='" + regionDivId + "' class='inlet-regions'></div>");
+
+				// Assign the configurable pane style properties
+
+				var regionPaneStyle = {
+
+					marginTop: paneNum < 1 ? 0 : displayProps.PANE_TOP,
+					width: 	   paneWth + "px",
+					height:    paneHgt + "px"
+
+				};
+
+				//	Add the styles to the pane DOM element
+
+				$("#" + regionDivId).css(regionPaneStyle);
+
+				// Create a map object for each pane and remove the "Leaflet" label.
+
+				mapObj = "map_" + regionDivId;
+				mapObj = L.map(regionDivId, {attributionControl: false});
+
+				regionProps["DIV_ID"] = regionDivId;
+
+				// Assign the map object to an empty geoJson object
+
+				var geoLayer = L.geoJson().addTo(mapObj);
+
+				//	Assign the region's features
+
+				var features = {
+
+					type: "Feature",
+					geometry: {
+
+						type: 		 "MultiPolygon",
+						coordinates: allCoords,
+						properties:  regionProps
+
+					}
+
+				};
+
+				// Assign the shape styles
+
+				var featStyle = {
+
+					weight: 	 0,
+					opacity: 	 1.0,
+					fillColor: 	 getRegionCountry(countryId, "colour"),
+					fillOpacity: 1.0
+
+				};
+
+				// Add the features and styles to the map object
+
+				L.geoJson(features, {
+
+					style: featStyle,
+					onEachFeature:
+
+						function onEachFeature(feature, layer) {
+
+							//bind events
+
+							layer.on({
+
+								click: regionClicked,
+								mouseover: regionMouseOver,
+								mouseout: regionMouseOut
+
+							});
+
+						}
+
+				}).addTo(mapObj);
+
+				geoLayer.addData(features);	// Add to the geoJson object
+
+				$("#" + regionDivId).append(getRegionHeader(regionProps, countryId)); // Add the region name to the inlet pane
+
+				mapObj.fitBounds(geoLayer.getBounds(),{padding: [5,5]}); // Center the region Polygon/MultiPolygon in the inlet pane.
+
+				// Disable any events for each inlet pane
+
+				mapObj.touchZoom.disable();
+				mapObj.doubleClickZoom.disable();
+				mapObj.scrollWheelZoom.disable();
+				mapObj.boxZoom.disable();
+				mapObj.keyboard.disable();
+				mapObj.dragging.disable();
+
+				paneNum++;
+
+			}
+
+		}
+
+		/*
+			We want to fade in each inlet region when the show/hide button is clicked, so here we ensure that they all start as faded out.
+			This is because, if we use "display: none" as a starting point, the shapes will not appear when faded in.
+		 */
+
+		$(".inlet-regions").fadeOut(0);
+
+		// Grab the css padding value for the inlet container and convert to an int value.
+
+		inletContainerPdg = $("#inletContainer").css("padding-left");
+		inletContainerPdg = inletContainerPdg.replace("px", "");
+		inletContainerPdg = parseInt(inletContainerPdg);
+
+		// Calculate the height on the inlet container based on the number of panes, their height, inlet container padding value, and the distance between each pane.
+
+		maxPanes = (maxPanes > paneNum) ? paneNum : maxPanes; // Max inlet panes cannot be more than the number of inlet regions available.
+		maxPanes = (maxPanes <= 0) ? 1 : maxPanes;			  // Max inlet panes cannot be zero or less (at least one pane will be visible).
+
+		numPanes = maxPanes;
+
+		inletContainerHgt = ((paneHgt * numPanes) + (numPanes - 1) * topPosPx) + (inletContainerPdg * (inletContainerPdg + 1));
+
+		inletContainerWdt = paneWth + yOffset; 	// Inlet container width (with scroll bar).
+		inletContainerScr = "scroll"; 			// Inlet container overflow with scroll (default).
+
+		// Calculate the correct width of the inlet container with max panes or less (no vertical scroll bar).
+
+		if (paneNum <= maxPanes){
+
+			inletContainerWdt  = paneWth;
+			inletContainerWdt += (inletContainerPdg * 2) + 1;
+			inletContainerScr  = "hidden";
+
+		}
+
+		// Configure the inlet container based on the properties file.
+
+		var inletContainerBkg = displayProps.INLET_BG;  		// Inlet container background (show/hide = true/false).
+
+		var bgc = $("#inletContainer").css("background-color"); // css background colour (overseas-inlet-regions.css).
+		var opa = "0.5";										// Default configured opacity.
+
+		var inletContainerStyle = {
+
+			height: 	inletContainerHgt,
+			overflowY: 	inletContainerScr,
+			width: 		inletContainerWdt,
+			border: 	inletContainerBkg ? "" : "none",
+			boxShadow: 	inletContainerBkg ? "" : "none",
+			background: inletContainerBkg ? (displayProps.INLET_BG_OPA ? getRbgBgOpacity(bgc, opa) : bgc) : "transparent"
+
+		};
+
+		// Configure each inlet pane header based on the properties file.
+
+		var regionHeaderStyle = {
+
+			fontSize: paneFnt,
+			background: displayProps.HEADR_BG ? "" : "transparent"
+
+		};
+
+		// Configure each inlet pane bacground colour opacity based on the properties file.
+
+		var bgc = $(".inlet-regions").css("background-color"); // css background colour (overseas-inlet-regions.css).
+		var opa = "0.7";									   // Default configured opacity.
+
+		var regionBodyStyle = {
+
+			backgroundColor: displayProps.RGION_BG_OPA ? getRbgBgOpacity(bgc, opa) : bgc
+
+		};
+
+		// Add the configured styles to the inlet container and inlet panes
+
+		$("#inletContainer").css(inletContainerStyle);
+		$(".region-header").css(regionHeaderStyle);
+		$(".inlet-regions").css(regionBodyStyle);
+
+		// Hide the zoom control for each inlet pane (map).
+
+		$(".inlet-regions .leaflet-control-zoom").css({"visibility":"hidden"});
+
+		// Fade in the inlet container.
+
+		$("#inletContainer").fadeIn(300);
+
+		// Fade in each inlet container
+
+		for (var panes = 0; panes < paneNum; panes++){
+
+			var pane = panes + 1;
+
+			showOverseasRegions(pane);
+
+		}
+
+		// Hightlight the relevant inlet regions if a legend selection has been made before the regions panel has been opened;
+
+		 if (legendRegions.length){
+
+			for (var ind = 0; ind < legendRegions.length; ind++){
+
+				legendClickColorRegions(legendRegions[ind], regionsColorStyle);
+
+			}
+			rci2log.log(regionsColorStyle);
+		}
+
+	}
+
+	// Return the geometric features for each country key in overseas-inlet-regions.js
+
+	function getRegionsGeometry(features, countries){
+
+		var featIdIndex  = 0;  // country id array index
+		var featIdArr    = []; // country id array
+		var rGeometry 	 = []; // array to hold country features objects
+
+		// First, grab all country ids from the main map geoJson object
+		L.geoJson(features, {
+
+			filter: function(feature, layer) {
+
+				featIdArr[featIdIndex] = feature.id;
+
+				featIdIndex++;
+
+			}
+
+		});
+
+		// Now grab the relevant country features
+
+		for (var i = 0; i < featIdArr.length; i++){
+
+			for (var x = 0; x < countries.length; x++){
+
+				if (featIdArr[i] == countries[x]){
+
+					var geoFeatsObj = "rGeometry" + countries[x];
+
+					geoFeatsObj  = features[i];
+					rGeometry[x] = geoFeatsObj;
+
+				}
+
+			}
+
+		}
+
+		return rGeometry; // Multi-dimensional array
+
+	}
+
+	// Returns all the coordinates necessary to display an inlet region
+
+	function getAllCoords(regionCoordsObj, coords){
+
+		var count = 0;
+		var allCoords = [];
+		var coordsObj = regionCoordsObj; // defined in overseas-inlet-regions.js (region id > coords)
+
+		coords.forEach(function(coords, x){
+
+			for (var polyCoords = 0; polyCoords < coordsObj.length; polyCoords++){
+
+				if (x == coordsObj[polyCoords]){
+
+					allCoords[count] = coords;
+
+					count++;
+
+				}
+
+			}
+
+		});
+
+		return allCoords;	// Multi-dimensional array
+
+	}
+
+	// Return the fill colour and Country name of each country so we can use it for their regions
+
+	function getRegionCountry(countryFid, property){
+
+		var geoList = dataStructure.geoList;
+
+		var regionCountry;
+		var regionFillColor;
+		var returnVar;
+
+		for (var i=0; i < geoList.length; i++){
+
+			if (geoList[i].Code == countryFid){
+
+				regionCountry 	= geoList[i].Country;
+				regionFillColor = geoList[i].Color;
+
+			}
+
+		}
+
+		returnVar = (property == "country") ? regionCountry : regionFillColor;
+
+		return returnVar;
+
+	}
+
+	// Return the header (region) name for each inlet pane
+
+	function getRegionHeader(properties, countryFid){
+
+		var regionName = getRegionName(properties);
+
+		var regionHeader = "<div class='region-header'>";
+			regionHeader+= "<div class='region-label'>";
+			regionHeader+= regionName + " (";
+			regionHeader+= countryFid + ") ";
+			regionHeader+= "</div></div>";
+
+		return regionHeader;
+
+	}
+
+	// Return the configurable opacity (inlet container/pane background). Deconstructs the rgba bg colour and adds the opacity value.
+
+	function getRbgBgOpacity(bgColor, opacity){
+
+		var rgb 	  = bgColor.substring((bgColor.indexOf("(") + 1), bgColor.indexOf(")"))
+		var bgOpacity = "rgba(" + rgb + ", " + opacity + ")";
+
+		return bgOpacity;
+	}
+
+	// Returns the inlet region name for the selected language
+
+	function getRegionName(props){
+
+		var name;
+
+		switch (language) {
+
+			case "en": name = props.SHRT_ENGL;
+
+			break;
+
+			case "fr": name = props.SHRT_FREN;
+
+			break;
+
+			case "de": name = props.SHRT_GERM;
+
+			break;
+
+		}
+
+		return name;
+
+	}
+
+	// Displays each inlet pane with a slight delay after each (not necessary, but gives a nice smooth ripple down effect).
+
+	function showOverseasRegions(pane){
+
+		setTimeout(function(){
+
+			$("#inletContainer .inlet-regions:nth-child(" + pane + ")").fadeIn(300);
+
+		}, pane * 45);
+
+	}
+
+	// Remove all inlet objects from the DOM
+
+	function clearOverseasInletRegions(){
+
+		$(".inlet-regions").remove();
+		$("#inletContainer").remove();
+
+	}
+
+	// Display country comparison popup
+
+	function regionClicked(e) {
+
+		countryID   = this.feature.geometry.properties.FID;
+		countryName = this.feature.geometry.properties.COUNTRY;
+
+		clickCountry();
+
+	}
+
+	// Display country data
+
+	function regionMouseOver(e) {
+		//rci2log.log("boo");
+		countryID 	  = this.feature.geometry.properties.FID;
+		countryRegion = this.feature.geometry.properties.COUNTRY;
+
+		enterLayer();
+
+		var layer = e.target;
+		var divId = layer._map._container.id;
+
+		var regionBodyStyle = {
+
+			stroke:"black",
+			//strokeOpacity: 0.9,
+			strokeWidth: 1.5,
+
+		};
+
+		$("#" + divId + ".inlet-regions path.leaflet-clickable").css(regionBodyStyle);
+
+	}
+
+	// Reset region stroke highlight
+
+	function regionMouseOut(e) {
+
+		countryID 	  = this.feature.geometry.properties.FID;
+		countryRegion = this.feature.geometry.properties.COUNTRY;
+
+		enterLayer();
+
+		var layer = e.target;
+		var divId = layer._map._container.id;
+
+		var regionBodyStyle = {
+			stroke: "#7F7F7F",
+			//strokeOpacity: 0.3,
+			strokeWidth: 1
+
+		};
+
+		$("#" + divId + ".inlet-regions path.leaflet-clickable").css(regionBodyStyle);
+
+		document.getElementById("mapcountryname").innerHTML = infotext;
+	}
+
+	legendClickColorRegions = function(fid, fillStyle) {
+		//rci2log.log(fid);
+		//resetRegionColor();
+
+		if (overseasInletRegions.countries[fid]){
+
+			var regionKeys = Object.keys(overseasInletRegions.countries[fid].inlet); 	// Grab the region keys defined in the properties file.	.
+
+			// Loop through the region keys
+
+			for (var r = 0; r < regionKeys.length; r++){
+
+				var region      = regionKeys[r]; 											// Get the country overseas region
+				var regionObj   = overseasInletRegions.countries[fid].inlet[region]; 	// Grab the region object
+				var regionProps = regionObj.properties;
+
+				$("#" + regionProps["DIV_ID"] + ".inlet-regions path.leaflet-clickable").css(fillStyle);
+
+			}
+
+		}
+
+	}
+
+	resetRegionColor = function(){
+
+		var countryKeys = Object.keys(overseasInletRegions.countries);
+
+		for (var i=0; i < countryKeys.length; i++){
+
+			var countryId  = countryKeys[i];
+			var regionKeys = Object.keys(overseasInletRegions.countries[countryId].inlet); 	// Grab the region keys defined in the properties file.
+
+			// Loop through the region keys
+
+			for (var r = 0; r < regionKeys.length; r++){
+
+				var region      = regionKeys[r]; 											// Get the country overseas region
+				var regionObj   = overseasInletRegions.countries[countryId].inlet[region]; 	// Grab the region object
+				var regionProps = regionObj.properties;
+				var origColor   = getRegionCountry(countryId, "colour");
+
+				var regionBodyStyle = {
+
+					//stroke: "black",
+					stroke: "#7F7F7F",
+					//strokeOpacity: 0.3,
+					opacity: 1,
+					strokeWidth: 1,
+					fill: origColor
+
+				};
+
+				$("#" + regionProps["DIV_ID"] + ".inlet-regions path.leaflet-clickable").css(regionBodyStyle);
+
+			}
+
+		}
+
+	}
+
+	/* ------------------------------------- End ------------------------------------- */

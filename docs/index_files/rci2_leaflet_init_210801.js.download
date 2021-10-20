@@ -1,0 +1,1985 @@
+var vis_div='visContainer';
+var clickSource='';
+var height_total_vis ='';
+var height_total_scroll = '';
+var height_total_map=''
+var runningKey ='';
+var running_zIndex=0;
+var zStripes=[];
+var zStripesCSS=[];
+
+
+rci2loading_perc();
+
+	function rsi2_inIframe () {
+		try {
+			return window.self !== window.top;
+		} catch (e) {
+			return true;
+		}
+	}
+
+	 function setParent(el, newParent)	 {
+	    newParent.appendChild(el);
+	 }
+	function rci2_InitDataTable() {
+
+		if(rci2_layout.regionComparison) { // transposed table - comparing with EU
+			var h18=rci2_layout.height_vis-15;// reset to default each time -- $('#rightContainer').height();
+		} else {
+			var h18=rci2_layout.height_vis+4;// reset to default each time -- $('#rightContainer').height();
+		}
+		var vis_div='visContainer';
+		if(rci2_layout.scheme=='tworows_1doublevis2datable') {
+			vis_div='visContainerBottom';
+			$('#'+vis_div).html('').height(rci2_layout.height_visRow2-10);
+		} else {
+			$('#visContainer').html('').height(h18);
+		}
+		//rci2log.log('//');
+		//rci2log.log(defLayer.vals_table);
+		rci2log.log('//11',current_year);
+		rci2log.log(1289,281,RegionTable);
+		//rci2log.log(Key2RegionIndex);
+		//rci2log.log('//12');
+		var RegionTableAr=[]; /// convert object of objects to array
+		//for (var rRegion in Key2RegionIndex) {
+		//	var rKey=Key2RegionIndex[rRegion];
+		var RegionTableYear=RegionTable[current_year];
+		for (var rKey in RegionTableYear) {
+			if (!RegionTableYear.hasOwnProperty(rKey)) continue;
+			/// rKey=2016|0 (0=index of region)
+			//if(rKey.substr(-4,4)==current_year) {
+			if( rKey != 'undefined'){
+				//rci2log.log(28,'// '+rKey);//+' '+Key2RegionIndex[rRegion]);
+				var rRow = RegionTableYear[rKey];
+				if(rRow['Country']) {
+					//rci2log.log('// '+rKey);
+					//rci2log.log(rRow);
+					RegionTableAr.push(rRow);
+				} else {
+					//rci2log.log(1289,rRow);
+				}
+			} else {
+				rci2log.log(1289,61,RegionTableYear[rKey]);
+			}
+		}
+		//rci2log.log(1289,28,RegionTableAr,RegionTableYear);
+		//rci2log.log('//');
+		//rci2log.log('//28'+LangCur['rci2_indicator']);
+		if(rci2_layout.regionComparison) {// transposed table - comparing with EU
+			if(RegionTableAr.length>0) {  /// we actually have data
+				var RegionTableTransposed=[];
+				var RegionTableTransposedFilters=[];
+				for (var key in rsi2_sources) {
+					if (rsi2_sources.hasOwnProperty(key)) {
+						var rowName= rsi2_sources[key].ShortTitle+' <span class=rciDataColumnSubTitle>'+rsi2_sources[key].SubTitle+'</span>';
+						var langindicator = LangCur['rci2_indicator'];
+						var rRow=[];
+						rRow[langindicator]=rowName;
+						rRow['Key']="table_"+key  ;
+						var rRowFlag=[];
+						rRowFlag[langindicator]=rowName;
+						rRowFlag['Key']="table_"+key  ;
+						TranspRow["table_"+key]=rsi2_sources[key].FullTitle; // table_2-ZZZ : Unemployment full
+						RegionTableTransposedFilters[0]='Key';// dont show filter
+						var colCC=0;
+						for (var key1 in RegionTableAr) {
+							if (RegionTableAr.hasOwnProperty(key1)) {
+								var rCols=RegionTableAr[key1];
+								//var rFlags=RegionTableAr[key1+' Flag'];
+								var rRegion = RegionTableAr[key1].Region;;
+								var rRegionCode = RegionTableAr[key1].Code;;
+								if(rRegionCode==rci2_layout.regionComparison || rRegionCode==rci2_layout.regionDefault) {
+									// value of region
+									var rRegionFull = '<b>'+rRegion+'</b> ('+rRegionCode+')';
+									rRow[rRegionFull] = rCols[rowName];
+									// code of region
+									colCC++;
+									rRow[rRegionFull+'_Code'] = rRegionCode;
+									RegionTableTransposedFilters[colCC]=rRegionFull+'_Code'; // hide it
+									// flag of region
+									rRow[rRegionFull+'_Flag'] = rCols[rowName+' Flag'];
+									colCC++;
+									RegionTableTransposedFilters[colCC]=rRegionFull+'_Flag'; // hide it
+								}
+							}
+						}
+						RegionTableTransposed.push(rRow);
+					}
+				}
+				//rci2log.log(RegionTableTransposed);
+				//rci2log.log('//');
+				rci2_showDataTable(RegionTableTransposed,RegionTableTransposedFilters,vis_div) ; // RegionTable defLayer.vals_table);
+			}
+		} else {
+			rci2_showDataTable(RegionTableAr,TableFlagsFilter,vis_div) ; // RegionTable defLayer.vals_table);
+		}
+	}
+
+
+	function rci2_showDataTable(dataR,filtersR, vis_div) {
+
+		if(!vis_div) vis_div='visContainer';
+
+		$('#'+vis_div).html('');
+		$('#'+vis_div+' #gene_table').remove();
+		$('#'+vis_div+' #gene_table_wrapper').remove();
+		var table_plot = rci2_makeTable().datum(dataR).filterCols(filtersR);
+		d3.select('#'+vis_div).call(table_plot).transition().duration(500).each("end", function() {
+			rci2log.log('h1','end table');
+			if(rci2_layout.scheme=='tworows_1doublevis2datable') {
+				$('#rci2_head').hide();
+				//rci2_InitDataTable();
+				rci2_layout.height_total = $(window).height()-60;
+				if(rci2_layout.height_total<800) {
+					rci2_layout.height_visRow2 =  Math.round(rci2_layout.height_total/2);
+				}
+				rci2_layout.height_table_scroll= rci2_layout.height_visRow2 - 100;
+				$('#bottomContainer').css('height',rci2_layout.height_visRow2+10);
+				$('#visContainerBottom').css('height',rci2_layout.height_visRow2);
+				rci2_layout.height_vis = rci2_layout.height_total - rci2_layout.height_visRow2 + 0  ;
+				$('#leftContainer').css('height',rci2_layout.height_vis);
+				$('#rightContainer').css('height',rci2_layout.height_vis);
+				chart_init(rci2_layout.visLeft, 'visContainerLeft'); /// start HighCharts
+				chart_init(rci2_layout.visRight, 'visContainer'); /// start HighCharts
+				rci2log.log('129 h1',rci2_layout.height_total, 'vis',rci2_layout.height_vis, 'table', rci2_layout.height_visRow2);
+			}
+		});
+		//
+
+		//rci2log.log(dataR);
+		//rci2log.log(Object.values(dataR));
+	}
+
+function layout_init() {
+	$(document).ready(function() {
+		/// used for iFrame mode
+		// comment 6/may/20200 var parentHeight = parent.document.body.clientHeight;
+		//var parentWidth = parent.document.body.clientWidth;
+		//
+		h1width=$(window).width();
+		h1=$(window).height();
+		//
+		var headertabs_height=70;
+		if(!rci2_layout.tabsEnabled) headertabs_height=0;
+		//
+		//rci2_fullheight = 'yes' ; // leave empty for 'no' -- yes will override the fixedheight
+		if (typeof rci2_fullheight !== 'undefined') {
+			if(rci2_fullheight) {
+        if(rci2_layout.timelineEnabled=='yes') {
+          rci2_layout.height_total = h1-headertabs_height-35;
+        } else {
+          rci2_layout.height_total = h1-headertabs_height-3;
+        }
+        rci2log.log('167h1', h1, rci2_fullheight, rci2_layout.height_total );
+        if(rci2_layout.infoModalHeader) {
+          rci2_layout.height_total = rci2_layout.height_total - $('#infoModalHeader').height();
+        }
+        if(rci2_layout.scheme=='tworows') { // two rows and full height
+          var totalrelheight = rci2_layout.height_map*1 + rci2_layout.height_vis*1;
+          var totalrelheight_map = rci2_layout.height_map / totalrelheight; // percentage of total
+          var totalrelheight_vis = rci2_layout.height_vis / totalrelheight; // percentage of total
+          rci2_layout.height_map = Math.round(totalrelheight_map * rci2_layout.height_total); // scale map height according to available window height
+          rci2_layout.height_vis = Math.round(totalrelheight_vis * rci2_layout.height_total); // scale map height according to available window height
+          rci2log.log(127, 129, '184h1', h1, 'totalrelheight', totalrelheight);
+        } else {
+          if(rci2_layout.height_total) {
+  					var height_total_vis = rci2_layout.height_total - rci2_layout.height_vis; //650-630=20
+  					var height_total_scroll = rci2_layout.height_total - rci2_layout.height_table_scroll; //650-450=200
+  					var height_total_map = rci2_layout.height_total - rci2_layout.height_map; //650-625=25
+            rci2log.log(128, 129, '190h1', rci2_layout.height_total, height_total_vis, height_total_scroll, height_total_map);
+  				}
+  				rci2_layout.height_vis = rci2_layout.height_total - height_total_vis;
+  				rci2_layout.height_table_scroll= rci2_layout.height_total - height_total_scroll + 30;
+  				rci2_layout.height_map= rci2_layout.height_total - height_total_map;
+          rci2log.log(128, 129, '195h1', height_total_vis, height_total_scroll, height_total_map);
+        }
+			}
+		} else {
+			rci2_fullheight='';
+		}
+		if(!rci2_fullheight) {
+			rci2_layout.height_total = h1-headertabs_height;
+			if(!rci2_layout.height_map) rci2_layout.height_map=rci2_layout.height_total-20;
+			if(!rci2_layout.height_vis) rci2_layout.height_vis=rci2_layout.height_total-20;
+      rci2log.log(128, 129, 'h1', height_total_vis, height_total_scroll, height_total_map);
+		}
+		rci2log.log(129, 'h1 height_total', rci2_layout.height_total, 'height_vis', rci2_layout.height_vis,
+      'height_table_scroll', rci2_layout.height_table_scroll, 'height_map', rci2_layout.height_map, 'width '+h1width );
+		// if large screen and full width is set, then increase initial zoom
+		if(h1width>1750 && rci2_layout.width_total=='') {
+			rci2_initZoom=rci2_initZoom+0.25;
+		}
+		// on small screens , reduce zoom
+		if(h1width<500 && rci2_layout.width_total=='') {
+			rci2_initZoom=rci2_initZoom-0.25;
+		}
+
+
+		// layout
+		rci2log.time('time layout_init');
+		rci2log.time('time layout_init start');
+
+		//translations of html elements
+		$.each(LangCur, function(i,val) {
+			if(!i.indexOf(':')) { // exclude (:) not available
+				$("#"+i).html(val);
+				if($("#"+i).attr('data-original-title')) {
+					//rci2log.log(i, '####', 115);
+					$("#"+i).attr('data-original-title',LangLocal(i+'_orig_title'));
+				}
+				$("."+i).attr('title',val);
+			}
+		});
+
+		//rci2log.log('layout= '+rci2_layout);
+		$('body').addClass(rci2_layout.scheme);
+		if(rci2_layout.inletsLayout) $('#inletsbar').addClass('inlets_'+rci2_layout.inletsLayout);
+		if(rci2_layout.inletsLayout) $('#mapid').addClass('map_inlets_'+rci2_layout.inletsLayout);
+		if(rci2_layout.timelineEnabled=='yes') {
+			$('#rciTimeline').show();
+			$('#rci2_timeline_tabs').html('');
+			for(i=rci2_layout.timeStart; i<=rci2_layout.timeEnd; i++) {
+				var iLabel=i;
+				if(timeLabels[i]) {
+					iLabel=timeLabels[i];
+				}
+				$('#rci2_timeline_tabs').append('<button type="button" class="btn btn-sm  btn-primary  " id="rci2_timetab_'+i+'" year="'+i
+				   +'">'+iLabel+'<div class="btn-inner-dot"></div><div class="btn-inner-border"></div></button>');
+			}
+			var numbtns=i-rci2_layout.timeStart+0;
+			var btnswidths=100/numbtns; btnswidths=Math.round(btnswidths);
+			//rci2log.log(120, i, numbtns, btnswidths);
+			$('#rci2_timeline_tabs .btn-primary').css('width',btnswidths+'%');
+			//
+			for(i=rci2_layout.timeStart; i<current_year; i++) {
+				$('#rci2_timetab_'+i).addClass('beforeactive');
+			}
+			$('#rci2_timetab_'+current_year).addClass('activenow');
+		}
+		if(rci2_layout.scheme=='singlecol') {
+			$('#leftContainer').addClass("col-12");
+			$('#rci2_head').hide();
+			$('#rsi2_indic_selector_containerRight').hide();
+			$('#rsi2_indic_selector_containerLeft').hide();
+		}
+		if(rci2_layout.scheme=='twocolumns') {
+			if(rci2_layout.width_col_left) {
+				$('#leftContainer').addClass(rci2_layout.width_col_left);
+			} else {
+				$('#leftContainer').addClass("col-6");
+			}
+			if(rci2_layout.height_map) $('#leftContainer').css('height',rci2_layout.height_map);
+			if(rci2_layout.width_col_right) {
+				$('#rightContainer').addClass(rci2_layout.width_col_right);
+			} else {
+				$('#rightContainer').addClass("col-6");
+			}
+			if(rci2_layout.height_vis) $('#rightContainer').css('height',rci2_layout.height_vis);
+			$('#schemeContainer').addClass('row');
+			$('#rci2_head').show();
+			$('body').addClass('twocolumns');
+			$('#rsi2_indic_selector_containerRight').hide();
+			$('#rsi2_indic_selector_containerLeft').hide();
+		}
+		if(rci2_layout.scheme=='tworows_1doublevis2datable') {
+			$('#rci2_head').hide();
+			h1=$(window).height();
+			rci2_layout.height_total = h1-60;
+			rci2_layout.height_visRow2 = 420;
+			if(rci2_layout.height_total<800) {
+				rci2_layout.height_visRow2 =  Math.round(rci2_layout.height_total/2);
+			}
+			rci2_layout.height_table_scroll= rci2_layout.height_visRow2 - 100;
+			rci2_layout.height_vis = rci2_layout.height_total - rci2_layout.height_visRow2 + 0  ;
+			rci2log.log(129, 'h1 h2', rci2_layout.height_total, 'vis2', rci2_layout.height_visRow2 , 'vis', rci2_layout.height_vis , rci2_layout.height_table_scroll  );
+			//
+			$('#leftContainer').addClass("col-6");
+			if(rci2_layout.height_vis) $('#leftContainer').css('height',rci2_layout.height_vis);
+			$('#rightContainer').addClass("col-6");
+			if(rci2_layout.height_vis) $('#rightContainer').css('height',rci2_layout.height_vis);
+			$('#schemeContainer').addClass('row');
+			$('#schemeContainer2').addClass('row');
+			$('#bottomContainer').addClass("col-12");
+			$('#bottomContainer').css('height',rci2_layout.height_visRow2);
+			if(rci2_layout.selectorOneHeader=='Left') $('#rsi2_indic_selector_containerRight').hide();
+			if(rci2_layout.selectorOneHeader=='Right') $('#rsi2_indic_selector_containerLeft').hide();
+			$('body').addClass('tworows_1doublevis2datable');
+		}
+		if(rci2_layout.scheme=='tworows_1vis2map') {
+			// body
+			if(rci2_layout.height_total) $('#rci2_content').css('height',rci2_layout.height_total).css('overflow-y','hidden');
+			// vis
+			$('#leftContainer').addClass("not-col-12").css('width',rci2_fixedwidth).css('height',rci2_layout.height_vis);
+			$('#visContainer').css('width',(rci2_fixedwidth-4));
+			var e_rightContainer = document.getElementById('rightContainer');
+			var e_mapContainer = document.getElementById('mapContainer');
+			setParent(e_mapContainer,e_rightContainer);
+			/// map
+			$('#rightContainer').addClass("not-col-12").css('height',rci2_layout.height_map);
+			var e_leftContainer = document.getElementById('leftContainer');
+			var e_visContainer = document.getElementById('visContainer');
+			setParent(e_visContainer,e_leftContainer);
+			$('#schemeContainer').addClass('not-row');
+			$('#rci2_head').show();
+			$('#rsi2_indic_selector_containerRight').hide();
+			$('#rsi2_indic_selector_containerLeft').hide();
+		}
+		if(rci2_layout.headerEnabled=='yes') {
+			$('#rci2_head').show();
+		} else {
+			$('#rci2_head').hide();
+		}
+		// for My Region GEP iframe mode
+		if(rci2_layout.mobileAllowed=='no') {
+			if(parentWidth < rci2_layout.mobileMinWidth) {
+				rci2_layout.showMobileWarning=1;
+			}
+		}
+
+		if(rci2_layout.showMobileWarning==1) {
+			$('#mapContainer').html("<a href='https://ec.europa.eu/eurostat/help/first-visit/tools' target='_blank'><img src='https://ec.europa.eu/eurostat/documents/10186/7894257/ma-my-region.png' style='float: left; width: 100px; margin-right: 10px;'></a>This screen resolution is not supported for the desktop version of <B>My Region</b>. You can <a href='https://ec.europa.eu/eurostat/help/first-visit/tools' target='_blank'>use the <b>My Region mobile app</b></a> instead.").css('background-color','white').css('padding','20px').css('font-size','10pt');
+			$('#rciInfoLoading').hide();
+			var x = parent.document.getElementById("frameGEP");
+			x.style.height = "145px";
+			var x2 = parent.document.getElementById("frameGEPselectregion");
+			x2.style.display = "none";
+			rci2log.timeEnd('time layout_init start');
+		} else {
+			//
+			if(rci2_layout.MobileReponsive) {
+				if($(window).width() <= rci2_layout.MobileReponsive) {
+					rci2_show_inlets_on_load='';
+					if(rci2_layout.initZoomMobile) rci2_initZoom=rci2_layout.initZoomMobile;
+					if(rci2_layout.legend_layoutMobile) rci2_legend_layout=rci2_layout.legend_layoutMobile;
+					if(rci2_layout.legend_positionMobile) rci2_layout.legend_position=rci2_layout.legend_positionMobile;
+					if(rci2_layout.legend_layoutMobile) rci2_layout.legend_layout=rci2_layout.legend_layoutMobile;
+				}
+			}
+			//
+			if(rci2_layout.infoModalHeader!='' && typeof rci2_layout.infoModalHeader !== 'undefined') {
+				$('#infoModalHeader').show();
+				$('#share_tweet').attr('href','https://twitter.com/intent/tweet?text='+rci2_layout.infoMapHeader+'%20%20'+document.location+'%20%23Eurostat%20'+rci2_layout.infoHeaderTweet+'&tw_p=tweetbutton&_blank');
+				$('#share_fb').attr('href','https://www.facebook.com/sharer/sharer.php?u='+document.location+'&t=title?redirect=facebook');
+				$('#share_embed').html('&lt;iframe width="100%" height="800" src="'+document.location+'"&gt;&lt;/iframe&gt;');
+				$(".qtip_tooltip").each(function(){
+					var qtip_text=$(this).attr('data-original-title');
+					var qtip_id=$(this).attr('id');
+					$(this).qtip({
+						style: { classes: "qtipUI qtip-light qtip-shadow qtip-rounded"   } ,
+						titlebar: true,
+						content: {
+							text: qtip_text,
+						},
+						position: {
+							target: "#" + qtip_id, //'mouse', // Track the mouse as the positioning target
+							my: 'top center',
+							at: 'bottom center',
+							adjust: { x: -2, y: +2 } // Offset it slightly from under the mouse
+						}
+					});
+				});
+			}
+			if(rci2_layout.infoMapHeader!='' && typeof rci2_layout.infoMapHeader !== 'undefined') {
+				if(QueryString['simple']=='nomodal' || (runQuerySimple('simple')=='nomodal')) {
+					$('#mapInfoHeader').addClass('simple_nomodal');
+				}
+				if(QueryString['simple']=='true' || (runQuerySimple('simple')=='true')) {
+					$('#mapInfoHeader').addClass('simple_true');
+				}
+			//
+				if(rci2_layout.infoMapHeaderSearch=='yes') {
+					$('#mapInfoHeader').html("<div class='infoTitleContainer col-8'><div class='infoTitle'>"+rci2_layout.infoMapHeader+
+						"</div><div class='infoTitleSub'>"+rci2_layout.infoMapHeaderSub+"</div></div>"+
+						"<div class='col-4 pt-2' id=infoSearch></div>").addClass('row infoMapHeader');
+				} else {
+					$('#mapInfoHeader').html("<div class='infoTitleContainer'><div class='infoTitle'>"+rci2_layout.infoMapHeader+"</div><div class='infoTitleSub'>"+rci2_layout.infoMapHeaderSub+"</div></div>").addClass('  infoMapHeader');
+				}
+			} else {
+				if(rci2_layout.infoMapHeaderSearch=='yes') {
+					$('#mapInfoHeader').html("<div class='infoTitleContainer col-8'></div>"+
+						"<div class='col-4 pt-2' id=infoSearch></div>").addClass('row infoMapHeader');
+				} else {
+					$('#mapInfoHeader').hide();
+				}
+			}
+			if(rci2_layout.infoMapFooter!='') {
+				$('#mapInfoFooter').html(rci2_layout.infoMapFooter).addClass('infoMapFooter');
+			} else {
+				$('#mapInfoFooter').hide();
+			}
+			//
+			document.title=LangLocal('page_title');
+			//
+			rci2log.timeEnd('time layout_init start');
+			//
+			leaflet_init();
+			//
+			if(rci2_layout.mapEnabled=='yes') {
+			} else {
+				if(rci2_layout.scheme=='tworows_1doublevis2datable') {
+					$('#mapInfoHeader').hide(); // hide map
+					$('#mapContainer').hide(); // hide map
+				} else {
+					$('#leftContainer').hide(); // hide map
+					$('#rightContainer').removeClass('col-7').addClass('col-12'); // expand vis column
+				}
+			}
+		}
+
+		// on click chart type
+		$('#rci2_nav_tabs .btn').click(function() {
+			$('#rci2_nav_tabs .btn.active').removeClass('active');
+			$(this).addClass('active');
+			rci2log.log('11 135 '+$(this).attr('id'));
+			if($(this).attr('chart-type'))  {
+				//set new vis type
+				current_chart=$(this).attr('chart-type') ;
+				//refresh timeline availability
+				rci2_timelineLimits();
+				//
+				if(current_chart=='datatable') {
+					rci2_InitDataTable();
+					//if(CurrentRegion) rci2_regionClick(CurrentRegion);
+				} else {
+					chart_init(current_chart); /// start HighCharts
+					if(CurrentRegion) rci2_regionClick(CurrentRegion);
+				}
+			}
+		});
+		/// on click timeline
+		$('#rci2_timeline_tabs .btn').click(function() {
+			rci2log.log('11 135 '+$(this).attr('id'),CurrentPane);
+			var current_yearNew='';
+			if($(this).attr('year'))  {
+				// set styling
+				if(CurrentPane) {
+					var TimeSlotsInd=rsi2_sources[CurrentPane].TimeSlots;
+					for(i=rci2_layout.timeStart; i<=rci2_layout.timeEnd; i++) {
+						if(TimeSlotsInd) {
+							if (Object.values(TimeSlotsInd).indexOf(i+'') > -1) {
+								//if(TimeSlotsInd.includes(i+'')) {
+								$('#rci2_timetab_'+i).removeClass('disabled');
+								//$('#rci2_timetab_'+i).on('click');
+								// new current year
+								if($(this).attr('year')==i) {
+									current_yearNew=i ;
+									rci2log.log(285,'newyear',i,CurrentPane,current_yearNew);
+								}
+							} else {
+								rci2log.log(285,i,CurrentPane, typeof TimeSlotsInd, TimeSlotsInd);//rsi2_sources[CurrentPane].TimeSlots);
+								$('#rci2_timetab_'+i).addClass('disabled');
+								//$('#rci2_timetab_'+i).off('click');
+							}
+						}
+					}
+				}
+				// the year changed
+				if($(this).attr('year')==current_yearNew && current_yearNew) {
+					$('#rci2_timeline_tabs .btn.activenow').removeClass('activenow');
+					$('#rci2_timeline_tabs .btn.beforeactive').removeClass('beforeactive');
+					$('#rci2_timeline_buttons .btn.active').removeClass('active');
+					current_year=current_yearNew;
+					rci2log.log(285,'newyear2',CurrentPane,current_year,current_yearNew);
+					$(this).addClass('activenow');
+					for(i1=rci2_layout.timeStart; i1<current_year; i1++) {
+						$('#rci2_timetab_'+i1).addClass('beforeactive');
+					}
+					$('#rci2_timetab_'+current_year).addClass('activenow');
+					//do the rest
+					changecurrentyear(current_year);
+				} else {
+					rci2log.log(285,'no data',$(this).attr('year'),CurrentPane,current_year);
+					$('#rci2_timetab_'+$(this).attr('year')).removeClass('activenow');
+					$('#rci2_timetab_'+current_year).addClass('activenow');
+				}
+
+			}
+		});
+		var time_play_timer='';
+		var moving = 0;
+		$('#rci2_time_backward').click(function() {
+			rci2log.log($(this).attr('id'), current_year, rci2_layout.timeStart, rci2_layout.timeEnd);
+			current_year--;
+			var timelimits=rci2_timelineLimits();
+			if(current_year<timelimits['tStart']) current_year=timelimits['tStart'];
+			//if(current_year<rci2_layout.timeStart) current_year=rci2_layout.timeStart;
+			$('#rci2_time_play').attr('playing',0);
+			$('#rci2_time_play').html("<i class='fa fa-play'></i>");
+			clearInterval(time_play_timer);
+			$('#rci2_timetab_'+current_year).addClass('activenow');
+			$('#rci2_timetab_'+current_year).trigger('click')
+		});
+		$('#rci2_time_forward').click(function() {
+			rci2log.log($(this).attr('id'), current_year, rci2_layout.timeStart, rci2_layout.timeEnd);
+			current_year++;
+			// do we have data ?
+			var TimeSlotsInd=rsi2_sources[CurrentPane].TimeSlots;
+			var timelimits=rci2_timelineLimits();
+			if(!TimeSlotsInd.includes(current_year+'')) { // we dont have data loop back
+				current_year=timelimits['tStart'];
+			}
+			/// end of time
+			//if(current_year > rci2_layout.timeEnd) {
+			if(current_year>timelimits['tEnd']) {
+				current_year=timelimits['tStart']; // loop at end of time
+			}
+			/* stop at end of timeline
+			if(current_year >= rci2_layout.timeEnd) {
+				current_year=rci2_layout.timeEnd;
+				$('#rci2_time_play').attr('playing',1);
+				$('#rci2_time_play').html("<i class='fa fa-play'></i>");
+				clearInterval(time_play_timer);
+			}*/
+			$('#rci2_timetab_'+current_year).addClass('activenow');
+			$('#rci2_timetab_'+current_year).trigger('click')
+		});
+		$('#rci2_time_play').click(function() {
+			rci2log.log(306,'playing',moving);
+			if ($(this).attr('playing')== 1) {
+			  moving = 0;
+			  clearInterval(time_play_timer);
+			  // time_play_timer = 0;
+			  $(this).html("<i class='fa fa-play'></i>");
+			  rci2log.log(313);
+			} else {
+			  moving = 1;
+			  rci2log.log(315);
+				$('#rci2_time_forward').trigger('click');
+			  time_play_timer = setInterval(function(){
+				rci2log.log(308,'step',current_year);
+				$('#rci2_time_forward').trigger('click');
+			  }, 2000);
+			  $(this).html("<i class='fa fa-pause'></i>");
+			}
+			$(this).attr('playing',moving);
+			$('#rci2_timetab_'+current_year).addClass('activenow');
+			rci2log.log(current_year, "Slider moving: " + moving, $(this).attr('playing'));
+		});
+
+		rci2log.timeEnd('time layout_init');
+
+
+	});
+	// end of document ready
+}
+
+function changecurrentyear(newyear) {
+	// update map
+	//leaflet_init();
+	var TimeSlotsInd=rsi2_sources[CurrentPane].TimeSlots;
+	if(TimeSlotsInd.includes(newyear+'')) {
+		runningKey=CurrentPane;
+		var key1year = CurrentPane+'_'+newyear;
+		//
+		Value_Region_feature[key1year+'_scatter']=[]; // reset array
+
+		defLayer={
+			pane: CurrentPane,
+			name:rsi2_sources[CurrentPane].FullTitle /*"Employment rates From 55 to 64 years (2013)"*/,
+			vals: Value_Region_feature[key1year],
+			vals_table: Value_Region_feature[key1year+'_table'],
+			vals_bar: Value_Region_feature[key1year+'_bar'],
+			vals_scatter: Value_Region_feature[key1year+'_scatter'],
+			unit: rsi2_sources[CurrentPane].sUnit  ,
+			nutslevel: 'NUTS_'+rsi2_sources[CurrentPane].sNUTS,
+			zone: rsi2_sources[CurrentPane].sZones,
+			mapData: rsi2_sources[CurrentPane].regions_nuts,
+			style: style_nuts
+		};
+		//rsi2_geojson[CurrentPane].remove();
+		rsi2_nuts_topo_features_reload(CurrentPane);//,rsi2_sources[CurrentPane].regions_nuts);
+		rsi2_geojson[CurrentPane] = L.topoJson(rsi2_sources[CurrentPane].regions_nuts, {
+						pane: CurrentPane,
+						mapData: rsi2_sources[CurrentPane].regions_nuts,
+						style: style_nuts,
+						onEachFeature: onEachFeatureDo
+					}).addTo(rsiMap);
+		//rsiMap.fire('baselayerchange');
+		//def_enable_infoIndicator
+		if(rci2_layout.selectorOneHeader=='yes') {
+			$('#rsi2_indic_label').html(rci2_indic_label(CurrentPane));
+		}
+		if(rci2_layout.selectorOneHeader=='Left') $('#rsi2_indic_label_Left').html(rci2_indic_label(CurrentPane));
+		if(rci2_layout.selectorOneHeader=='Right') $('#rsi2_indic_label_Right').html(rci2_indic_label(CurrentPane));
+		//
+		//
+		$('#rci2_timeline_tabs .btn.activenow').removeClass('activenow');
+		$('#rci2_timetab_'+current_year).addClass('activenow');
+		rci2log.log('101 changecurrentyear '+current_year+','+newyear+' / '+CurrentPane, $('#rci2_timetab_'+current_year).attr('class') );//,rsi2_sources[CurrentPane].TimeSlots);
+		/// update visualisations
+		if(current_chart=='datatable') {
+			rci2_InitDataTable();
+		} else {
+			if(rci2_layout.scheme=='tworows_1doublevis2datable') {
+				$('#rci2_head').hide();
+				rci2_InitDataTable();
+			} else {
+				chart_init(current_chart); /// start HighCharts
+				if(CurrentRegion && rci2_layout.scheme=='twocolumns') rci2_regionClick(CurrentRegion);; // not needed in data table
+			}
+		}
+	}
+}
+
+function rci2_changeIndicator(trCCt, myregion) {
+	trCCt=trCCt.trim();
+	rci2log.log('439 id '+' : '+trCCt);
+	var spanCC=0; var spanCCclicked='';
+	$('form.leaflet-control-layers-list span').each(function() {
+		var spanhtml=$(this).html();
+		spanhtml=spanhtml.trim();
+		if(spanhtml==trCCt) {
+			rci2log.log(439,$(this).html());
+			rci2log.log(439,spanCC);
+			spanCCclicked=spanCC;
+		}
+		spanCC++;
+	});
+	$('form.leaflet-control-layers-list input').eq(spanCCclicked).trigger('click');
+	if(myregion) {
+		rci2_changeRegion(myregion)
+	}
+}
+
+function rci2_changeRegion(myregion) {
+	// clean tooltips
+	$(".leaflet-pane.leaflet-tooltip-pane").children().remove();
+	$(".leaflet-fusesearch-panel").removeClass('opened').addClass('closed');
+	// get region on main map
+	var CurrentLayerID = nutscodeLayer[CurrentPane+'_'+myregion];
+	rci2log.log('h1','current '+CurrentRegion+' clickSource '+clickSource+' fire region '+CurrentPane+' / '+myregion+' layer id='+CurrentLayerID);
+	var CurrentLayer=rsiMap._layers[CurrentLayerID];
+	rci2log.log(613, CurrentLayer);
+  //
+	$('.inlet-regions').trigger('mouseout'); // close any open inlet tooltips
+	//
+	if(CurrentLayer) {
+        //
+        //zoom to region
+        /*if(!inletsDivs[myregion]) {
+            var regLevel = CurrentLayer.feature.properties.LEVL_CODE;
+            rsiMap.fitBounds(CurrentLayer.feature.layer.getBounds(),{maxZoom: rci2_search_zoom[regLevel] });
+	        // hide inlets
+	        //rci2_closeinlets();
+        }*/
+		rci2log.log(613, CurrentLayer.feature.id);
+		CurrentLayer.fire('mouseout').fire('click');
+	} else {
+		rci2log.log('1177: '+inletsDivs[myregion]);
+		if(inletsDivs[myregion]) {
+			//
+      // show inlets
+			rci2_showinlets(defLayer);
+			$('.inlet-regions').css('background-color',rci2_layout['color_sea']);//
+			//
+			var leDiv=inletsDivs[myregion];
+			leDiv=leDiv.replace('#','');
+			//var CurrentLayerID1 = nutscodeLayer['inlet'+myregion];
+			rci2log.log(1177, 1, myregion, leDiv);
+			var inletMap=mapObj[leDiv];
+			if(inletMap) {
+				rci2log.log(1177, 2, mapObj[leDiv], inletMap);
+				inletMap.eachLayer(function (layer) {
+					rci2log.log(1177, 3, mapObj[leDiv], inletMap);
+					if(layer.feature) {
+						if(layer.feature.properties.NUTS_ID == myregion) {
+							rci2log.log('636 inlet trigger '+myregion);
+							rci2log.log(layer);
+							//rci2log.log(getLayerId(layer));
+							layer.fire('click');
+						}
+					}
+				});
+			} else {
+				rci2log.log(1177, 652, myregion, leDiv);
+				$('.inlet-regions').trigger('mouseout');
+				$('#'+leDiv).trigger('mouseover');
+			}
+			//rci2log.log(inletMap);
+		}
+	}
+}
+
+function leaflet_init() {
+
+	rci2log.time('time leaflet_init');
+	rci2log.time('time leaflet_init before sources');
+	rci2log.time('time leaflet_init before sources1');
+
+	if(rsiMap) 	rsiMap.remove(); // kill map
+
+	//
+	// sort sources
+	//rci2log.log(rsi2_sources);
+	var rsi2_sources2={};
+	var rsi2_sourcesSort= Object.keys(rsi2_sources).sort(function(a, b) {return (rsi2_sources[a].AA - rsi2_sources[b].AA)});
+	if(rsi2_sourcesSort.length) {
+		for (k = 0; k < rsi2_sourcesSort.length; k++) {
+			//rci2log.log('303 '+rsi2_sourcesSort[k]);
+			var k1=rsi2_sourcesSort[k];
+			rsi2_sources2[k1]=rsi2_sources[k1];
+		}
+		rci2log.log(rsi2_sources2);
+		rsi2_sources=rsi2_sources2; // replace
+	}
+	// search options
+
+	// frame heights
+	h1=$(window).height(); //$('#global')
+	//
+	if(rsi2_inIframe()) {
+	}
+	if (typeof rci2_fixedheight !== 'undefined') {
+		if(rci2_fixedheight || !rci2_fullheight) {
+			h1 = rci2_fixedheight;
+		}
+	}
+	//
+	var inletsopenY=0;
+	if(rci2_layout.height_map) {
+		h1 = rci2_layout.height_map;
+		inletsopenY= -680 + (690-rci2_layout.height_map);
+	}
+	inletsopenY = inletsopenY + $('#infoMapHeader').height();
+	rci2log.log('h1 '+h1+' inletsopenY '+inletsopenY, '/',$('body').height(), $(window).height() );
+	$('#inletsbar.open').css('top',inletsopenY+'px');
+	//
+	if(rci2_layout.inletsWidth) {
+		if(rci2_layout.inletsLayout!='singlecol') {
+			$('#inletsbar').css('width',((rci2_layout.inletsWidth+5)*2)+'px');
+		} else {
+			$('#inletsbar.singlecol').css('width',((rci2_layout.inletsWidth+5)*1)+'px');
+		}
+	}
+	//
+	var inletsopenX=rci2_layout.inletsWidth-80;
+	if(inletsopenX<0) inletsopenX=0;
+	inletsopenX=inletsopenX+10;
+	//rci2log.log(361,inletsopenX);
+	$('#inletsbar').css('right',inletsopenX+'px');
+	//
+	if (typeof rci2_fixedwidth !== 'undefined') {
+		if(rci2_fixedwidth) {
+			$('#mapid').width(rci2_fixedwidth-2); // 2pixels for border
+			$('#mapContainer').width(rci2_fixedwidth-2);
+			$('#rci2_content').width(rci2_layout.width_total);
+			$('#leftContainer').width(rci2_fixedwidth);
+			$('#rightContainer').width(rci2_fixedwidth);
+			//$('#chart-column').width(rci2_fixedwidth);
+		}
+	}
+
+	$('#mapid').css('background-color','white');//E6FFFF
+
+	var diff=0;
+	//$('#rci2_demo_notice').height()+
+	diff=2;// for borders//$('#rci2_head').height()+$('#rciTimeline').height()+0;//45
+
+	if (typeof rci2_fullheight !== 'undefined') {
+		if(rci2_fullheight=='yes') {
+			diff=0;
+		}
+	}
+
+	loadperc=loadperc+2;
+	loadpercDot=loadpercDot+'.';
+	$('#rciInfoLoading').html(LangCur['rciPleaseHold1']+' ('+loadperc+'%) '+loadpercDot);
+
+	//if ($.browser.msie) { diff=230; } // works up to and including jquery 1.8 // deprecated in 1.9
+	/*if(str=='urbanrural.urb_typology') {
+		diff=diff+15;
+		h1Title=15;
+	}*/
+	//// inlets positioning -> h1n
+	diff = diff+ $('#mapInfoFooter').height()*1;
+	diff = diff+ $('#mapInfoHeader').height();
+  diff = diff+ $('#infoModalHeader').height();
+  diff = diff+ $('#rciTimeline').height();
+
+	if(diff) 	h1n=h1-diff;
+	else h1n=h1;
+	h1n_in=(-1)*(h1-diff-10);
+	if(inletsopenY) h1n_in=inletsopenY;
+	//+h1Title
+	$('#mapid').height(h1n);
+	rci2log.log('805 h1n+h1Title '+h1n+'/'+h1Title, diff);
+
+	$('#mapContainer').height( h1n+5 ).css('overflow-y','hidden') ;//+h1Title
+	//$('#mapInfoFooter').height()
+
+	//$('#chart-column').height(h1n);//+h1Title
+
+	var def_minZoom=3;
+	if (typeof rci2_minZoom !== 'undefined') {
+		def_minZoom=rci2_minZoom;
+		rci2log.log('def_minZoom '+def_minZoom);
+	}
+ 	var def_initZoom=3;
+	if (typeof rci2_initZoom !== 'undefined') {
+		def_initZoom=rci2_initZoom;
+		rci2log.log('def_initZoom '+def_initZoom);
+	}
+
+	// mobile screen adjustments
+	if(( $('#rci2_content').height() < 500 || $(window).width()<400)
+	 && rci2_layout.inletsLayout=='singlecol') {
+		// if the container is not high enough
+		$('#inletsbar').removeClass('inlets_'+rci2_layout.inletsLayout); // change to two columns
+		$('#mapid').removeClass('map_inlets_'+rci2_layout.inletsLayout);
+		rci2_layout.inletsLayout='';
+		// move down to avoid indicator selector
+		var h1a = $('#mapid').height()
+		inletsopenY= -680 + (690-h1a) + 45 + $('#infoMapHeader').height();
+		h1n_in=inletsopenY
+		rci2log.log('784h1 '+h1a+' inletsopenY '+inletsopenY, '/',$('body').height(), $(window).height() );
+		$('#inletsbar.open').css('top',inletsopenY+'px');
+		// closed default
+		rci2_show_inlets_on_load=''
+		// decrease zoom
+		def_initZoom=2;
+		rci2log.log('802 def_initZoom '+def_initZoom);
+		// legend
+		if(rci2_layout.legend_position== 'topleft') {
+			rci2_layout.legend_position='bottomright';
+			rci2_legend_layout='horizontal';
+				rci2log.log('842legend ',rci2_layout.legend_position, $('#rci2_content').height() ,$(window).width());
+		}
+	}
+	//
+	rci2log.log('849h inlets '+rci2_layout.inletsLayout,' h1 '+h1+' / h1n '+h1n+' diff '+diff+ ' / year='+current_year ,
+			$('#mapInfoHeader').height(), $('#mapInfoFooter').height(), $('#infoModalHeader').height() );
+	rci2log.log(760,h1n_in);
+
+	//
+	rci2log.timeEnd('time leaflet_init before sources1');
+	rci2log.time('time leaflet_init before sources2');
+
+	var EPSG3035 = {
+		  "format": "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs",
+		  "origin": [-8426600.0 ,15968500.0],
+		  "center": {"lat":54, "lng": 19,"zoom": def_initZoom},
+		  "area": "Europe",
+		  "resolutions": [66145.9656252646,26458.386250105836,13229.193125052918,6614.596562526459,2645.8386250105837,1322.9193125052918,661.4596562526459,264.5838625010584,132.2919312505292,66.1459656252646,26.458386250105836,13.229193125052918],
+		  /*"latLngBounds": {"latMin": 20, "lngMin":-40,"latMax": 80, "lngMax": 70}*/
+		  /* lat = north-south , lang = east-west */
+		}
+
+
+    rsiMap = new L.Map('mapid', {
+    	minZoom: def_minZoom,
+    	/*maxBounds: bounds[2],*/
+			gestureHandling: true,
+			maxBoundsViscosity: 0.1,
+    	zoomSnap: 0.25,
+    	zoomDelta: 0.25,
+    	zoomControl: false, /* will be added later */
+    	crs : new L.Proj.CRS('EPSG:3035',
+									EPSG3035.format, {
+									origin: EPSG3035.origin,
+									resolutions: EPSG3035.resolutions
+									})
+    }).setView(rci2_initialCenter, def_initZoom);
+    /// lat = Y , long = X
+
+	// disable zoom scroll -- override in conf
+    var def_rci2_scrollzoom='';
+	if (typeof rci2_scrollzoom !== 'undefined')  def_rci2_scrollzoom=rci2_scrollzoom;
+	if(!rci2_scrollzoom) {
+		rsiMap.scrollWheelZoom.disable();
+	}
+
+	// Stripes.
+	if(rci2_layout.zFill0) { zStripesCSS[0]=rci2_layout.zFill0;  zStripes[0]= new L.StripePattern(rci2_layout.zFill0);   zStripes[0].addTo(rsiMap); }
+	if(rci2_layout.zFill1) { zStripesCSS[1]=rci2_layout.zFill1;  zStripes[1]= new L.StripePattern(rci2_layout.zFill1);   zStripes[1].addTo(rsiMap); }
+	if(rci2_layout.zFill2) { zStripesCSS[2]=rci2_layout.zFill2;  zStripes[2]= new L.StripePattern(rci2_layout.zFill2);   zStripes[2].addTo(rsiMap); }
+	if(rci2_layout.zFill3) { zStripesCSS[3]=rci2_layout.zFill3;  zStripes[3]= new L.StripePattern(rci2_layout.zFill3);   zStripes[3].addTo(rsiMap); }
+	if(rci2_layout.zFill4) { zStripesCSS[4]=rci2_layout.zFill4;  zStripes[4]= new L.StripePattern(rci2_layout.zFill4);   zStripes[4].addTo(rsiMap); }
+	if(rci2_layout.zFill5) { zStripesCSS[5]=rci2_layout.zFill5;  zStripes[5]= new L.StripePattern(rci2_layout.zFill5);   zStripes[5].addTo(rsiMap); }
+
+	//extend Leaflet to create a GeoJSON layer from a TopoJSON file
+    L.TopoJSON = L.GeoJSON.extend({
+        addData: function (data) {
+          var geojson, key;
+          if (data.type === "Topology") {
+            for (key in data.objects) {
+              if (data.objects.hasOwnProperty(key)) {
+                geojson = topojson.feature(data, data.objects[key]);
+                L.GeoJSON.prototype.addData.call(this, geojson);
+              }
+            }
+            return this;
+          }
+          L.GeoJSON.prototype.addData.call(this, data);
+          return this;
+        }
+    });
+    L.topoJson = function (data, options) {
+		return new L.TopoJSON(data, options);
+	};
+
+    var myIcon = L.icon({
+	    iconUrl: 'leaflet1/images/marker-icon.png',
+	    iconSize: [18, 18],
+	    iconAnchor: [22, 94],
+	    popupAnchor: [-3, -76],
+	    shadowUrl: 'leaflet1/images/marker-shadow.png',
+	    shadowSize: [18, 25],
+	    shadowAnchor: [22, 94]
+	});
+
+
+	var def_rci2_copyright= LangLocal('rcit_copyright');
+	if(rci2_layout.hidemapcopyright=='yes') {
+		def_rci2_copyright='';
+	}
+	rsiMap.attributionControl.setPrefix(def_rci2_copyright); // Don't show the 'Powered by Leaflet' text.
+
+
+	//
+	if (typeof rci2_enable_fullscreen !== 'undefined') {
+		if(rci2_enable_fullscreen=='yes') {
+			rsiMap.addControl(new L.Control.Fullscreen());
+		}
+	}
+
+
+	// Create additional Control placeholders
+	function addControlPlaceholders(map) {
+		var corners = map._controlCorners,
+	        l = 'leaflet-',
+	        container = map._controlContainer;
+
+	    function createCorner(vSide, hSide) {
+	        var className = l + vSide + ' ' + l + hSide;
+
+	        corners[vSide + hSide] = L.DomUtil.create('div', className, container);
+	    }
+
+	    createCorner('horizontalcenter', 'top');
+	    createCorner('horizontalLeft1', 'top'); // for the layer choice
+	    createCorner('horizontalLeft2', 'top'); // for the layer title
+	    createCorner('horizontalcenter', 'bottom');
+	    createCorner('horizontalcenter', 'middle');
+	}
+	addControlPlaceholders(rsiMap);
+
+	// Change the position of the Zoom Control to a newly created placeholder.
+	//map.zoomControl.setPosition('horizontalcenterright');
+
+	rci2log.timeEnd('time leaflet_init before sources2');
+	rci2log.time('time leaflet_init world');
+
+
+	if(rci2_layout.mapEnabled) {
+
+		//rci2log.log(571,642,rci2Maps['map_world']);
+		map_world=rci2Maps['map_world'];
+		// base map
+		rsiMap.createPane('WorldCoast');
+		rsiMap.getPane('WorldCoast').style.zIndex = 400;
+		rsiMap.getPane('WorldCoast').style.pointerEvents = 'none';
+		//geoJson(map_world
+		geojsonWorld = L.topoJson(map_world, { /* */
+			style: style_map_world,
+			 pane: 'WorldCoast'
+		}).addTo(rsiMap);
+	}
+
+	rci2log.timeEnd('time leaflet_init world');
+	rci2log.time('time leaflet_init countries');
+
+	if(rci2_layout.mapEnabled) {
+		// country border
+		//rci2_countries_enable
+		if(1==1) {
+			map_countries=rci2Maps['map_countries'];
+			rsiMap.createPane('countryBorders');
+			rsiMap.getPane('countryBorders').style.zIndex = 600;
+			rsiMap.getPane('countryBorders').style.pointerEvents = 'none';
+			geojsonCountry = L.topoJson(map_countries, {
+				style: style_map_countries,
+				pane: 'countryBorders'
+			}).addTo(rsiMap);
+		}
+	}
+
+	if (typeof rci2_deflayer !== 'undefined') {
+		var def_deflayer=rci2_deflayer;
+	} else {
+		var def_deflayer='nuts1';
+	}
+
+	rci2log.timeEnd('time leaflet_init countries');
+	rci2log.time('time leaflet_init nuts0');
+
+ 	var baseLayers = { };
+
+	rci2log.log('989 nuts0',rci2_nuts0_enable,'+', rci2_layout.nuts0_enable,'/',rci2_nuts3_enable);
+	if(rci2_layout.nuts0_enable) rci2_nuts0_enable=rci2_layout.nuts0_enable;
+	// nuts0 Typology
+	if (typeof rci2_nuts0_enable === 'undefined') {
+		var rci2_nuts0_enable='';
+	}
+	if(rci2_nuts0_enable || rci2_layout.nuts0_enable) {
+		rci2log.log('994 nuts0 start');
+		rsiMap.createPane('nuts_regions0');
+		rsiMap.getPane('nuts_regions0').style.zIndex = 450;
+		rsiMap.getPane('nuts_regions0').style.pointerEvents = 'all';
+		if(!rci2Maps['regions_nuts0'] && regions_nuts0) {
+			rci2Maps['regions_nuts0']=regions_nuts0;;
+		}
+		geojson_regions0 = L.topoJson(rci2Maps['regions_nuts0'], {
+			pane: 'nuts_regions0', /*name your pane */
+			nutslevel: 'NUTS_0', /* nuts level used in inlets */
+			mapData: rci2Maps['regions_nuts0'], /* map file */
+			style: style_nuts_regions, /* function to colour */
+			onEachFeature: onEachFeatureDo /* run for each region */
+		});//
+	  if(Object.keys(rsi2_sources).length>0 || def_deflayer=='nuts0') {
+			rci2log.log('168 nuts0 enabled',rci2Maps['regions_nuts0']);
+			geojson_regions0.addTo(rsiMap);;
+		}
+		var namenuts0=LangCur['rci2_nuts_regions0'];
+		if(def_deflayer=='nuts0') {
+			var defLayerNUTS={
+				'pane': 'geojson_regions0',
+				'name': namenuts0,
+				'nutslevel': 'NUTS_0',
+				'mapData': rci2Maps['regions_nuts0'],
+				'style': style_nuts_regions
+			};
+		}
+		if(rci2_nuts0_inmenu) {
+	 		baseLayers[namenuts0]= geojson_regions0;
+		}
+	}
+
+	rci2log.timeEnd('time leaflet_init nuts0');
+
+	rci2log.time('time leaflet_init nuts1');
+
+	// nuts1 Typology
+	if(rci2_nuts1_enable) {
+		rsiMap.createPane('nuts_regions');
+		rsiMap.getPane('nuts_regions').style.zIndex = 450;
+		rsiMap.getPane('nuts_regions').style.pointerEvents = 'all';
+		rci2Maps['regions_nuts1']=regions_nuts1;;
+		geojson_regions = L.topoJson(rci2Maps['regions_nuts1'], {
+			pane: 'nuts_regions', /*name your pane */
+			nutslevel: 'NUTS_1', /* nuts level used in inlets */
+			mapData: rci2Maps['regions_nuts1'], /* map file */
+			style: style_nuts_regions, /* function to colour */
+			onEachFeature: onEachFeatureDo /* run for each region */
+		});//
+	    if(Object.keys(rsi2_sources).length>0 || def_deflayer=='nuts1') {
+			rci2log.log('168 nuts1 enabled');
+			geojson_regions.addTo(rsiMap);;
+		}
+		var namenuts1=LangCur['rci2_nuts_regions1'];
+		if(def_deflayer=='nuts1') {
+			var defLayerNUTS={
+				'pane': 'geojson_regions',
+				'name': namenuts1,
+				'nutslevel': 'NUTS_1',
+				'mapData': rci2Maps['regions_nuts1'],
+				'style': style_nuts_regions
+			};
+		}
+		if(rci2_nuts1_inmenu) {
+	 		baseLayers[namenuts1]= geojson_regions;
+		}
+	}
+
+	rci2log.timeEnd('time leaflet_init nuts1');
+	rci2log.time('time leaflet_init nuts2');
+
+	// nuts2 Typology
+	if(rci2_nuts2_enable && rci2_layout.mapEnabled) {
+		rsiMap.createPane('nuts_regions2');
+		rsiMap.getPane('nuts_regions2').style.zIndex = 450;
+		rsiMap.getPane('nuts_regions2').style.pointerEvents = 'all';
+		regions_nuts2=rci2Maps['regions_nuts2'];
+		geojson_regions2 = L.topoJson(regions_nuts2, {
+			pane: 'nuts_regions2',
+			nutslevel: 'NUTS_2',
+			mapData: regions_nuts2,
+			style: style_nuts_regions,
+			onEachFeature: onEachFeatureDo
+		});
+		// run onEachFeatureData for each EU/EA row
+		onEachEUEAdata();
+		//
+	  if(Object.keys(rsi2_sources).length>0 || def_deflayer=='nuts2') {
+			rci2log.log('200 nuts2 enabled');
+			geojson_regions2.addTo(rsiMap);;
+		}
+		var namenuts2=LangCur['rci2_nuts_regions2'];
+		if(def_deflayer=='nuts2') {
+			var defLayerNUTS={
+				'pane': 'geojson_regions2',
+				'name':namenuts2,
+				'nutslevel': 'NUTS_2',
+				'mapData': regions_nuts2,
+				'style': style_nuts_regions
+			};
+		}
+		if(rci2_nuts2_inmenu) {
+	 		baseLayers[namenuts2]= geojson_regions2;
+	 	}
+	}
+	if(! rci2_layout.mapEnabled  && rci2_layout.scheme=='tworows_1doublevis2datable' ) {
+		// run onEachFeatureData for each EU/EA row
+		onEachEUEAdata();
+	}
+
+	rci2log.timeEnd('time leaflet_init nuts2');
+	rci2log.time('time leaflet_init nuts3');
+
+	// nuts3 Typology
+	if(rci2_nuts3_enable) {
+		rsiMap.createPane('nuts_regions3');
+		rsiMap.getPane('nuts_regions3').style.zIndex = 450;
+		rsiMap.getPane('nuts_regions3').style.pointerEvents = 'all';
+		geojson_regions3 = L.topoJson(rci2Maps['regions_nuts3'], {
+			pane: 'nuts_regions3',
+			nutslevel: 'NUTS_3',
+			mapData: rci2Maps['regions_nuts3'],
+			style: style_nuts_regions,
+			onEachFeature: onEachFeatureDo
+		});;
+	    if(Object.keys(rsi2_sources).length>0 || def_deflayer=='nuts3') {
+			rci2log.log('202 nuts3 enabled');
+			geojson_regions3.addTo(rsiMap);;
+		}
+		var namenuts3=LangCur['rci2_nuts_regions3'];
+		if(def_deflayer=='nuts3') {
+			var defLayerNUTS={
+				'pane': 'geojson_regions3',
+				'name':namenuts3,
+				'nutslevel': 'NUTS_2',
+				'mapData': rci2Maps['regions_nuts3'],
+				'style': style_nuts_regions
+			};
+		}
+		if(rci2_nuts3_inmenu) {
+	 		baseLayers[namenuts3]= geojson_regions3;
+	 	}
+	}
+
+	rci2log.timeEnd('time leaflet_init nuts3');
+
+	if(rci2_layout.mapEnabled) {
+		if(rci2_layout.infoMapHeaderSearch=='yes') {
+			$('#infoSearch').append("<select class='selectpicker'  title='' data-size=5 data-dropdown-align-right=true "+
+				" nonodata-none-selected-text='Select a region' data-live-search-placeholder='Name or NUTS code' "+
+				" data-live-search='true'><option  value=''>Select a region</option> </select>");
+			var infoSearch= new SlimSelect({
+				 select: '#infoSearch select',
+				 allowDeselect: true,
+				 onChange: function(info){
+					 if($('#infoSearch select').val()) {
+						 CurrentRegion=$('#infoSearch select').val()
+						 rci2log.log(685,CurrentRegion, info)
+						 rci2_changeRegion(CurrentRegion)
+						 infoSearch.set('')
+					 }
+				 }
+			});
+		} else {
+		///Create the control L.Control.FuseSearch and add it to the Map.
+		var searchCtrl = L.control.fuseSearch()
+		searchCtrl.options.position='topleft';
+		searchCtrl.options.title=LangCur['rci2_btn_search'];
+		searchCtrl.options.threshold=0.3; // def: 0.5 , perfect match = 0
+		searchCtrl.addTo(rsiMap);
+	}
+	}
+
+	rci2log.timeEnd('time leaflet_init before sources');
+
+	//rci2log.log('795 / '+rsi2_srCC+':'+rsi2_sources.length);
+	//rci2log.log(rci2_layout);
+
+	if(rsi2_sources.length>0 || rsi2_srCC>5) {
+
+		//rci2log.log('496/ ');
+		for (var key in rsi2_sources) {
+			if (rsi2_sources.hasOwnProperty(key)) {
+				runningKey=key; // used in style_nuts
+				rci2log.time('time leaflet_init '+key);
+				//
+				rci2loading_perc(rsi2_sources[key].ShortTitle);
+				// render default layer
+					//
+					if(rsi2_sources[key].sNUTS==0) {
+						rsi2_nuts_topo_features(key,regions_nuts0);
+							rci2log.log(917,1168,key,regions_nuts0);
+					}
+					if(rsi2_sources[key].sNUTS==1) {
+						rsi2_nuts_topo_features(key,regions_nuts1);
+					}
+					if(rsi2_sources[key].sNUTS==2) {
+						rsi2_nuts_topo_features(key,regions_nuts2);
+							rci2log.log(917,1175,key,regions_nuts2);
+					}
+					if(rsi2_sources[key].sNUTS==3) {
+						rsi2_nuts_topo_features(key,regions_nuts3);
+					}
+					//
+					rsi2_sources[key].loops=0;
+					//
+					rsiMap.createPane(key);
+					rsiMap.getPane(key).style.zIndex = 450;
+					rsiMap.getPane(key).style.pointerEvents = 'all';
+					rsi2_geojson[key] = L.topoJson(rsi2_sources[key].regions_nuts, {
+						pane: key,
+						mapData: rsi2_sources[key].regions_nuts,
+						group: rsi2_sources[key].Group,
+						AA: rsi2_sources[key].AA,
+						groupTitle: rsi2_sources[key].GroupTitle,
+						groupTitleSub: rsi2_sources[key].GroupTitleSub,
+						style: style_nuts,
+						onEachFeature: onEachFeatureDo
+					});
+					rci2log.log(917,'leaflet_init load: '+key, rsi2_sources[key].Loaded, rsi2_sources[key].loops,
+					 'nuts',rsi2_sources[key].sNUTS, 'region', typeof rsi2_sources[key].regions_nuts); // nuts_data_gdp
+
+				if(rsi2_sources[key].sDefault=='yes') {
+
+					rci2log.time('time leaflet_init default '+key);
+
+					var defaultSource=key;
+					CurrentPane=key;
+					rci2log.log(1042,'default '+key);
+					defaultTitle=rsi2_sources[key].FullTitle;
+					rsi2_geojson[key].addTo(rsiMap);
+					// top label
+					if(rci2_layout.selectorOneHeader=='yes') {
+						$('#rsi2_indic_label').html(rci2_indic_label(key));
+						var wicont=$('#rci2_head').width() - $('#rci2_nav_tabs').width() - 100 ;  // * 0.5; //rsi2_indic_label
+						//$('#rsi2_indic_selector_container').css('min-width',wicont+50);//
+					}
+					if(rci2_layout.selectorOneHeader=='Right') {
+						$('#rsi2_indic_label_Right').html(rci2_indic_label(key));
+					}
+					if(rci2_layout.selectorOneHeader=='Left') {
+						$('#rsi2_indic_label_Left').html(rci2_indic_label(key));
+					}
+					/// define the initial Layer configuration
+					var key1year = key+'_'+current_year;
+					defLayer={
+						pane: key,
+						name:rsi2_sources[key].FullTitle /*"Employment rates From 55 to 64 years (2013)"*/,
+						vals: Value_Region_feature[key1year],
+						vals_table: Value_Region_feature[key1year+'_table'],
+						vals_bar: Value_Region_feature[key1year+'_bar'],
+						vals_scatter: Value_Region_feature[key1year+'_scatter'],
+						unit: rsi2_sources[key].sUnit  ,
+						nutslevel: 'NUTS_'+rsi2_sources[key].sNUTS,
+						zone: rsi2_sources[key].sZones,
+						mapData: rsi2_sources[key].regions_nuts,
+						style: style_nuts
+					};
+
+					rci2log.timeEnd('time leaflet_init default '+key);
+				}
+				// set baselayer menu
+				baseLayers[rsi2_sources[key].FullTitle] = rsi2_geojson[key];
+				rci2log.timeEnd('time leaflet_init '+key);
+			}
+		}
+
+	} else {
+		/*Base map,  */
+		rci2log.log('530/ default map is nuts = '+rsi2_srCC);
+		// defLayer can be set in conf
+		if(!defLayer.pane) defLayer=defLayerNUTS;
+		//rci2log.log(defLayerNUTS);
+	}
+
+	rci2log.log('2780/ ', baseLayers);
+
+	if(rci2_layout.mapEnabled) {
+
+        // add button for inlets
+        if(rci2_layout.inletsDisableButton!='yes') {
+            L.easyButton( '<span class="inlets-button"><i class="fa fa-globe"></i></span>', function(){
+                rci2_toggleinlets();
+                $('.inlet-regions').css('background-color',rci2_layout['color_sea']);//
+              }, LangCur['rci2_btn_inlets']).addTo(rsiMap);
+        }
+
+		// add zoom control
+		L.control.zoom({
+			zoomInTitle:LangCur['rci2_btn_zoomin'],
+			zoomOutTitle:LangCur['rci2_btn_zoomout']
+		}).addTo(rsiMap);
+		rsiMap.on('zoom', onZoomLevelsChanged);
+		// init ViewCenter plugin
+		var viewCenter = new L.Control.ViewCenter({title:LangCur['rci2_btn_resetview'],vcZoom: def_initZoom, vcLatLng: rci2_initialCenter});
+		rsiMap.addControl(viewCenter);
+
+		// load layers control
+		//L.control.layers(baseLayers).addTo(rsiMap);//
+	}
+	/// add indicator label
+	if (typeof rci2_enable_infoIndicator !== 'undefined') {
+		var def_enable_infoIndicator=rci2_enable_infoIndicator;
+	} else {
+		var def_enable_infoIndicator='yes';
+	}
+	//def_enable_infoIndicator
+	if(rci2_layout.infoIndicator=='yes') {
+	//if(def_enable_infoIndicator=='yes') {
+		var infoIndicator = L.control({position: 'horizontalLeft2top'});// topright horizontalcentertop
+		infoIndicator.onAdd = function (map) {
+		    this._div = L.DomUtil.create('div', 'info-indicator leaflet-bar'); // create a div with a class "info"
+		    this.update();
+		    return this._div;
+		};
+		// method that we will use to update the control based on feature properties passed
+		infoIndicator.update = function (props) {
+			rci2log.log(props);
+			var propsname='';
+			if(props) {
+				if(props.pane) {
+					propsname=rci2_indic_label(props.pane);
+				} else {
+					if(props.layer) {
+						propsname=rci2_indic_label(props.layer.options.pane);
+					}
+				}
+			}
+	    	this._div.innerHTML = '' +  (props ? '<b>' + propsname + '</b>' : 'Nothing chosen');
+		};
+		infoIndicator.addTo(rsiMap);
+	}
+	/// end indicator label
+
+	/// add indicator-select
+	if (typeof rci2_layerselect_position !== 'undefined') {
+		var def_layerselect_position=rci2_layerselect_position;
+	} else {
+		var def_layerselect_position='horizontalLeft2top';
+	}
+
+
+	 rci2log.log('def_layerselect_position '+def_layerselect_position);
+	//
+	if(rci2_menu_enable) {
+		$('div.leaflet-control-layers.leaflet-control').remove();// clear - needed when switching nuts levels
+
+   		//activeLayers
+    	//layers
+		var control = L.control.groupedLayers(baseLayers).setPosition(def_layerselect_position);;
+		control.addTo(rsiMap);
+
+		if(rci2_layout.selectorOneHeader=='yes' || rci2_layout.selectorOneHeader=='Left' || rci2_layout.selectorOneHeader=='Right') {
+			// Call the getContainer routine.
+			 var htmlObject = control.getContainer();
+			 // Get the desired parent node.
+			 var a = document.getElementById('rsi2_indic_selector_container');
+			 if(rci2_layout.selectorOneHeader=='Left') {
+				var a = document.getElementById('rsi2_indic_selector_containerLeft');
+			 }
+			 if(rci2_layout.selectorOneHeader=='Right') {
+				var a = document.getElementById('rsi2_indic_selector_containerRight');
+			 }
+			 // Finally append that node to the new parent, recursively searching out and re-parenting nodes.
+			 setParent(htmlObject, a);
+			// wicont=200;
+
+    	} else {
+
+			$('#rsi2_indic_selector_containerRight').hide();
+			$('#rsi2_indic_selector_containerLeft').hide();
+
+			wicont=370;
+			if(rci2_layout.menuWidth) wicont=rci2_layout.menuWidth;
+			$('.leaflet-control-layers-list').css('width',wicont+'px');
+			$('.leaflet-control-layers-expanded').css('width',(wicont+10)+'380px');
+		}
+		// add icon
+		$('.leaflet-control-layers-toggle').append("<i class='leaflet-control-layers-toggle-arrow fa fa-chevron-down'></i>");
+		//
+		if(rci2_layout.menuIndicator=='yes') { /* yes= show indicator next to dropdown menu icon */
+			$('.leaflet-control-layers').addClass('menuIndicator');
+			if(wicont) $('.leaflet-control-layers .leaflet-control-layers-toggle').css('width',wicont+'px');
+			$('.leaflet-control-layers-toggle').prepend('<span class="leaflet-control-layers-current-indicator"></span>');
+		} else new Promise(function(resolve, reject) {
+			$('.leaflet-control-layers-toggle').append('<span class="leaflet-control-layers-toggle-arrow-expanded"><i class="fa fa-chevron-right"></i> '+LangCur['rciSelectIndicator']+'</span>');
+			$('.leaflet-control-layers-toggle-arrow-expanded').width(wicont+0);
+		});
+
+	} else {
+		$('#rsi2_indic_selector_containerRight').hide();
+		$('#rsi2_indic_selector_containerLeft').hide();
+		//console.log(1236)
+	}
+  function control_layers_current_indicator(props) {
+    var propsname='';
+    if(props) {
+      if(props.pane) {
+        propsname=rci2_indic_label(props.pane);
+      } else {
+        if(props.layer) {
+          propsname=rci2_indic_label(props.layer.options.pane);
+        }
+      }
+    }
+    if(propsname) $('.leaflet-control-layers-current-indicator').html(propsname)
+  }
+
+	//
+	///
+	// load  GeoJSON layer and index the features
+	if(rci2_layout.mapEnabled) {
+		if(defLayer.mapData) {
+			if(rci2_deflayer='nuts2') {
+                rci2log.log(363, defLayer.pane, defLayer.mapData, rci2Maps['regions_'+rci2_deflayer+'_topo']);
+				// search on header
+				if(rci2_layout.infoMapHeaderSearch=='yes') {
+					//console.log(1419,NameofRegion,NameofRegion.length);
+					for (const NoR in NameofRegion) {
+  					//console.log(1419,NoR, NameofRegion[NoR]);
+						if(defLayer.nutslevel=='NUTS_2' && NoR.length==4) { // nuts2 only
+							$('#infoSearch select').append('<option data-subtext='+NoR+' value='+NoR+'>'+NameofRegion[NoR]+' ('+NoR+')</option>')
+						}
+					}
+				} else { // search on leaflet
+                searchCtrl.indexFeatures(defLayer.mapData, ['NUTS_ID', 'NUTS_NAME']); //NAME_LATN used in geojson, ,'CAPT'
+            }
+      }
+		} else {
+			rci2log.log('363 error missing MapData on '+defLayer.pane);
+		}
+	}
+	// set default layer to the title
+	//def_enable_infoIndicator
+	if(rci2_layout.infoIndicator=='yes') {
+	//if(def_enable_infoIndicator=='yes') {
+		infoIndicator.update(defLayer);
+	}
+  control_layers_current_indicator(defLayer);
+	//
+	rsiMap.on('baselayerchange', onBaselayerchanged);
+	//rsiMap.on('overlayadd', onBaselayerchanged);
+
+	// start inlets
+	if(rci2_layout.mapEnabled) {
+		if (typeof rci2_show_inlets_on_load !== 'undefined') {
+			if(rci2_show_inlets_on_load=='yes') {
+				rci2_inlets_open_status='open';
+				rci2_showinlets(defLayer);
+				$('.inlet-regions').css('background-color',rci2_layout['color_sea']);//
+			} else {
+				//rci2_toggleinlets();
+			}
+		}
+	}
+
+
+	if (typeof rci2_enable_print !== 'undefined') {
+		if(rci2_enable_print=='yes') {
+			/// add print button
+			L.easyPrint().addTo(rsiMap);
+		}
+	}
+	// setup info popup
+	//<p><b>NUTS demo</b> - Region typologies by NUTS 2013.</p></div>
+	var def_rci2_infopopup = '';
+	if (typeof rci2_infopopup !== 'undefined') { def_rci2_infopopup=rci2_infopopup[sLang]; }
+	if (def_rci2_infopopup && rci2_enable_infobutton=='yes') {
+		//var infoPopup = L.popup().setContent(def_rci2_infopopup);
+		var infoPopup = L.control({position: 'horizontalcentermiddle'});
+	    infoPopup.onAdd = function (map) {
+       		var div = L.DomUtil.create('div', 'info infoCenterMiddle ');
+			div.id='rciInfoPup';
+			div.innerHTML=def_rci2_infopopup+"<div class='infoPopupClose'><span class='infoPopupClosebtn btn btn-dark btn-sm'>"+
+				"<i class='fa fa-window-close'></i> "+LangCur['infoPopupClose']+"</span></div>";
+        	return div;
+    	};
+		/// add button for info
+		L.easyButton( '<span class="info-button"><i class="fa fa-info"></i></span>', function(btn, map){
+		  	//infoPopup.setLatLng(map.getCenter()).openOn(map);;
+			$("#rciInfoPup").toggle();
+			$('.infoPopupClosebtn').click(function() {
+				$('#rciInfoPup').hide();
+			});
+		}).addTo(rsiMap);
+		// add rciInfoPup
+    	infoPopup.addTo(rsiMap);
+        $('#rciInfoPup').hide();
+	}
+
+	//// loading status
+	$('#rciInfoLoading').hide();
+
+	if(!rci2_layout['color_sea']) rci2_layout['color_sea']='#E6FFFF';
+	$('#mapid').css('background-color',rci2_layout['color_sea']);//
+	$('.inlet-regions').css('background-color',rci2_layout['color_sea']);//
+	$('#mapContainer').css('background-color',rci2_layout['color_sea']);//
+
+	if(rci2_layout['color_mapcontainer']) {
+		$('#mapContainer').css('border-color',rci2_layout['color_mapcontainer']);//
+	} else {
+		$('#mapContainer').css('border-color','#f5f5f5');//
+	}
+
+
+	/////////////////////////////////// legend //////////////////////
+	var rci2_legend_position='bottomleft';
+	if(rci2_legend_layout=='vertical') rci2_legend_position='topleft';
+	if(rci2_layout.legend_position) rci2_legend_position=rci2_layout.legend_position;
+	rci2log.log('legend',1502, rci2_legend_position, rci2_legend_layout);
+
+	var legend = L.control({position: rci2_legend_position});
+
+	if(rci2_layout.legend_position=='bottomleft' && rci2_layout.scheme=='tworows_1doublevis2datable') {
+		var div1 =  document.getElementById('visContainerLeft_legend');
+		var div = document.createElement('div');
+		div.className = 'info legend '+rci2_legend_layout;
+		div1.appendChild(div);
+		rci2log.log('legend', 1511, rci2_legend_layout);
+		legendAdd(div);
+	} else if(rci2_layout.legend_position=='topleft'){
+		//var div1 =  document.getElementById('leaflet-top leaflet-left');
+		//var div = document.createElement('div');
+		//div.className = 'info legend '+rci2_legend_layout;
+		//div1.appendChild(div);
+		rci2log.log('legend', 1514, rci2_layout.legend_position, rci2_legend_layout);
+		//legendAdd(div);
+	}
+
+
+	function legendAdd(div) {
+		div.id='rsiLegend'+rci2_legend_layout;
+    if(rsi2_sources[defaultSource]) {
+			rci2log.log('legend',1225,943, rsi2_sources[defaultSource]);
+			var llZones=rsi2_sources[defaultSource].sZones;
+			var llunit='';
+			if(rci2_layout.legend_showunit) {
+				llunit=' '+rsi2_sources[defaultSource].sUnit;
+			}
+			//rci2log.log('adding legend');
+			//rci2log.log(llZones);
+			if(rci2_layout.colorbyCategory && CategoryColors) { // legend by color category
+				if(CategoryColors[rci2_layout.colorbyCategory]) {
+					var catColors=CategoryColors[rci2_layout.colorbyCategory];
+					for (var key in catColors) {
+						if (catColors.hasOwnProperty(key)) {
+							var leStyle='border: 1px solid #eee; background:' + (catColors[key]);
+							div.innerHTML +='<div class=legendItem><i style="' + leStyle + '" title="'+ key + '"></i>'
+								+'<span class="legendLabel">'+key+'</span></div>';
+						}
+					}
+				}
+			} else {
+				if(typeof llZones !== 'undefined') {
+          var leLoops = 1
+          if(rci2_layout.biColors) {
+              leLoops = rci2_layout.biColors.length;
+          }
+          //rci2log.log(249, rci2_layout, bColors);
+					for (var iB = 0; iB < leLoops; iB++) {
+                        for (var i = 0; i < llZones.length; i++) {
+                            var leZone=llZones[i];
+                            var leColor = leZone.color;
+                            if(rci2_layout.biColors) {
+                                var mix = RGBMix(leColor, rci2_layout.biColors[iB]);
+            					          leColor= rgba2hex ( mix.toCSS() ) ;
+                            }
+                            if (rci2_layout.legend_precision) {
+                                rsi2_sources[defaultSource].legendPrecision=rci2_layout.legend_precision;
+                            }
+                            if (typeof rsi2_sources[defaultSource].legendPrecision == 'undefined') {
+                                rsi2_sources[defaultSource].legendPrecision=1;
+                            }
+                            //rci2log.log(249+' '+leZone.valueLow,leZone.value, leColor);
+                            var lP=rsi2_sources[defaultSource].legendPrecision;
+                            var lzTitle='&ge; '+ rci2_numspaces(leZone.valueLow , lP)
+                                        + (rci2_numspaces(leZone.value,lP) ? ' '+LangLocal('to')+' ' + rci2_numspaces(leZone.value,lP) : '+');
+                            if(rci2_layout.biColors) {
+                                lzTitle= rsi2_sources[defaultSource].ShortTitle+' : '+lzTitle;
+                                var bSource = rsi2_sources[defaultSource].biVariate;
+                                leZoneB = rsi2_sources[bSource].sZones[iB];
+                                lzTitle += " / "+rsi2_sources[bSource].FullTitle+' : '
+                                    +'&ge; '+ rci2_numspaces(leZoneB.valueLow , lP)
+                                    + (rci2_numspaces(leZoneB.value,lP) ? ' '+LangLocal('to')+' ' + rci2_numspaces(leZoneB.value,lP) : '+');
+                            }
+                            var leStyle='border: 1px solid #eee;background:' + (leColor);
+                            if(zStripesCSS[i]) {
+                                leStyle='background: repeating-linear-gradient( '+zStripesCSS[i].angle+'deg, '+zStripesCSS[i].color+', '+zStripesCSS[i].color+							' '+zStripesCSS[i].weight+'px, '+zStripesCSS[i].spaceColor+' '+zStripesCSS[i].spaceWeight+'px, '+zStripesCSS[i].spaceColor+' '+zStripesCSS[i].width+'px';
+                            }
+                            div.innerHTML +='<div class="legendItem legendItem'+i+'" ><i style="' + leStyle + '" title="'+ lzTitle + '"></i>'
+                                +'<span class="legendLabel">'+lzTitle+llunit+'</span></div>';
+                        }
+                    }
+				}
+			}
+			lzTitle=LangCur['Data not available'];
+			lzTitle1=LangCur['(:) Not available'];
+			if(!lzTitle1) {
+				lzTitle1=LangCur['(:) Not available']='(:) Not available';
+			}
+			if(!rci2_layout['color_na']) rci2_layout['color_na']='#7F7F7F';
+      if(rci2_layout.hideNAfromlegend!='yes' && lzTitle1 && lzTitle1!='undefined') {
+        div.innerHTML +='<div class=legendItem><i style="border: 1px solid #eee;background: '+rci2_layout['color_na']+'" title="'+ lzTitle + '"></i>'
+  					+'<span class="legendLabel" title="'+ lzTitle + '">'+lzTitle1+'</span></div>';
+      }
+    } else {
+			div.id='rsiLegend';
+    }
+	}
+
+	function legendUpdate(kSource) {
+		var legendI='rsiLegend'+rci2_legend_layout;
+	    var divContent='';
+	    rci2log.log(1225, 'update legend', legendI,kSource,  rsi2_sources[kSource]);
+		if (typeof rsi2_sources[kSource] !== 'undefined') {
+	    	var llZones=rsi2_sources[kSource].sZones;
+	    	// rci2log.log(llZones);
+			for (var i = 0; i < llZones.length; i++) {
+			var leZone=llZones[i];
+			if (typeof rsi2_sources[kSource].legendPrecision == 'undefined') {
+				rsi2_sources[kSource].legendPrecision=1;
+			}
+			var lP=rsi2_sources[kSource].legendPrecision;
+			//rci2log.log(739+' '+leZone.valueLow);
+					var lzTitle='&ge; '+ rci2_numspaces((leZone.valueLow),lP)
+								+ ( rci2_numspaces((leZone.value),lP) ? ' '+LangLocal('to')+' ' + rci2_numspaces((leZone.value),lP) : '+');
+					divContent +='<div class=legendItem><i style="border: 1px solid #eee;background:' + (leZone.color) + '" title="'+ lzTitle + '"></i>'
+						+'<span class="legendLabel" title="'+ lzTitle + '">'+lzTitle+'</span></div>';
+			}
+			lzTitle=LangLocal('Data not available');
+			lzTitle1=LangLocal('(:) Not available');
+			if(!rci2_layout['color_na']) rci2_layout['color_na']='#7F7F7F';
+			if(rci2_layout.hideNAfromlegend!='yes') {
+				divContent +='<div class=legendItem><i style="border: 1px solid #eee;background: '+rci2_layout['color_na']+'" title="'+ lzTitle + '"></i>'
+							+'<span class="legendLabel">'+lzTitle1+'</span></div>';
+			} else {
+				//rci2log.log(1225,hideNAfromlegend, rci2_layout.hideNAfromlegend);
+			}
+    	}
+		//rci2log.log(1225,legendI,divContent);
+		if(!divContent) {
+			//rci2log.log(740);
+		$('#'+legendI).hide();
+		} else {
+			//rci2log.log(741);
+		$('#'+legendI).html(divContent); //this.getContainer().innerHTML = divContent;
+		$('#'+legendI).show();
+		}
+	}
+
+    legend.onAdd = function (map) {
+			var divclassName='info legend '+rci2_legend_layout;
+			if(rci2_layout.hidemapcopyright=='yes') {
+				divclassName=divclassName+'  hidemapcopyright';
+			}
+			var div = L.DomUtil.create('div',divclassName);
+			rci2log.log('legend', 1640, rci2_legend_layout);
+			legendAdd(div);
+      return div;
+    };
+
+    legend.update = function (kSource) {
+		legendUpdate(kSource);
+    };
+
+    // add legend
+    if(rsiMap) {
+			if(rci2_layout.legend_position=='bottomleft' && rci2_layout.scheme!='tworows_1doublevis2datable') {
+				legend.addTo(rsiMap);
+			}
+		}
+	//
+	if(rci2_layout.legend_fontsize) {
+		$('.legend').addClass('legend_'+rci2_layout.legend_fontsize);
+	}
+	if(rci2_layout.MobileReponsive) {
+		if($(window).width() <= rci2_layout.MobileReponsive) {
+			$('.legend').addClass('legend_mobile');
+		}
+	}
+    ////////////////////////////////////////////////////
+	$('#rci2_nav_tabs .btn').hide(); // hide tabs before showing the enabled ones
+	$('#navbarCollapse').hide();
+	// loop enabled visualisations
+	//$('#visContainer').hide
+	for (i in rci2_layout.visEnabled) {
+		var rciVis = rci2_layout.visEnabled[i];
+		if(typeof(rciVis)=='string') {
+			rci2log.log('526 '+rciVis+' -> '+rci2_layout.visDefault);
+			if(rci2_layout.tabsEnabled=='yes') {
+				$('#navbarCollapse').show();
+				$('#rci2_nav_tabs .btn-tab-'+rciVis).show();
+				$('#rci2_nav_tabs .btn-tab-'+rci2_layout.visDefault).addClass('active');
+			}
+			//
+			current_chart=rci2_layout.visDefault;
+		}
+	}
+	if(rci2_layout.visDefault) {
+		if(rci2_layout.visDefault=='datatable') {
+			rci2_InitDataTable();
+		} else {
+			if(rci2_layout.scheme=='tworows_1doublevis2datable') {
+				$('#rci2_head').hide();
+				rci2_InitDataTable();
+
+			} else {
+				chart_init(rci2_layout.visDefault); /// start HighCharts
+			}
+		}
+
+		if(rci2_layout.defaultRegion) {
+			CurrentRegion=rci2_layout.defaultRegion;
+			rci2_regionClick(CurrentRegion);
+		}
+	}
+	///////////////////////////
+
+
+
+
+	////// functions
+	////
+	function onBaselayerchanged(e){
+		rci2log.time('time onBaselayerchanged');
+
+		var rsi2_layer_queue = d3.queue(1); // 4 loads concurrently
+		rsi2_layer_queue.defer(function(index,callback) {
+			$('#rciInfoLoading').html(LangCur['rciPleaseHold1']+'. '+LangCur['rciPleaseHold4']).show();
+			rci2log.log('show rciInfoLoading');
+			// close selector
+			$(".leaflet-control-layers").removeClass("leaflet-control-layers-expanded");
+			//
+			var id = setTimeout(function() {
+				rci2log.log("582 Bye, " + index + "!");
+				callback(null);
+			}, 100);
+			return {
+				abort: function() {
+					clearTimeout(id);
+				}
+			};
+		},1);
+		rsi2_layer_queue.defer(function(index,callback) {
+
+			//rci2log.log(917,e);
+			if(!e.layer) { // runs when we have the year
+				//e.layer=rsi2_geojson[CurrentPane];
+			}
+			//
+			CurrentPane = e.layer.options.pane;
+			runningKey=CurrentPane;
+			//
+			rci2loading_perc(e.name+' ('+CurrentPane+')');
+			//
+			$('#gene_table tr').removeClass('selected').removeClass('highlight');
+			$('#gene_table #table_'+CurrentPane).addClass('selected').addClass('highlight');
+			//
+			rci2_highghtColumnTable(); // highlight column according to current indicator
+			//
+			//var pane = e.layer.options.pane;
+			rci2log.log(rsi2_sources[CurrentPane]);
+			if(rci2_layout.selectorOneHeader=='yes') {
+				$('#rsi2_indic_label').html(rci2_indic_label(CurrentPane));
+			}
+			if(rci2_layout.selectorOneHeader=='Left') {
+				$('#rsi2_indic_label_Left').html(rci2_indic_label(CurrentPane));
+			}
+			if(rci2_layout.selectorOneHeader=='Right') {
+				$('#rsi2_indic_label_Right').html(rci2_indic_label(CurrentPane));
+			}
+			// typology layers dont have a source
+			if(!rsi2_sources[CurrentPane]) var leZones='';
+				else var leZones=rsi2_sources[CurrentPane].sZones;
+			if(!rsi2_sources[CurrentPane]) var leUnit='';
+				else var leUnit=rsi2_sources[CurrentPane].sUnit;
+			//rci2log.log(':917: zone ',leZones); //
+
+			// tracking
+			if(typeof _paq != 'undefined') {
+				var paqT= 'Vis: '+sAppName+' / '+e.name+' ('+sLang+')';
+				_paq.push(['trackEvent', 'RCI2', paqT]);
+				rci2log.log(paqT);
+			} else {
+				rci2log.log('no paq1');
+			}
+			//
+			// set layer
+			var key1year = CurrentPane+'_'+current_year;
+
+			var TimeSlotsInd=rsi2_sources[CurrentPane].TimeSlots;
+			//
+			if(TimeSlotsInd.includes(current_year+'')) {
+			} else {
+				var TimeSlotsInd1=TimeSlotsInd.reverse();
+				var zMax_Year=TimeSlotsInd1[0];
+				current_year=zMax_Year;
+				changecurrentyear(zMax_Year);
+			}
+			//
+			for(i=rci2_layout.timeStart; i<=rci2_layout.timeEnd; i++) {
+				if(TimeSlotsInd.includes(i+'')) {
+					$('#rci2_timetab_'+i).removeClass('disabled');
+				} else {
+					$('#rci2_timetab_'+i).addClass('disabled');
+				}
+			}
+			//
+			Value_Region_feature[key1year+'_scatter']=[]; // reset array
+			//
+			//rci2log.log(':917: '+e.layer.options.style); //
+			//rci2log.log(':917a: '+e.name,   'current '+CurrentPane, 'key1y '+key1year, current_year); //
+
+			defLayer={
+				name: e.name,
+				mapData: rsi2_sources[CurrentPane].regions_nuts /*e.layer.options.mapData*/,
+				nutslevel: 'NUTS_'+rsi2_sources[CurrentPane].sNUTS, /*e.layer.options.nutslevel,*/
+				pane: CurrentPane,
+				vals: Value_Region_feature[key1year],
+				vals_table: Value_Region_feature[key1year+'_table'],
+				vals_bar: Value_Region_feature[key1year+'_bar'],
+				vals_scatter: Value_Region_feature[key1year+'_scatter'],
+				unit: leUnit /*LayerUnit[pane]*/,
+				zone: leZones, /*LayerZone[pane]*/
+				style: style_nuts /*e.layer.options.style*/,
+				onEachFeature: onEachFeatureDo
+			};
+			// update map if we are not in the default year
+			//if (current_year != rci2_defaultYear ) {// do it anyway
+				//CurrentPane = pane;
+				//
+				rsi2_nuts_topo_features_reload(CurrentPane);//rsi2_nuts_topo_features(CurrentPane,rsi2_sources[CurrentPane].regions_nuts);
+				//
+				//L.DomUtil.remove(CurrentPane); // remove pane to add it again
+				//rsiMap.createPane(CurrentPane);
+				var lPanes=rsiMap.getPanes();
+				running_zIndex++;
+				rsiMap.getPane(CurrentPane).style.zIndex = 450+running_zIndex;
+				rsi2_geojson[CurrentPane] = L.topoJson(rsi2_sources[CurrentPane].regions_nuts, {
+					pane: CurrentPane,
+					mapData: rsi2_sources[CurrentPane].regions_nuts,
+					vals: Value_Region_feature[key1year],
+					vals_table: Value_Region_feature[key1year+'_table'],
+					vals_bar: Value_Region_feature[key1year+'_bar'],
+					vals_scatter: Value_Region_feature[key1year+'_scatter'],
+					unit: leUnit ,
+					zone: leZones,
+					style: style_nuts,
+					onEachFeature: onEachFeatureDo
+				}).addTo(rsiMap);
+				//lPanes,
+				//rci2log.log(917, 1256, CurrentPane,  rci2_defaultYear, current_year, e.name, rsiMap.getPane(CurrentPane).style.zIndex);
+			//}
+			// legend
+			//legend.update(CurrentPane);
+			legendUpdate(CurrentPane)
+
+			if(rci2_layout.mapEnabled) {
+				// re-index
+				if(e.layer.options.mapData) {
+					rci2log.log('444 reindex '+CurrentPane);
+					rci2log.log(e.layer.options.mapData);
+					if(rci2_layout.infoMapHeaderSearch=='yes') {
+					} else {
+					searchCtrl.indexFeatures(e.layer.options.mapData, ['NUTS_ID', 'NUTS_NAME']); //NAME_LATN used in geojson, //,'CAPT'
+					}
+				} else {
+					rci2log.log('445 error missing MapData on '+e.layer.options.pane);
+				}
+				if(rci2_layout.infoMapHeaderSearch=='yes') {
+				} else {
+				searchCtrl.searchFeatures('');
+				// close in case you had it open
+				searchCtrl.hidePanel();
+				}
+				// re-run inlets
+				if(!$('#inletsbar').hasClass('open')) {
+					var closeinlets=1;
+				}
+				//
+				rci2_showinlets(defLayer);
+				$('.inlet-regions').css('background-color',rci2_layout['color_sea']);//
+				//
+				if(closeinlets) {
+					rci2_toggleinlets();
+					$('.inlet-regions').css('background-color',rci2_layout['color_sea']);//
+				}
+			}
+			// re-run chart
+			if (typeof rci2_layout.visEnabled !== 'undefined') {
+				if(rci2_layout.visEnabled) {
+					if(current_chart=='datatable') {
+						//rci2_InitDataTable();
+					} else {
+						if(rci2_layout.scheme=='tworows_1doublevis2datable') {
+							rci2_InitDataTable();
+
+						} else {
+							chart_init(current_chart); /// start HighCharts
+						}
+					}
+				}
+			}
+			//def_enable_infoIndicator
+			if(rci2_layout.infoIndicator=='yes') {
+				infoIndicator.update(e);
+			}
+      control_layers_current_indicator(e);
+			//
+		  var id = setTimeout(function() {
+			 rci2log.log("582 Bye, " + index + "!");
+			 callback(null);
+		   }, 100);
+		   return {
+			 abort: function() {
+			 clearTimeout(id);
+			 }
+		   };
+
+		},2);
+		rsi2_layer_queue.defer(function() {
+			$('#rciInfoLoading').hide();
+		},3);
+	    rsi2_layer_queue.await(ready);
+		rci2log.timeEnd('time onBaselayerchanged');
+	}
+
+	function onZoomLevelsChanged(e){
+		rci2log.log('zoomlevelschange', e.target._zoom);
+		var theZoom=e.target._zoom;
+		/// disable barrier for bounds // rsiMap.setMaxBounds(bounds[theZoom]);
+		rci2log.log(rsiMap.getBounds());
+	}
+
+	rci2log.timeEnd('time leaflet_init');
+
+}
+function rciInfoLoading_start(callback) {
+	$('#rciInfoLoading').show().html('Loading. Please hold.');
+	var id = setTimeout(function() {
+	   callback(null);
+	 }, 60);
+	 return {
+	   abort: function() {
+		 clearTimeout(id);
+	   }
+	 };
+}
+function rciInfoLoading_end(callback) {
+	$('#rciInfoLoading').hide();
+	var id = setTimeout(function() {
+	   callback(null);
+	 }, 60);
+	 return {
+	   abort: function() {
+		 clearTimeout(id);
+	   }
+	 };
+}

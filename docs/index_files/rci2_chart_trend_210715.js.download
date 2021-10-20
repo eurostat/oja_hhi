@@ -1,0 +1,217 @@
+var baseColor='';
+//
+function rci2_trendColor(vl1,key1indicator) {
+  var	tColor='';
+  if(vl1) {
+    var sZones = rsi2_sources[key1indicator].sZones;
+    for (var keyZ in sZones) {
+      if (sZones.hasOwnProperty(keyZ) || keyZ == 0) {
+        if(!baseColor && sZones[keyZ].color) baseColor=sZones[keyZ].color;
+        if (vl1 >= sZones[keyZ].valueLow) {
+          tColor = sZones[keyZ].color;
+          //console.log(vl1,key1indicator,keyZ);
+          //colorStripe = zStripes[keyZ];
+        }
+      }
+    }
+  }
+  if(!tColor) {
+    tColor=baseColor; // return some colour at all times
+  }
+  //console.log('color', tColor, baseColor);
+  return tColor;
+}
+function rci2_chartTrend(vis_div){
+    $('#'+vis_div).html("Select a region on the map to see it's trend over time.");
+    if(CurrentRegion) {
+        $('#'+vis_div).html('');
+        var visHeight=$('#'+vis_div).height();
+        $('#'+vis_div).append('<div id='+vis_div+'_vis></div>')
+        $('#'+vis_div+'_vis').height(visHeight-22);
+        $('#'+vis_div).append('<div id='+vis_div+'_cntrlegend class="bb-legend-countries bb-legend-item"></div>')
+        $('#'+vis_div).addClass('rciTrendVis');
+        var key1indicator=defLayer.pane;
+        var tYears=['x'];
+        var tValues=['regionTitle'];
+        var tEU=['euTrend'];
+        //
+        var	tColor='';
+        //
+        for(i=rsi2_sources[key1indicator].timeStart; i<=rsi2_sources[key1indicator].timeEnd; i++) {
+          var key1year = defLayer.pane+'_'+i;//current_year;
+          disDataAll=Value_Region_feature[key1year+'_bar'];
+          var disDataAllSorted=[];
+          var disDataAllCountry=[];
+          $.each(disDataAll, function(i) {
+            /// exclude empty values and candidate countries
+            if(disDataAll[i].Code==CurrentRegion || disDataAll[i].Code=='EU27' || disDataAll[i].Code=='EU28') {
+              if(typeof  disDataAll[i].y !== 'undefined') {
+                  if(disDataAll[i].y !== '') {
+                    disDataAllSorted.push(disDataAll[i]);// current region
+                    //console.log(disDataAll[i].Code, disDataAll[i] )//FI20
+                  }
+              }
+            }
+            // find country values
+            var dCode=disDataAll[i].Code;
+            if(dCode.substring(0,2)==CurrentRegion.substring(0,2)) {
+              if(typeof  disDataAll[i].y !== 'undefined') {
+                if(disDataAll[i].y==='') {
+                  //console.log('trend', 'empty',disDataAll[i].Code, i )//FI20
+                } else {
+                disDataAllCountry.push(disDataAll[i].y*1)
+                  //console.log('trend',disDataAll[i].Code, i, disDataAll[i] )//FI20
+              }
+            }
+            }
+          })
+          disDataAllCountry.clean(null); // get values without the null
+          disDataAllCountry.sort(function(a, b){
+            return a - b;
+          });
+          var zMin_data=disDataAllCountry[0]; //find bottom value of country
+          disDataAllCountry.reverse();
+          var zMax_data=disDataAllCountry[0]; //find top value of country
+          //
+          if(disDataAllSorted[0]) {
+            // years
+            tYears.push(i+'-01-01');
+            // add color for legend
+            if(typeof disDataAllSorted[0].y  !== 'undefined') {
+              //tColor,
+              //console.log('trend', key1indicator,  'i', i, disDataAllSorted[0].y,'/', zMin_data ,zMax_data);
+              //, disDataAllCountry );
+              var tColor1=rci2_trendColor(1*disDataAllSorted[0].y,key1indicator)
+              if(tColor1) {
+                tColor=tColor1; // only change if a value was given
+              }
+              //console.log('trend',68,disDataAllSorted[0].y,tColor)
+            }
+            //  country low , region value, country high
+            tValues.push( [
+              1*(zMax_data) ,
+              1*(disDataAllSorted[0].y) ,
+              1*(zMin_data) ]);
+            //
+            var EUval='';
+            if(rci2_layout.trendEUvalue) {
+              if(rci2_layout.trendEUvalue[i]!='') {
+                EUval = rci2_layout.trendEUvalue[i];
+              }
+            }
+            // override
+            if(rsi2_sources[key1indicator].trendEUvalue) {
+              if(rsi2_sources[key1indicator].trendEUvalue[i]!='') {
+                EUval = rsi2_sources[key1indicator].trendEUvalue[i];
+              }
+            }
+            tEU.push(EUval); // EU value of that year
+            //
+            var regionTitle=disDataAllSorted[0].name+', '+disDataAllSorted[0].country;
+            var regionCountry=disDataAllSorted[0].country;
+          }
+          //rci2_layout.timeStart, rci2_layout.timeEnd
+        }
+        //console.log('trend', tValues, tColor);
+        //
+        var tir=0;
+        //
+        var chart = bb.generate({
+          svg: {
+            classname: "rci_trend"
+          },
+          data: {
+            x: "x",
+            names: {
+              'regionTitle': regionTitle,
+              'euTrend': rci2_layout.trendEUtitle
+            },
+            columns: [
+            	tYears,
+            	tValues,
+          	  tEU
+            ],
+            colors: {
+              'regionTitle':  function(d) {
+                // d will be "id" when called for legends
+                var v1=d.value;
+                if(v1) {
+                  var vl1=v1[1];
+                  //console.log(102,vl1)
+                  tColor=rci2_trendColor(vl1,key1indicator)
+                }
+                return tColor;
+              },
+             'euTrend': "#888888"
+            },
+            types: {
+              'regionTitle': "area-line-range"
+            }
+          },
+          tooltip: {
+             contents: function(d, defaultTitleFormat, defaultValueFormat, color) {
+                //console.log(d, defaultTitleFormat, defaultValueFormat, color)
+                var x=Intl.DateTimeFormat('en', { year: 'numeric' }).format(d[0].x);;
+                $('#'+vis_div+'_cntrlegend').html(regionCountry+'\'s lowest value: '
+                  +rci2_numspaces(d[0].value[2]*1,1)+' '+rsi2_sources[key1indicator].sUnit
+                  +', highest value: '+ rci2_numspaces(d[0].value[0]*1,1)+' '+rsi2_sources[key1indicator].sUnit)
+                 return '<table class="bb-tooltip"><tbody><tr><th colspan="2">Year: '+x+'</th></tr>'+
+                 '<tr class="bb-tooltip-name-regionTitle"><td class="name">'+d[0].name+'</td>'+
+                 '<td class="value">'+rci2_numspaces(d[0].value[1]*1,1)+' '+rsi2_sources[key1indicator].sUnit+'</td></tr>'+
+                 '<tr class="bb-tooltip-name-euTrend"><td class="name">'+d[1].name+
+                 '</td><td class="value">'+rci2_numspaces(d[1].value*1,1)+' '+rsi2_sources[key1indicator].sUnit+'</td></tr></tbody></table>'
+             },
+            format: {
+              title: function(d) {
+        		      return 'Year: ' + Intl.DateTimeFormat('en', { year: 'numeric' }).format(d);;
+              },
+              value: function(value, ratio, id, index) {
+                tir++;
+                //console.log('trend', id, ratio, value,index,tir )
+                if(tir==3) tir=0;
+        		    if(id=='regionTitle') {
+                  return (value);
+                } else {
+                  return (value);
+                }
+              }
+            }
+          },
+          grid: {
+            x: {
+              show: false
+            },
+            y: {
+              show: false,
+            }
+          },
+          axis: {
+            y: {
+              tick: {
+                culling: {
+                  max: 6
+                }
+              }
+            },
+            x: {
+              type: "timeseries",
+              tick: {
+                text: {
+                  position: {
+                    x: -5,
+                    y: 0
+                  }
+                },
+                fit: true,
+                multiline: false,
+                format: "%Y"
+              }
+            }
+          },
+          bindto: '#'+vis_div+'_vis'
+        });
+
+
+    }
+
+}
