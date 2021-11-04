@@ -13,5 +13,3 @@ The main R script takes as inputs two .csv files:
 2. [_staff_agencies_EU_](https://github.com/eurostat/oja_hhi/blob/main/staff_agencies_EU.csv) to filter out staffing agencies (i.e. where the variable _companyname_ reports the name of the staffing agency instead of the name of the company that has the actual job post adverstised)
 
 The folder [_Other script_](https://github.com/eurostat/oja_hhi/tree/main/Other%20scripts) contains mainly scripts and data used for the creation and evaluation of the model dealing with company names.
-
-<iframe width="100%" height="800" src="https://ec.europa.eu/eurostat/cache/RCI/rcit/lmci.html"></iframe>
