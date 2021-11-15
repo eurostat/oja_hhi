@@ -2,7 +2,7 @@
 
 R code for calculating a Labour Market Concentration Index using the [Herfindahl-Hirschmann Index  (HHI)](https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_Index) from Online Job Advertisements data (OJA).
 
-This R code is used to produce the experimental results described in the [Statistical Working Paper - Competition in Urban Hiring Markets: Evidence from Online Job Advertisements](https://ec.europa.eu/eurostat/publications/statistical-working-papers#:~:text=The%20'Statistical%20working%20papers'%20(,to%20the%20European%20Statistical%20System.).
+This R code is used to produce the experimental results described in the [Statistical Working Paper - Competition in Urban Hiring Markets: Evidence from Online Job Advertisements](https://ec.europa.eu/eurostat/publications/statistical-working-papers).
 
 The main code is contained in the script [_lmci_v1.R_](https://github.com/eurostat/oja_hhi/blob/main/lmci_v1.R) 
 
