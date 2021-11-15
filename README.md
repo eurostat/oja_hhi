@@ -37,6 +37,6 @@ Data for all Functional Urban Areas over 2019 and 2020 can be explored in an [in
 
 ## Workflow
 
-![image](https://user-images.githubusercontent.com/57686282/141798897-d3c2c501-b43a-44a3-b09f-a81ee07a597d.png)
+![image](https://user-images.githubusercontent.com/57686282/141802589-c4251dc3-b5a6-4863-80a8-716b15684dd6.png)
 
 
