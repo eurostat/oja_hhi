@@ -6,9 +6,6 @@ R code for calculating a Labour Market Concentration Index using the [Herfindahl
 
 The code is based on the work within the [ESSnet Big Data II project on Online Job Vacancies](https://github.com/OnlineJobVacanciesESSnetBigData/Labour-market-concentration-index-from-CEDEFOP-data). 
 
-
-This R code is used to produce the experimental results described in the [Statistical Working Paper - Competition in Urban Hiring Markets: Evidence from Online Job Advertisements](https://ec.europa.eu/eurostat/publications/statistical-working-papers). The visualizations produced with ggplot are not the same used in the paper, which are reformatted to respect the graphical standards of Eurostat's publications. 
-
 ## Structure
 
 The main code is contained in the script [_lmci_v1.R_](https://github.com/eurostat/oja_hhi/blob/main/lmci_v1.R) 
@@ -32,6 +29,11 @@ The main R script takes as inputs two .csv files:
 1. [_companies_to_clean_EU_](https://github.com/eurostat/oja_hhi/blob/main/companies_to_clean_EU.csv) to clean the company names of the original OJA dataset
 2. [_staff_agencies_EU_](https://github.com/eurostat/oja_hhi/blob/main/staff_agencies_EU.csv) to filter out staffing agencies (i.e. where the variable _companyname_ reports the name of the staffing agency instead of the name of the company that has the actual job post adverstised)
 
+## Results
+
+This R code is used to produce the experimental results described in the [Statistical Working Paper - Competition in Urban Hiring Markets: Evidence from Online Job Advertisements](https://ec.europa.eu/eurostat/publications/statistical-working-papers). The visualizations produced with ggplot are not the same used in the paper, which are reformatted to respect the graphical standards of Eurostat's publications. 
+
+Data for all Functional Urban Areas over 2019 and 2020 can be explored in an [interactive map](https://ec.europa.eu/eurostat/cache/RCI/rcit/lmci.html).
 
 ## Workflow
 
