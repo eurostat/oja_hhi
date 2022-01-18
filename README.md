@@ -31,7 +31,7 @@ The main R script takes as inputs two .csv files:
 
 ## Results
 
-This R code is used to produce the experimental results described in the [Statistical Working Paper - Competition in Urban Hiring Markets: Evidence from Online Job Advertisements](https://ec.europa.eu/eurostat/publications/statistical-working-papers). The visualizations produced with ggplot are not the same used in the paper, which are reformatted to respect the graphical standards of Eurostat's publications. 
+This R code is used to produce the experimental results described in the [Statistical Working Paper - Competition in Urban Hiring Markets: Evidence from Online Job Advertisements](https://ec.europa.eu/eurostat/web/products-statistical-working-papers/-/ks-01-21-430). The visualizations produced with ggplot are not the same used in the paper, which are reformatted to respect the graphical standards of Eurostat's publications. 
 
 Data for all Functional Urban Areas over 2019 and 2020 can be explored in an [interactive map](https://ec.europa.eu/eurostat/cache/RCI/rcit/lmci.html).
 
